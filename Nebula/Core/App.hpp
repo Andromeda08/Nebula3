@@ -1,0 +1,22 @@
+#pragma once
+
+#include "Types.hpp"
+#include "Math/DeltaTime.hpp"
+#include "Window/Window.hpp"
+
+class App
+{
+public:
+    nbl_DISABLE_COPY(App);
+
+    App();
+    static UPtr<App> create() noexcept;
+
+    void run();
+
+private:
+    UPtr<Window>    mWindow;
+    DeltaTime       mDeltaTime;
+};
+
+extern App* gApplication;
