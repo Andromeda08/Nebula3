@@ -1,10 +1,8 @@
 #pragma once
 
-#include <filesystem>
-#include <fstream>
-#include <print>
 #include <nlohmann/json.hpp>
 
+#include "Macro.hpp"
 #include "Core/AppSpecification.hpp"
 #include "Core/Types.hpp"
 #include "VulkanRHI/RHIConfiguration.hpp"
@@ -16,68 +14,35 @@ constexpr auto gConfigurationPath = "nbl.json";
  */
 struct ConfigurationData
 {
-    AppSpecification app = {};
-    RHIConfiguration rhi = {};
+    uint32_t         version = 1u;  // ConfigurationData version tag
+    AppSpecification app     = {};
+    RHIConfiguration rhi     = {};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, app, rhi);
 
+/**
+ * Configuration reading & loading (singleton) class.
+ * [Lifetime] Created and initialized first on program start, valid until the program is closed.
+ */
 class Configuration
 {
 public:
-    static Configuration* getInstance()
-    {
-        if (!sInstance)
-        {
-            sInstance = UPtr<Configuration>(new Configuration());
-        }
-        return sInstance.get();
-    }
+    nbl_DISABLE_COPY(Configuration);
 
-    static const ConfigurationData& getConfig()
-    {
-        return sInstance->mData;
-    }
+    // Get Configuration instance.
+    static Configuration* getInstance();
+
+    // Directly get the configuration data.
+    static const ConfigurationData& getConfig();
 
 private:
-    Configuration()
-    {
-        const auto hasConfigFile = std::filesystem::exists(gConfigurationPath);
-        if (!hasConfigFile)
-        {
-            mData = ConfigurationData();
-            writeConfigFile();
-            std::println("[Config] No configuration file found, using defaults and creating one.");
-        }
-        else
-        {
-            readConfigFile();
-            std::println("[Config] Configuration loaded from file.");
-        }
-    }
+    Configuration();
 
-    void writeConfigFile() const
-    {
-        std::ofstream configFile(gConfigurationPath);
-        assert(configFile.is_open());
+    void writeConfigFile() const;
 
-        auto json = nlohmann::json({});
-        to_json(json, mData);
-        configFile << json;
-        configFile.close();
-    }
-
-    void readConfigFile()
-    {
-        std::fstream configFile(gConfigurationPath);
-        assert(configFile.is_open());
-        const auto json = nlohmann::json::parse(configFile);
-        configFile.close();
-        from_json(json, mData);
-    }
+    void readConfigFile();
 
     static UPtr<Configuration> sInstance;
 
     ConfigurationData mData;
 };
-
-UPtr<Configuration> Configuration::sInstance = nullptr;
