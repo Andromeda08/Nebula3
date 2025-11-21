@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Buffer.hpp"
+#include "DebugContext.hpp"
 #include "Device.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
@@ -18,30 +19,6 @@ namespace RHI
     struct VulkanRHICreateInfo
     {
         SPtr<IWindow> pWindow = nullptr;
-    };
-
-    struct DebugContextCreateInfo
-    {
-        const SPtr<Instance>& pInstance = nullptr;
-    };
-
-    class DebugContext
-    {
-    public:
-        nbl_DISABLE_COPY(DebugContext);
-        nbl_CTOR(DebugContext);
-
-        ~DebugContext();
-
-    private:
-        static vk::Bool32 VKAPI_CALL debugMessageCallback(
-            vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
-            vk::DebugUtilsMessageTypeFlagsEXT             type,
-            const vk::DebugUtilsMessengerCallbackDataEXT* p_data,
-            void*                                         p_user);
-
-        vk::DebugUtilsMessengerEXT  mMessenger;
-        SPtr<Instance>              mInstance;
     };
 
     class VulkanRHI
