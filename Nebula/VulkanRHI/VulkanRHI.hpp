@@ -4,6 +4,7 @@
 
 #include "Device.hpp"
 #include "Frame.hpp"
+#include "Instance.hpp"
 #include "IWindow.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
@@ -14,25 +15,6 @@ namespace RHI
     struct VulkanRHICreateInfo
     {
         SPtr<IWindow> pWindow = nullptr;
-    };
-
-    class Instance
-    {
-    public:
-        nbl_DISABLE_COPY(Instance);
-
-        explicit Instance(const VulkanRHICreateInfo& rhiCreateInfo);
-        static SPtr<Instance> create(const VulkanRHICreateInfo& rhiCreateInfo) noexcept;
-
-        vk::Instance getHandle() const noexcept
-        {
-            return mInstance;
-        }
-
-    private:
-        vk::Instance             mInstance;
-        std::vector<const char*> mLayers;
-        std::vector<const char*> mExtensions;
     };
 
     struct DebugContextCreateInfo
