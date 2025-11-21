@@ -52,7 +52,7 @@ namespace RHI
 
         [[nodiscard]] std::vector<UPtr<DeviceExtension>> getDeviceExtensions(const RHIFeatureLevel& featureLevel) noexcept;
 
-        [[nodiscard]] constexpr vk::PhysicalDeviceFeatures getDeviceFeatures() noexcept
+        [[nodiscard]] inline vk::PhysicalDeviceFeatures getDeviceFeatures() noexcept
         {
             auto features = vk::PhysicalDeviceFeatures()
                 .setMultiDrawIndirect(true)
