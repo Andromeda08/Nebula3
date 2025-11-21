@@ -73,7 +73,7 @@ namespace RHI
         return allSupported;
     }
 
-    constexpr bool isDepthFormat(const vk::Format format)
+    inline bool isDepthFormat(const vk::Format format)
     {
         static std::set depthFormats = {
             vk::Format::eD16Unorm, vk::Format::eD32Sfloat,
