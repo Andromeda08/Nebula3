@@ -38,6 +38,7 @@ add_executable(Nebula3
     Nebula/Impl/vma.impl.cpp
     Nebula/VulkanRHI/Device.cpp
     Nebula/Impl/std_macos.pch.hpp)
+    Nebula/Impl/std_macos.pch.hpp
     Nebula/VulkanRHI/Instance.hpp
     Nebula/VulkanRHI/Instance.cpp
 
