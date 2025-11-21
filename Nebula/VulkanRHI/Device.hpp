@@ -111,6 +111,7 @@ namespace RHI
             vk::QueueFlags               excludedFlags    = {},
             const std::set<QueueFamily>& excludedFamilies = {}) const noexcept;
 
+        bool                                mDebugFeatures;
         vk::Instance                        mInstance;
         vk::PhysicalDevice                  mPhysicalDevice;
         vk::PhysicalDeviceProperties        mProperties;
@@ -126,6 +127,11 @@ namespace RHI
     template<class T>
     void Device::nameObject(const NameObjectInfo<T>& nameObjectInfo) const
     {
+        if (!mDebugFeatures)
+        {
+            return;
+        }
+
         const std::string name = nameObjectInfo.debugName.empty() ? "Unknown" :  nameObjectInfo.debugName;
         const auto nameInfo = vk::DebugUtilsObjectNameInfoEXT()
             .setPObjectName(name.c_str())

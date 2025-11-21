@@ -195,6 +195,7 @@ namespace RHI
     : mInstance(createInfo.instance)
     {
         const auto& config = Configuration::getConfig();
+        mDebugFeatures  = config.rhi.debugFeatures;
         mExtensions     = Platform::getDeviceExtensions(config.rhi.featureLevel);
         mExtensionNames = DeviceExtension::getExtensionNames(mExtensions);
 
