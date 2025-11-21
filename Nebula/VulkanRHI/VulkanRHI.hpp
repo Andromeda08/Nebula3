@@ -33,6 +33,8 @@ namespace RHI
         // void      submit(const SubmitInfo& submitInfo);
         // void      present(const FrameData& frameData);
 
+        CommandQueue* getGraphicsQueue() const { return mGraphicsQueue.get(); }
+
         SPtr<Buffer> createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>  createImage(const RHIImageCreateInfo& createInfo) const;
 
