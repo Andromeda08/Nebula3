@@ -12,7 +12,7 @@ App::App()
         .title = config.app.windowTitle,
     });
     mVulkanRHI = RHI::VulkanRHI::create({
-        .pWindow = mWindow.get(),
+        .pWindow = mWindow,
     });
 }
 

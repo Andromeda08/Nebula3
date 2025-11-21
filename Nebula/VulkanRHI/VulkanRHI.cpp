@@ -41,6 +41,11 @@ namespace RHI
         mInstance = vk::createInstance(instanceCreateInfo);
     }
 
+    SPtr<Instance> Instance::create(const VulkanRHICreateInfo& rhiCreateInfo) noexcept
+    {
+        return std::make_shared<Instance>(rhiCreateInfo);
+    }
+
     DebugContext::DebugContext(const DebugContextCreateInfo& createInfo)
     : mInstance(createInfo.pInstance)
     {
@@ -78,12 +83,6 @@ namespace RHI
         return vk::False;
     }
 
-
-    UPtr<Instance> Instance::create(const VulkanRHICreateInfo& rhiCreateInfo) noexcept
-    {
-        return std::make_unique<Instance>(rhiCreateInfo);
-    }
-
     VulkanRHI::VulkanRHI(const VulkanRHICreateInfo& createInfo)
     : mWindow(createInfo.pWindow)
     {
@@ -99,7 +98,7 @@ namespace RHI
 
         if (config.rhi.debugFeatures)
         {
-            mDebugContext = DebugContext::create({ mInstance.get() });
+            mDebugContext = DebugContext::create({ mInstance });
         }
 
         mDevice = Device::create({ mInstance->getHandle() });

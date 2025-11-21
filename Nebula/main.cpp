@@ -15,5 +15,7 @@ int main()
     // 3. Run application
     lApplication->run();
 
+    lApplication.reset();
+
     return 0;
 }

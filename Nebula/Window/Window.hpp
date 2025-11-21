@@ -16,7 +16,7 @@ class Window final : public RHI::IWindow
 {
 public:
     nbl_DISABLE_COPY(Window);
-    nbl_CTOR(Window);
+    nbl_CTOR_SHARED(Window);
 
     ~Window() override;
 

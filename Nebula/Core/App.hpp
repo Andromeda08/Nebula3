@@ -16,7 +16,7 @@ public:
     void run();
 
 private:
-    UPtr<Window>            mWindow;
+    SPtr<Window>            mWindow;
     UPtr<RHI::VulkanRHI>    mVulkanRHI;
     DeltaTime               mDeltaTime;
 };

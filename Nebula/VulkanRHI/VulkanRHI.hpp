@@ -13,7 +13,7 @@ namespace RHI
 {
     struct VulkanRHICreateInfo
     {
-        IWindow* pWindow = nullptr;
+        SPtr<IWindow> pWindow = nullptr;
     };
 
     class Instance
@@ -22,7 +22,7 @@ namespace RHI
         nbl_DISABLE_COPY(Instance);
 
         explicit Instance(const VulkanRHICreateInfo& rhiCreateInfo);
-        static UPtr<Instance> create(const VulkanRHICreateInfo& rhiCreateInfo) noexcept;
+        static SPtr<Instance> create(const VulkanRHICreateInfo& rhiCreateInfo) noexcept;
 
         vk::Instance getHandle() const noexcept
         {
@@ -37,7 +37,7 @@ namespace RHI
 
     struct DebugContextCreateInfo
     {
-        Instance* pInstance = nullptr;
+        const SPtr<Instance>& pInstance = nullptr;
     };
 
     class DebugContext
@@ -56,7 +56,7 @@ namespace RHI
             void*                                         p_user);
 
         vk::DebugUtilsMessengerEXT  mMessenger;
-        Instance*                   mInstance;
+        SPtr<Instance>              mInstance;
     };
 
     class VulkanRHI
@@ -66,12 +66,12 @@ namespace RHI
         nbl_CTOR(VulkanRHI);
 
     private:
-        IWindow*            mWindow;
+        SPtr<IWindow>       mWindow;
         RHIFeatureLevel     mFeatureLevel;
 
-        UPtr<Device>        mDevice;
+        SPtr<Instance>      mInstance;
         UPtr<DebugContext>  mDebugContext;
-        UPtr<Instance>      mInstance;
+        SPtr<Device>        mDevice;
 
         UPtr<FrameSync>     mFrameSync;
     };
