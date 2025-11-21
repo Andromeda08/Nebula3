@@ -43,6 +43,17 @@ namespace RHI
             }
         }
 
+        ~FrameSync()
+        {
+            const auto d = mDevice->getHandle();
+            for (uint64_t i = 0; i < gFramesInFlight; i++)
+            {
+                d.destroyFence(frameInFlight[i]);
+                d.destroySemaphore(imageReady[i]);
+                d.destroySemaphore(renderingFinished[i]);
+            }
+        }
+
     private:
         Device* mDevice;
     };
