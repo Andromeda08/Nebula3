@@ -96,6 +96,8 @@ namespace RHI
         template <class T>
         void nameObject(const NameObjectInfo<T>& nameObjectInfo) const;
 
+        const DeviceQueue& getGraphicsQueue() const { return mGraphicsQueue; }
+
         VmaAllocator getAllocator() const { return mAllocator; }
 
         vk::PhysicalDevice getPhysicalDevice() const { return mPhysicalDevice; }
@@ -123,6 +125,8 @@ namespace RHI
         vk::Device                          mDevice;
         std::vector<const char*>            mExtensionNames;
         std::vector<UPtr<DeviceExtension>>  mExtensions;
+
+        DeviceQueue                         mGraphicsQueue;
 
         VmaAllocator                        mAllocator {};
     };

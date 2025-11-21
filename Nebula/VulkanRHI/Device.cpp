@@ -265,12 +265,12 @@ namespace RHI
 
         mDevice = mPhysicalDevice.createDevice(createInfo);
 
-        // mGraphicsQueue = {
-        //     .queue       = mDevice.getQueue(graphicsQueue->familyIndex, 0),
-        //     .familyIndex = graphicsQueue->familyIndex,
-        //     .queueIndex  = 0,
-        //     .queueType   = RHIQueueType::Graphics,
-        // };
+        mGraphicsQueue = {
+            .queue       = mDevice.getQueue(graphicsQueue->familyIndex, 0),
+            .familyIndex = graphicsQueue->familyIndex,
+            .queueIndex  = 0,
+            .queueType   = QueueType::Graphics,
+        };
     }
 
     void Device::createAllocator()

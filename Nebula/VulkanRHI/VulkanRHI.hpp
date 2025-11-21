@@ -12,6 +12,7 @@
 #include "Rendering.hpp"
 #include "Swapchain.hpp"
 #include "VulkanCore.hpp"
+#include "Commands/CommandQueue.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 
@@ -48,6 +49,8 @@ namespace RHI
         UPtr<DebugContext>  mDebugContext;
         SPtr<Device>        mDevice;
         UPtr<Swapchain>     mSwapchain;
+
+        UPtr<CommandQueue>  mGraphicsQueue;
 
         UPtr<FrameSync>     mFrameSync;
     };

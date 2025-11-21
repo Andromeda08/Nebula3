@@ -13,6 +13,13 @@ namespace RHI
     constexpr auto gVulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
     constexpr auto gVulkanPortabilitySubsetExtensionName = "VK_KHR_portability_subset";
 
+    enum class QueueType
+    {
+        Graphics,
+        Compute,
+        Transfer,
+    };
+
     using QueueFamily = uint32_t;
     using QueueIndex  = uint32_t;
 
@@ -20,6 +27,14 @@ namespace RHI
     {
         vk::QueueFamilyProperties properties;
         QueueFamily               familyIndex;
+    };
+
+    struct DeviceQueue
+    {
+        vk::Queue       queue;
+        QueueFamily     familyIndex;
+        QueueIndex      queueIndex;
+        QueueType       queueType;
     };
 
     namespace Platform

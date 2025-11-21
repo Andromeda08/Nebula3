@@ -35,20 +35,17 @@ namespace RHI
             .device   = mDevice,
         });
 
+        mGraphicsQueue = CommandQueue::create({
+            .queue  = mDevice->getGraphicsQueue(),
+            .device = mDevice,
+        });
+
         mFrameSync = std::make_unique<FrameSync>(mDevice.get());
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
             mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures),
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
-    }
-
-    FrameData VulkanRHI::beginFrame()
-    {
-    }
-
-    void VulkanRHI::present(const FrameData& frameData)
-    {
     }
 
     SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const
@@ -77,7 +74,7 @@ namespace RHI
         return ComputePipeline::create(createInfo);
     }
 
-    UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const;
+    UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const
     {
         return RenderPass::create(createInfo);
     }
