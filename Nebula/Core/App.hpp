@@ -2,6 +2,7 @@
 
 #include "Types.hpp"
 #include "Math/DeltaTime.hpp"
+#include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/Window.hpp"
 
 class App
@@ -15,8 +16,9 @@ public:
     void run();
 
 private:
-    UPtr<Window>    mWindow;
-    DeltaTime       mDeltaTime;
+    UPtr<Window>            mWindow;
+    UPtr<RHI::VulkanRHI>    mVulkanRHI;
+    DeltaTime               mDeltaTime;
 };
 
 extern App* gApplication;

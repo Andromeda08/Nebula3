@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Types.hpp"
+
 #define nbl_DECL_CTOR(T) \
     explicit T(const T##CreateInfo& createInfo);
 

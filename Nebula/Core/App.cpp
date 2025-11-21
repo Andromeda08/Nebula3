@@ -11,6 +11,9 @@ App::App()
         .size  = config.app.windowSize,
         .title = config.app.windowTitle,
     });
+    mVulkanRHI = RHI::VulkanRHI::create({
+        .pWindow = mWindow.get(),
+    });
 }
 
 UPtr<App> App::create() noexcept

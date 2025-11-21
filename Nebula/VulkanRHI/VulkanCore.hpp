@@ -1,0 +1,74 @@
+#pragma once
+
+#include <algorithm>
+#include <print>
+#include <ranges>
+#include <type_traits>
+#include <vector>
+#include <vulkan/vulkan.hpp>
+
+namespace RHI
+{
+    constexpr auto gVulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr auto gVulkanPortabilitySubsetExtensionName = "VK_KHR_portability_subset";
+
+    using QueueFamily = uint32_t;
+    using QueueIndex  = uint32_t;
+
+    struct QueueFamilyInfo
+    {
+        vk::QueueFamilyProperties properties;
+        QueueFamily               familyIndex;
+    };
+
+    namespace Platform
+    {
+        [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept
+        {
+            #ifdef __APPLE__
+            return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+            #endif
+            return {};
+        }
+
+        [[nodiscard]] constexpr std::vector<const char*> getInstanceExtensions() noexcept
+        {
+            #ifdef __APPLE__
+            return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
+            #endif
+            return {};
+        }
+    }
+
+    template <class T>
+    bool evaluateSupport(const std::vector<T>& available, const std::vector<const char*>& requested)
+    {
+        static_assert(std::is_same_v<vk::LayerProperties, T> || std::is_same_v<vk::ExtensionProperties, T>);
+
+        std::vector<const char*> missing;
+        const auto allSupported = std::ranges::all_of(requested, [&available, &missing](const char* name) -> bool {
+            const auto it = std::ranges::find_if(available, [name](const T& properties) -> bool {
+                if constexpr (std::is_same_v<vk::LayerProperties, T>)
+                {
+                    return std::string_view{ properties.layerName.data() } == name;
+                }
+                else if constexpr (std::is_same_v<vk::ExtensionProperties, T>)
+                {
+                    return std::string_view{ properties.extensionName.data() } == name;
+                }
+            });
+            if (it == std::end(available))
+            {
+                missing.push_back(name);
+            }
+            return it != std::end(available);
+        });
+
+        if (!missing.empty())
+        {
+            std::println("[RHI] Error: Missing features!");
+        }
+
+        return allSupported;
+    }
+}

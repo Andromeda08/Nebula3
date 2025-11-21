@@ -8,6 +8,7 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
+add_subdirectory(External/vma)
 
 add_executable(Nebula3
     Nebula/Core/Configuration.hpp
@@ -28,13 +29,22 @@ add_executable(Nebula3
     Nebula/VulkanRHI/VulkanRHI.hpp
     Nebula/Math/Transform.hpp
     Nebula/Math/Gradient.hpp
-    Nebula/Math/MathUtil.hpp)
+    Nebula/Math/MathUtil.hpp
+    Nebula/VulkanRHI/Frame.hpp
+    Nebula/VulkanRHI/Device.hpp
+    Nebula/VulkanRHI/VulkanCore.hpp
+    Nebula/VulkanRHI/VulkanRHI.cpp
+    Nebula/Core/Util.hpp
+    Nebula/Impl/vma.impl.cpp
+    Nebula/VulkanRHI/Device.cpp
+    Nebula/Impl/std_macos.pch.hpp)
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
     External/json/include
     External/glfw/include
     External/glm
+    External/vma/include
     ${Vulkan_INCLUDE_DIRS}
 )
 
@@ -43,6 +53,7 @@ target_link_libraries(Nebula3 PUBLIC
     ${Vulkan_LIBRARIES}
     glfw
     glm::glm
+    GPUOpen::VulkanMemoryAllocator
 )
 
 target_compile_definitions(Nebula3 PUBLIC
@@ -50,4 +61,8 @@ target_compile_definitions(Nebula3 PUBLIC
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+)
+
+target_precompile_headers(Nebula3 PUBLIC
+    Nebula/Impl/std_macos.pch.hpp
 )
