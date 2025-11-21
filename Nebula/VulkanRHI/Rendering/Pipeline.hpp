@@ -39,24 +39,39 @@ namespace RHI
         }
     };
 
-    class IPipeline
+    class Pipeline
     {
     public:
-        virtual ~IPipeline() = default;
+        virtual ~Pipeline() = default;
 
-        virtual void bind(const vk::CommandBuffer& commandBuffer) = 0;
+        void bind(const vk::CommandBuffer& commandBuffer);
 
-        virtual void bindDescriptorSet(const vk::CommandBuffer& commandBuffer,
-                                       const vk::DescriptorSet& descriptorSet) = 0;
+        void bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet);
 
-        virtual void bindDescriptorSets(const vk::CommandBuffer&              commandBuffer,
-                                        const std::vector<vk::DescriptorSet>& descriptorSets) = 0;
+        void bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets);
 
-        virtual void pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const = 0;
+        void pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const;
 
-        virtual vk::Pipeline getHandle() const = 0;
+        vk::Pipeline getHandle() const
+        {
+            return mPipeline;
+        }
 
-        virtual vk::PipelineLayout getPipelineLayout() const = 0;
+        vk::PipelineLayout getPipelineLayout() const
+        {
+            return mPipelineLayout;
+        }
+
+    protected:
+        vk::Pipeline            mPipeline;
+        vk::PipelineLayout      mPipelineLayout;
+
+        vk::PushConstantRange   mPushConstantRange;
+
+        vk::PipelineBindPoint   mBindPoint {};
+        PipelineType            mPipelineType {};
+
+        SPtr<Device>            mDevice;
     };
 
     struct PipelineUtils

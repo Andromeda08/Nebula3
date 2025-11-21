@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "IPipeline.hpp"
+#include "Pipeline.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 #include "VulkanRHI/Device.hpp"
@@ -84,7 +84,7 @@ namespace RHI
         GraphicsPipelineStateInfo stateInfo = {};
     };
 
-    class GraphicsPipeline final : public IPipeline
+    class GraphicsPipeline final : public Pipeline
     {
     public:
         nbl_DISABLE_COPY(GraphicsPipeline);
@@ -93,35 +93,7 @@ namespace RHI
 
         ~GraphicsPipeline() override;
 
-        void bind(const vk::CommandBuffer& commandBuffer) override;
-
-        void bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet) override;
-
-        void bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets) override;
-
-        void pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const override;
-
-        vk::Pipeline getHandle() const override
-        {
-            return mPipeline;
-        }
-
-        vk::PipelineLayout getPipelineLayout() const override
-        {
-            return mPipelineLayout;
-        }
-
     private:
-        vk::Pipeline            mPipeline;
-        vk::PipelineLayout      mPipelineLayout;
-
-        vk::PushConstantRange   mPushConstantRange;
-
         PipelineAttachmentInfo  mAttachments;
-
-        static constexpr auto   sPipelineType = PipelineType::Graphics;
-        static constexpr auto   sBindPoint    = PipelineUtils::pipelineTypeToBindPoint(sPipelineType);
-
-        SPtr<Device>            mDevice;
     };
 }

@@ -3,11 +3,14 @@
 namespace RHI
 {
     GraphicsPipeline::GraphicsPipeline(GraphicsPipelineCreateInfo createInfo)
-    : IPipeline()
-    , mPushConstantRange(createInfo.pushConstantRange)
+    : Pipeline()
     , mAttachments(createInfo.attachmentInfo)
-    , mDevice(createInfo.device)
     {
+        mPushConstantRange = createInfo.pushConstantRange;
+        mDevice = createInfo.device;
+        mPipelineType = PipelineType::Graphics;
+        mBindPoint = PipelineUtils::pipelineTypeToBindPoint(mPipelineType);
+
         assert(!createInfo.shaderInfos.empty());
 
         auto& pipelineState = createInfo.stateInfo;
@@ -73,25 +76,5 @@ namespace RHI
     {
         mDevice->getHandle().destroyPipeline(mPipeline);
         mDevice->getHandle().destroyPipelineLayout(mPipelineLayout);
-    }
-
-    void GraphicsPipeline::bind(const vk::CommandBuffer& commandBuffer)
-    {
-        commandBuffer.bindPipeline(sBindPoint, mPipeline);
-    }
-
-    void GraphicsPipeline::bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet)
-    {
-        commandBuffer.bindDescriptorSets(sBindPoint, mPipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-    }
-
-    void GraphicsPipeline::bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets)
-    {
-        commandBuffer.bindDescriptorSets(sBindPoint, mPipelineLayout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
-    }
-
-    void GraphicsPipeline::pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const
-    {
-        commandBuffer.pushConstants(mPipelineLayout, mPushConstantRange.stageFlags, mPushConstantRange.offset, mPushConstantRange.size, pData);
     }
 }
