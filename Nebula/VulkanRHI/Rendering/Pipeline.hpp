@@ -42,13 +42,13 @@ namespace RHI
     class Pipeline
     {
     public:
-        virtual ~Pipeline() = default;
+        virtual ~Pipeline();
 
-        void bind(const vk::CommandBuffer& commandBuffer);
+        void bind(const vk::CommandBuffer& commandBuffer) const;
 
-        void bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet);
+        void bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet) const;
 
-        void bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets);
+        void bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets) const;
 
         void pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const;
 

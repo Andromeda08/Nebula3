@@ -71,10 +71,4 @@ namespace RHI
     {
         return std::make_unique<GraphicsPipeline>(createInfo);
     }
-
-    GraphicsPipeline::~GraphicsPipeline()
-    {
-        mDevice->getHandle().destroyPipeline(mPipeline);
-        mDevice->getHandle().destroyPipelineLayout(mPipelineLayout);
-    }
 }

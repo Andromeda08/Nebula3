@@ -54,6 +54,8 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Rendering/Pipeline.cpp
     Nebula/VulkanRHI/Rendering/GraphicsPipeline.hpp
     Nebula/VulkanRHI/Rendering/GraphicsPipeline.cpp
+    Nebula/VulkanRHI/Rendering/ComputePipeline.hpp
+    Nebula/VulkanRHI/Rendering/ComputePipeline.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

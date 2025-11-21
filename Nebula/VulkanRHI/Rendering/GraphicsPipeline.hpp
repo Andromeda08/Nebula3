@@ -89,9 +89,10 @@ namespace RHI
     public:
         nbl_DISABLE_COPY(GraphicsPipeline);
         explicit GraphicsPipeline(GraphicsPipelineCreateInfo createInfo);
+
         static UPtr<GraphicsPipeline> create(GraphicsPipelineCreateInfo createInfo);
 
-        ~GraphicsPipeline() override;
+        ~GraphicsPipeline() override = default;
 
     private:
         PipelineAttachmentInfo  mAttachments;
