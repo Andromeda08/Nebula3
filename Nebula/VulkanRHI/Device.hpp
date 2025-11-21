@@ -96,6 +96,8 @@ namespace RHI
         template <class T>
         void nameObject(const NameObjectInfo<T>& nameObjectInfo) const;
 
+        VmaAllocator getAllocator() const { return mAllocator; }
+
         vk::PhysicalDevice getPhysicalDevice() const { return mPhysicalDevice; }
         vk::Device getHandle() const { return mDevice; }
         const std::string& getDeviceName() const noexcept { return mDeviceName; }

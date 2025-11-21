@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <print>
 #include <ranges>
+#include <set>
 #include <type_traits>
 #include <vector>
 #include <vulkan/vulkan.hpp>
@@ -70,5 +71,15 @@ namespace RHI
         }
 
         return allSupported;
+    }
+
+    constexpr bool isDepthFormat(const vk::Format format)
+    {
+        static std::set depthFormats = {
+            vk::Format::eD16Unorm, vk::Format::eD32Sfloat,
+            vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD32SfloatS8Uint,
+            vk::Format::eX8D24UnormPack32,
+        };
+        return depthFormats.contains(format);
     }
 }

@@ -41,7 +41,9 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Swapchain.hpp
     Nebula/VulkanRHI/Instance.hpp
     Nebula/VulkanRHI/Instance.cpp
-    Nebula/VulkanRHI/Swapchain.cpp)
+    Nebula/VulkanRHI/Swapchain.cpp
+    Nebula/VulkanRHI/Image.hpp
+    Nebula/VulkanRHI/Image.cpp)
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
