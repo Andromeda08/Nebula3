@@ -47,7 +47,12 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Buffer.hpp
     Nebula/VulkanRHI/Buffer.cpp
     Nebula/VulkanRHI/DebugContext.hpp
-    Nebula/VulkanRHI/DebugContext.cpp)
+    Nebula/VulkanRHI/DebugContext.cpp
+    Nebula/VulkanRHI/Rendering/GraphicsPipeline.hpp
+    Nebula/VulkanRHI/Rendering/Shader.hpp
+    Nebula/VulkanRHI/Rendering/IPipeline.hpp
+    Nebula/VulkanRHI/Rendering/Shader.cpp
+    Nebula/VulkanRHI/Rendering/GraphicsPipeline.cpp)
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
