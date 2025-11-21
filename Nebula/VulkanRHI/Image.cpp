@@ -114,10 +114,19 @@ namespace RHI
 
     Image::~Image()
     {
-        if (!mIsSwapchainImage || !mProperties.isAliased)
+        if (mIsSwapchainImage)
         {
-            vmaDestroyImage(mDevice->getAllocator(), mImage, mAllocation);
+            return;
         }
+
+        if (mSampler)
+        {
+            mDevice->getHandle().destroySampler(mSampler);
+        }
+
+        mDevice->getHandle().destroyImageView(mImageView);
+
+        vmaDestroyImage(mDevice->getAllocator(), mImage, mAllocation);
     }
 
     void Image::useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo)
