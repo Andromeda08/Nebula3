@@ -2,6 +2,8 @@
 
 #include <limits>
 
+#include "Image.hpp"
+
 namespace RHI
 {
     Swapchain::Swapchain(const SwapchainCreateInfo& createInfo)
@@ -30,6 +32,9 @@ namespace RHI
             .setPQueueFamilyIndices(nullptr);
 
         mSwapchain = mDevice->getHandle().createSwapchainKHR(swapchainCreateInfo);
+
+        acquireImages();
+        makeScissorViewport();
     }
 
     Swapchain::~Swapchain()
@@ -48,6 +53,12 @@ namespace RHI
     {
         commandList.setScissor(0, 1, &mScissor);
         commandList.setViewport(0, 1, &mViewport);
+    }
+
+    SPtr<Image> Swapchain::getImage(const size_t i) const
+    {
+        assert(i < mWrappedImages.size());
+        return mWrappedImages[i];
     }
 
     vk::Image Swapchain::getImageHandle(const size_t i) const
@@ -144,11 +155,19 @@ namespace RHI
             .setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 })
             .setViewType(vk::ImageViewType::e2D);
 
-        for (auto i = 0; i < mImageViews.size(); i++)
+        for (size_t i = 0; i < mImageViews.size(); i++)
         {
             viewCreateInfo.setImage(mImages[i]);
             result = mDevice->getHandle().createImageView(&viewCreateInfo, nullptr, &mImageViews[i]);
             assert(result == vk::Result::eSuccess);
+
+            mWrappedImages[i] = Image::createSwapchainImageWrapper({
+                .image      = mImages[i],
+                .imageView  = mImageViews[i],
+                .imageIndex = static_cast<uint32_t>(i),
+                .device     = mDevice,
+                .pSwapchain = this
+            });
 
             mDevice->nameObject<vk::Image>({
                 .debugName = std::format("SCImage[{}]", i),

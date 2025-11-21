@@ -11,6 +11,8 @@
 
 namespace RHI
 {
+    class Image;
+
     struct SwapchainCreateInfo
     {
         const SPtr<IWindow>&  window;
@@ -45,6 +47,7 @@ namespace RHI
 
         vk::SwapchainKHR getHandle() const { return mSwapchain; }
 
+        SPtr<Image>   getImage(size_t i) const;
         vk::Image     getImageHandle(size_t i) const;
         vk::ImageView getImageView(size_t i)   const;
 
@@ -74,6 +77,7 @@ namespace RHI
 
         PerFrameArray<vk::Image>        mImages;
         PerFrameArray<vk::ImageView>    mImageViews;
+        PerFrameArray<SPtr<Image>>      mWrappedImages;
 
         SPtr<IWindow>                   mWindow;
         SPtr<Instance>                  mInstance;
