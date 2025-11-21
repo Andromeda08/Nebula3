@@ -22,18 +22,26 @@ const ConfigurationData& Configuration::getConfig()
 
 Configuration::Configuration()
 {
-    const auto hasConfigFile = std::filesystem::exists(gConfigurationPath);
-    if (!hasConfigFile)
+    #ifdef NBL_CONFIG_REGEN
+    constexpr auto regenConfigFile = true;
+    #else
+    const auto regenConfigFile = !std::filesystem::exists(gConfigurationPath);
+    #endif
+
+    if (regenConfigFile)
     {
         mData = ConfigurationData();
         writeConfigFile();
+        #ifdef NBL_CONFIG_REGEN
+        std::println("[Config] Regenerating configuration from in-code defaults. (dev-mode)");
+        #else
         std::println("[Config] No configuration file found, using defaults and creating one.");
+        #endif
+        return;
     }
-    else
-    {
-        readConfigFile();
-        std::println("[Config] Configuration loaded from file.");
-    }
+
+    readConfigFile();
+    std::println("[Config] Configuration loaded from file.");
 }
 
 void Configuration::writeConfigFile() const

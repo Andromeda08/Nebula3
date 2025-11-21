@@ -57,6 +57,7 @@ target_link_libraries(Nebula3 PUBLIC
 )
 
 target_compile_definitions(Nebula3 PUBLIC
+    NBL_CONFIG_REGEN
     GLFW_INCLUDE_VULKAN
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
