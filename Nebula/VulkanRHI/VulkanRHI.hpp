@@ -9,6 +9,7 @@
 #include "Image.hpp"
 #include "Instance.hpp"
 #include "IWindow.hpp"
+#include "Rendering.hpp"
 #include "Swapchain.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
@@ -27,8 +28,17 @@ namespace RHI
         nbl_DISABLE_COPY(VulkanRHI);
         nbl_CTOR(VulkanRHI);
 
+        // FrameData beginFrame();
+        // void      submit(const SubmitInfo& submitInfo);
+        // void      present(const FrameData& frameData);
+
         SPtr<Buffer> createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>  createImage(const RHIImageCreateInfo& createInfo) const;
+
+        UPtr<GraphicsPipeline> createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
+        UPtr<ComputePipeline>  createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
+
+        UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
 
     private:
         SPtr<IWindow>       mWindow;

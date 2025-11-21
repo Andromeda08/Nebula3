@@ -43,6 +43,14 @@ namespace RHI
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 
+    FrameData VulkanRHI::beginFrame()
+    {
+    }
+
+    void VulkanRHI::present(const FrameData& frameData)
+    {
+    }
+
     SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const
     {
         auto bufferInfo = BufferCreateInfo(createInfo);
@@ -55,5 +63,22 @@ namespace RHI
         auto imageInfo = ImageCreateInfo(createInfo);
         imageInfo.device = mDevice;
         return Image::create(imageInfo);
+    }
+
+    UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
+    {
+        createInfo.device = mDevice;
+        return GraphicsPipeline::create(createInfo);
+    }
+
+    UPtr<ComputePipeline> VulkanRHI::createComputePipeline(ComputePipelineCreateInfo& createInfo) const
+    {
+        createInfo.device = mDevice;
+        return ComputePipeline::create(createInfo);
+    }
+
+    UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const;
+    {
+        return RenderPass::create(createInfo);
     }
 }
