@@ -28,7 +28,7 @@ namespace RHI
         vk::PipelineStageFlags2 stageFlags  = vk::PipelineStageFlagBits2::eNone;
     };
 
-    struct ImageCreateInfo
+    struct RHIImageCreateInfo
     {
         vk::Extent2D        extent          = { 1280, 720 };
         vk::Format          format          = vk::Format::eR32G32B32A32Sfloat;
@@ -36,7 +36,11 @@ namespace RHI
         bool                createSampler   = false;
         bool                aliased         = false;
         std::string         debugName       = "Unknown Image";
-        SPtr<Device>        device;
+    };
+
+    struct ImageCreateInfo : public RHIImageCreateInfo
+    {
+        SPtr<Device> device;
     };
 
     struct SwapchainImageWrapperCreateInfo
