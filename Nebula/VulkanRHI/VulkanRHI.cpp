@@ -66,10 +66,18 @@ namespace RHI
         mDevice = Device::create({ mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
 
+        mSwapchain = Swapchain::create({
+            .window   = mWindow,
+            .instance = mInstance,
+            .device   = mDevice,
+        });
+
         mFrameSync = std::make_unique<FrameSync>(mDevice.get());
 
-        std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}",
-            mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures));
+        const auto& swapchainProperties = mSwapchain->getProperties();
+        std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
+            mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures),
+            mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 
 }

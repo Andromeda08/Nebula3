@@ -37,10 +37,11 @@ add_executable(Nebula3
     Nebula/Core/Util.hpp
     Nebula/Impl/vma.impl.cpp
     Nebula/VulkanRHI/Device.cpp
-    Nebula/Impl/std_macos.pch.hpp)
     Nebula/Impl/std_macos.pch.hpp
+    Nebula/VulkanRHI/Swapchain.hpp
     Nebula/VulkanRHI/Instance.hpp
     Nebula/VulkanRHI/Instance.cpp
+    Nebula/VulkanRHI/Swapchain.cpp)
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
