@@ -80,4 +80,17 @@ namespace RHI
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 
+    SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const
+    {
+        auto bufferInfo = BufferCreateInfo(createInfo);
+        bufferInfo.device = mDevice;
+        return Buffer::create(bufferInfo);
+    }
+
+    SPtr<Image> VulkanRHI::createImage(const RHIImageCreateInfo& createInfo) const
+    {
+        auto imageInfo = ImageCreateInfo(createInfo);
+        imageInfo.device = mDevice;
+        return Image::create(imageInfo);
+    }
 }
