@@ -87,12 +87,12 @@ namespace RHI
 
         const auto waitSemaphoreInfo = vk::SemaphoreSubmitInfo()
                 .setSemaphore(frameData.imageReadySemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
         std::vector waitSemaphoreInfos { waitSemaphoreInfo };
 
         const auto signalSemaphoreInfo = vk::SemaphoreSubmitInfo()
                 .setSemaphore(frameData.renderingFinishedSemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
         std::vector signalSemaphoreInfos { signalSemaphoreInfo };
 
         const auto vkSubmitInfo = vk::SubmitInfo2()

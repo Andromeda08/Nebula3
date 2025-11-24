@@ -25,7 +25,7 @@ void App::run()
 {
     mDeltaTime.initialize();
 
-    auto graphicsCommandPool = mVulkanRHI->getGraphicsQueue()->createCommandPool();
+    const SPtr<RHI::CommandPool> graphicsCommandPool = mVulkanRHI->getGraphicsQueue()->createCommandPool();
 
     PerFrameArray<RHI::CommandList*> commandLists;
     for (auto i = 0; i < commandLists.size(); i++)
@@ -38,18 +38,23 @@ void App::run()
     {
         mWindow->pollEvents();
 
-        auto frameInfo = mVulkanRHI->beginFrame();
-        auto* commandList = commandLists[frameInfo.currentFrame];
+        const RHI::FrameData frameInfo   = mVulkanRHI->beginFrame();
+        RHI::CommandList*    commandList = commandLists[frameInfo.currentFrame];
+
         commandList->begin();
 
-        auto currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
+        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
         {
             auto barrier = vk::ImageMemoryBarrier2()
                 .setImage(currentSwapchainImage->getImage())
                 .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
                 .setOldLayout(currentSwapchainImage->getState().layout)
-                .setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+                .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setSrcAccessMask(vk::AccessFlagBits2::eNone)
+                .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eClear);
 
             auto dependencyInfo = vk::DependencyInfo()
                 .setImageMemoryBarrierCount(1)
@@ -68,7 +73,11 @@ void App::run()
                 .setImage(currentSwapchainImage->getImage())
                 .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
                 .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setNewLayout(vk::ImageLayout::ePresentSrcKHR);
+                .setNewLayout(vk::ImageLayout::ePresentSrcKHR)
+                .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
+                .setDstAccessMask(vk::AccessFlagBits2::eMemoryRead)
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eClear)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eBottomOfPipe);
 
             auto dependencyInfo = vk::DependencyInfo()
                 .setImageMemoryBarrierCount(1)
