@@ -18,7 +18,7 @@ namespace RHI
     {
     public:
         nbl_DISABLE_COPY(CommandPool);
-        nbl_CTOR(CommandPool);
+        nbl_CTOR_SHARED(CommandPool);
 
         ~CommandPool() = default;
 

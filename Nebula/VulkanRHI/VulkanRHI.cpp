@@ -1,5 +1,6 @@
 #include "VulkanRHI.hpp"
 
+#include <limits>
 #include <print>
 
 #include "Core/ToString.hpp"
@@ -46,6 +47,77 @@ namespace RHI
         std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
             mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures),
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
+    }
+
+    FrameData VulkanRHI::beginFrame() const
+    {
+        const vk::Device device = mDevice->getHandle();
+
+        const uint64_t currentFrame = mFrameSync->currentFrame;
+        const vk::Fence fence = mFrameSync->frameInFlight[currentFrame];
+
+        const vk::Result result = device.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
+        assert(result == vk::Result::eSuccess);
+
+        device.resetFences(fence);
+
+        const auto acquireInfo = vk::AcquireNextImageInfoKHR()
+            .setSwapchain(mSwapchain->getHandle())
+            .setTimeout(std::numeric_limits<uint64_t>::max())
+            .setSemaphore(mFrameSync->imageReady[currentFrame])
+            .setDeviceMask(1);
+        const auto acquiredIndex = device.acquireNextImage2KHR(acquireInfo).value;
+
+        return {
+            .waitFence                  = mFrameSync->frameInFlight[currentFrame],
+            .imageReadySemaphore        = mFrameSync->imageReady[currentFrame],
+            .renderingFinishedSemaphore = mFrameSync->renderingFinished[currentFrame],
+            .currentFrame               = currentFrame,
+            .acquiredIndex              = acquiredIndex,
+        };
+    }
+
+    void VulkanRHI::endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const
+    {
+        const auto& frameData = presentSubmitInfo.frameData;
+
+        const auto info = vk::CommandBufferSubmitInfo()
+                .setCommandBuffer(presentSubmitInfo.pCommandList->getHandle());
+        std::vector commandBufferSubmitInfos { info };
+
+        const auto waitSemaphoreInfo = vk::SemaphoreSubmitInfo()
+                .setSemaphore(frameData.imageReadySemaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+        std::vector waitSemaphoreInfos { waitSemaphoreInfo };
+
+        const auto signalSemaphoreInfo = vk::SemaphoreSubmitInfo()
+                .setSemaphore(frameData.renderingFinishedSemaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+        std::vector signalSemaphoreInfos { signalSemaphoreInfo };
+
+        const auto vkSubmitInfo = vk::SubmitInfo2()
+            .setCommandBufferInfos(commandBufferSubmitInfos)
+            .setCommandBufferInfoCount(commandBufferSubmitInfos.size())
+            .setWaitSemaphoreInfos(waitSemaphoreInfos)
+            .setWaitSemaphoreInfoCount(waitSemaphoreInfos.size())
+            .setSignalSemaphoreInfos(signalSemaphoreInfos)
+            .setSignalSemaphoreInfoCount(signalSemaphoreInfos.size());
+
+        mDevice->getGraphicsQueue().queue.submit2(vkSubmitInfo, frameData.waitFence);
+
+        const auto swapchain = mSwapchain->getHandle();
+        const auto presentInfo = vk::PresentInfoKHR()
+            .setPWaitSemaphores(&frameData.renderingFinishedSemaphore)
+            .setWaitSemaphoreCount(1)
+            .setPSwapchains(&swapchain)
+            .setSwapchainCount(1)
+            .setImageIndices(frameData.acquiredIndex)
+            .setPResults(nullptr);
+
+        const auto result = mDevice->getGraphicsQueue().queue.presentKHR(presentInfo);
+        assert(result == vk::Result::eSuccess);
+
+        mFrameSync->advanceCurrentFrame();
     }
 
     SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const

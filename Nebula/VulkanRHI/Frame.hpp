@@ -13,7 +13,13 @@ namespace RHI
         vk::Semaphore   imageReadySemaphore;
         vk::Semaphore   renderingFinishedSemaphore;
         const uint64_t  currentFrame;
-        const uint64_t  acquiredIndex;
+        const uint32_t  acquiredIndex;
+    };
+
+    struct PresentSubmitInfo
+    {
+        const FrameData frameData;
+        CommandList*    pCommandList;
     };
 
     struct FrameSync
@@ -46,12 +52,18 @@ namespace RHI
         ~FrameSync()
         {
             const auto d = mDevice->getHandle();
+            d.waitIdle();
             for (uint64_t i = 0; i < gFramesInFlight; i++)
             {
                 d.destroyFence(frameInFlight[i]);
                 d.destroySemaphore(imageReady[i]);
                 d.destroySemaphore(renderingFinished[i]);
             }
+        }
+
+        void advanceCurrentFrame()
+        {
+            currentFrame = (currentFrame + 1) % gFramesInFlight;
         }
 
     private:

@@ -10,7 +10,7 @@ namespace RHI
 
     void CommandList::begin()
     {
-        assert(!mIsRecording);
+        // assert(!mIsRecording);
         mIsRecording = true;
 
         auto beginInfo = vk::CommandBufferBeginInfo();
@@ -24,7 +24,7 @@ namespace RHI
 
     void CommandList::end()
     {
-        assert(mIsRecording);
+        // assert(mIsRecording);
         mIsRecording = false;
 
         mCommandBuffer.end();

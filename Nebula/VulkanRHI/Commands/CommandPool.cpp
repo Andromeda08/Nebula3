@@ -20,12 +20,14 @@ namespace RHI
 
         const auto allocatedBuffers = mDevice->getHandle().allocateCommandBuffers(allocInfo);
 
-        mCommandLists.push_back(CommandList::create({
+        auto commandList = CommandList::create({
             .commandBuffer    = allocatedBuffers[0],
             .singleTimeSubmit = false,
-        }));
+        });
+        mCommandLists.push_back(std::move(commandList));
 
-        return mCommandLists.back().get();
+        auto* pList = mCommandLists[mCommandLists.size() - 1].get();
+        return pList;
     }
 
     void CommandPool::free(const CommandList* pCommandList)

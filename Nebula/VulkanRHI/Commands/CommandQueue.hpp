@@ -12,10 +12,10 @@ namespace RHI
 
     struct SubmitInfo
     {
-        std::vector<CommandList>    commandLists;
+        std::vector<CommandList*>   commandLists;
         std::vector<vk::Semaphore>  waitSemaphores;
         std::vector<vk::Semaphore>  signalSemaphores;
-        vk::PipelineStageFlags2     waitStages;
+        vk::PipelineStageFlags2     waitStages {vk::PipelineStageFlagBits2::eAllCommands};
         vk::Fence                   fence {nullptr};
     };
 

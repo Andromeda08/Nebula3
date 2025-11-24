@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Buffer.hpp"
+#include "Commands.hpp"
 #include "DebugContext.hpp"
 #include "Device.hpp"
 #include "Frame.hpp"
@@ -12,7 +13,6 @@
 #include "Rendering.hpp"
 #include "Swapchain.hpp"
 #include "VulkanCore.hpp"
-#include "Commands/CommandQueue.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 
@@ -29,11 +29,11 @@ namespace RHI
         nbl_DISABLE_COPY(VulkanRHI);
         nbl_CTOR(VulkanRHI);
 
-        // FrameData beginFrame();
-        // void      submit(const SubmitInfo& submitInfo);
-        // void      present(const FrameData& frameData);
+        FrameData beginFrame() const;
+        void      endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const;
 
         CommandQueue* getGraphicsQueue() const { return mGraphicsQueue.get(); }
+        Swapchain*    getSwapchain() const { return mSwapchain.get(); }
 
         SPtr<Buffer> createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>  createImage(const RHIImageCreateInfo& createInfo) const;
