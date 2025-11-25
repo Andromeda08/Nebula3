@@ -1,6 +1,7 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "UserInterface/Components/StatisticsComponent.hpp"
 
 App* gApplication = nullptr;
 
@@ -14,11 +15,13 @@ App::App()
     mVulkanRHI = RHI::VulkanRHI::create({
         .pWindow = mWindow,
     });
+
     mUserInterface = UserInterface::create({
         .fontFile = "Resources/Fonts/GeistMono-Regular.ttf",
         .window   = mWindow,
         .rhi      = mVulkanRHI,
     });
+    mUserInterface->addComponent<StatisticsComponent>();
 }
 
 UPtr<App> App::create() noexcept
@@ -41,8 +44,14 @@ void App::run()
     // Main Loop
     while (!mWindow->shouldClose())
     {
+        // Input
         mWindow->pollEvents();
 
+        // Updates
+        const float dt = mDeltaTime.getDeltaTime();
+        mUserInterface->update();
+
+        // Rendering
         const RHI::FrameData frameInfo   = mVulkanRHI->beginFrame();
         RHI::CommandList*    commandList = commandLists[frameInfo.currentFrame];
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IComponent.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Core/Macro.hpp"
 
@@ -16,14 +17,21 @@ public:
     nbl_DISABLE_COPY(UserInterface);
     nbl_CTOR(UserInterface);
 
-    void update();
+    template <class T, class... Args>
+    void addComponent(Args&&... args)
+    {
+        mComponents.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+    }
+
+    void update() const;
 
     void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 
-    bool wantCaptureMouse() const noexcept;
+    static bool wantCaptureMouse() noexcept;
 
-    bool wantCaptureKeyboard() const noexcept;
+    static bool wantCaptureKeyboard() noexcept;
 
 private:
-    UPtr<ImGuiRenderer> mRenderer;
+    UPtr<ImGuiRenderer>           mRenderer;
+    std::vector<UPtr<IComponent>> mComponents;
 };

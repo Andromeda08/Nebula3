@@ -78,6 +78,9 @@ add_executable(Nebula3
     Nebula/UserInterface/ImGuiRenderer.hpp
     Nebula/UserInterface/UserInterface.cpp
     Nebula/UserInterface/UserInterface.hpp
+    Nebula/UserInterface/IComponent.hpp
+    Nebula/UserInterface/Components/StatisticsComponent.hpp
+    Nebula/UserInterface/Components/StatisticsComponent.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

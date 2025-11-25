@@ -11,29 +11,32 @@ UserInterface::UserInterface(const UserInterfaceCreateInfo& createInfo)
     });
 }
 
-void UserInterface::update()
+void UserInterface::update() const
 {
+    for (const auto& component : mComponents)
+    {
+        component->update();
+    }
 }
 
 void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
 {
     mRenderer->render(pCommandList->getHandle(), frameData, [&]()
     {
-        const ImGuiIO& io = ImGui::GetIO();
-
-        ImGui::Begin("Test Component");
-        ImGui::Text("FPS: %.2f (%.2gms)", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f);
-        ImGui::End();
+        for (const auto& component : mComponents)
+        {
+            component->draw();
+        }
     });
 }
 
-bool UserInterface::wantCaptureMouse() const noexcept
+bool UserInterface::wantCaptureMouse() noexcept
 {
     const ImGuiIO& io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
 
-bool UserInterface::wantCaptureKeyboard() const noexcept
+bool UserInterface::wantCaptureKeyboard() noexcept
 {
     const ImGuiIO& io = ImGui::GetIO();
     return io.WantCaptureKeyboard;
