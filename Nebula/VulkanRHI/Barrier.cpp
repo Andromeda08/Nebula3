@@ -39,8 +39,8 @@ namespace RHI
     void Barrier::insert(const vk::CommandBuffer& commandBuffer)
     {
         const auto dependencyInfo = vk::DependencyInfo()
-                                    .setImageMemoryBarrierCount(1)
-                                    .setImageMemoryBarriers(mImageBarriers);
+            .setImageMemoryBarrierCount(mImageBarriers.size())
+            .setPImageMemoryBarriers(mImageBarriers.data());
         commandBuffer.pipelineBarrier2(dependencyInfo);
 
         for (const auto& [i, image] : std::views::enumerate(mImages))
