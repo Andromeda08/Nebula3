@@ -2,6 +2,7 @@
 
 #include "Types.hpp"
 #include "Math/DeltaTime.hpp"
+#include "RenderGraph/RenderGraphContext.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/Window.hpp"
@@ -17,10 +18,11 @@ public:
     void run();
 
 private:
-    SPtr<Window>            mWindow;
-    SPtr<RHI::VulkanRHI>    mVulkanRHI;
-    UPtr<UserInterface>     mUserInterface;
-    DeltaTime               mDeltaTime;
+    DeltaTime                    mDeltaTime;
+    SPtr<Window>                 mWindow;
+    SPtr<RHI::VulkanRHI>         mVulkanRHI;
+    UPtr<UserInterface>          mUserInterface;
+    SPtr<rg::RenderGraphContext> mRenderGraphContext;
 };
 
 extern App* gApplication;

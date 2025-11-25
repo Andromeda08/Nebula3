@@ -15,7 +15,7 @@ Configuration* Configuration::getInstance()
     return sInstance.get();
 }
 
-const ConfigurationData& Configuration::getConfig()
+ConfigurationData& Configuration::getConfig()
 {
     return sInstance->mData;
 }

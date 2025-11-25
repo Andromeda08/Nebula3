@@ -95,6 +95,18 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp
     Nebula/RenderPass/HelloTrianglePass.hpp
+    Nebula/RenderGraph/RenderGraph.hpp
+    Nebula/RenderGraph/RGConfiguration.hpp
+    Nebula/RenderGraph/RenderGraphTraits.hpp
+    Nebula/RenderGraph/RenderGraph.cpp
+    Nebula/RenderGraph/Node.hpp
+    Nebula/RenderGraph/Node.cpp
+    Nebula/RenderGraph/DependencyInfo.hpp
+    Nebula/RenderGraph/RenderGraphContext.hpp
+    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.hpp
+    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.cpp
+    Nebula/RenderGraph/RenderGraphContext.cpp
+    Nebula/RenderGraph/RGConfiguration.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -103,6 +115,7 @@ target_include_directories(Nebula3 PUBLIC
     External/glm
     External/imgui
     External/imgui/backends
+    External/imnodes
     External/json/include
     External/stb
     External/vma/include

@@ -1,6 +1,7 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "RenderPass/HelloTrianglePass.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
@@ -24,6 +25,11 @@ App::App()
         .rhi      = mVulkanRHI,
     });
     mUserInterface->addComponent<StatisticsComponent>();
+
+    mRenderGraphContext = rg::RenderGraphContext::create({
+        .rhiFeatureLevel = mVulkanRHI->getFeatureLevel(),
+    });
+    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 }
 
 UPtr<App> App::create() noexcept
