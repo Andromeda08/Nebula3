@@ -5,6 +5,7 @@
 #include "Buffer.hpp"
 #include "Commands.hpp"
 #include "DebugContext.hpp"
+#include "Descriptor.hpp"
 #include "Device.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
@@ -35,8 +36,9 @@ namespace RHI
         CommandQueue* getGraphicsQueue() const { return mGraphicsQueue.get(); }
         Swapchain*    getSwapchain() const { return mSwapchain.get(); }
 
-        SPtr<Buffer> createBuffer(const RHIBufferCreateInfo& createInfo) const;
-        SPtr<Image>  createImage(const RHIImageCreateInfo& createInfo) const;
+        SPtr<Buffer>     createBuffer(const RHIBufferCreateInfo& createInfo) const;
+        SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
+        SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
 
         UPtr<GraphicsPipeline> createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
         UPtr<ComputePipeline>  createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
