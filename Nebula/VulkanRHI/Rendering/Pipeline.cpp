@@ -4,6 +4,7 @@ namespace RHI
 {
     Pipeline::~Pipeline()
     {
+        mDevice->waitIdle();
         mDevice->getHandle().destroyPipeline(mPipeline);
         mDevice->getHandle().destroyPipelineLayout(mPipelineLayout);
     }
