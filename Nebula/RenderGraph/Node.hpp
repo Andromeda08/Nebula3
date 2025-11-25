@@ -92,6 +92,6 @@ namespace rg
 
         std::vector<DependencyInfo> mDependencies;
         const NodeType              mNodeType = NodeType::Unknown;
-        const NodeStyle&            mStyle;
+        const NodeStyle             mStyle;
     };
 }
