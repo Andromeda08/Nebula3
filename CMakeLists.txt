@@ -43,9 +43,10 @@ add_executable(Nebula3
     Nebula/VulkanRHI/VulkanCore.hpp
     Nebula/VulkanRHI/VulkanRHI.cpp
     Nebula/Core/Util.hpp
+    Nebula/Impl/stb.impl.cpp
+    Nebula/Impl/std_macos.pch.hpp
     Nebula/Impl/vma.impl.cpp
     Nebula/VulkanRHI/Device.cpp
-    Nebula/Impl/std_macos.pch.hpp
     Nebula/VulkanRHI/Swapchain.hpp
     Nebula/VulkanRHI/Instance.hpp
     Nebula/VulkanRHI/Instance.cpp
@@ -87,11 +88,12 @@ add_executable(Nebula3
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
-    External/json/include
     External/glfw/include
     External/glm
     External/imgui
     External/imgui/backends
+    External/json/include
+    External/stb
     External/vma/include
     ${Vulkan_INCLUDE_DIRS}
 )
