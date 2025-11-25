@@ -86,6 +86,8 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Barrier.cpp
     Nebula/VulkanRHI/Descriptor.cpp
     Nebula/VulkanRHI/Descriptor.hpp
+    Nebula/VulkanRHI/Raytracing/ShaderBindingTable.cpp
+    Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
