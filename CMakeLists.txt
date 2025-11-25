@@ -91,6 +91,7 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.cpp
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp
+    Nebula/RenderPass/HelloTrianglePass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

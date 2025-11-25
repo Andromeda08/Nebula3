@@ -1,6 +1,7 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "RenderPass/HelloTrianglePass.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
@@ -42,6 +43,8 @@ void App::run()
         commandLists[i] = graphicsCommandPool->allocate();
     }
 
+    const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
+
     // Main Loop
     while (!mWindow->shouldClose())
     {
@@ -60,24 +63,33 @@ void App::run()
 
         const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
-        RHI::Barrier()
-            .addImageBarrier({ RHI::ImageUsage::Clear, currentSwapchainImage })
-            .insert(commandList);
+        {
+            auto barrier = RHI::Barrier()
+                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+            barrier.insert(commandList);
+        }
 
-        commandList->getHandle().clearColorImage(
-            currentSwapchainImage->getImage(), vk::ImageLayout::eTransferDstOptimal,
-            vk::ClearColorValue().setFloat32({ 0.8f, 0.2f, 1.0f }),
-            currentSwapchainImage->getProperties().subresourceRange);
+        // commandList->getHandle().clearColorImage(
+        //     currentSwapchainImage->getImage(), vk::ImageLayout::eTransferDstOptimal,
+        //     vk::ClearColorValue().setFloat32({ 0.8f, 0.2f, 1.0f }),
+        //     currentSwapchainImage->getProperties().subresourceRange);
 
-        RHI::Barrier()
-             .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage })
-             .insert(commandList);
+        mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
+        helloTrianglePass->execute(commandList->getHandle(), frameInfo);
+
+        {
+            auto barrier = RHI::Barrier()
+                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+             barrier.insert(commandList);
+        }
 
         mUserInterface->draw(commandList, frameInfo);
 
-        RHI::Barrier()
-             .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage })
-             .insert(commandList);
+        {
+            auto barrier = RHI::Barrier()
+                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
+             barrier.insert(commandList);
+        }
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({
