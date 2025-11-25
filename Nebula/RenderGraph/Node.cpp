@@ -74,12 +74,12 @@ namespace rg
 
             switch (dependency.dependencyType)
             {
-                case DependencyType::Expose:
                 case DependencyType::Read: {
                     const ImNodesPinShape pinShape = dependency.isConnected ? ImNodesPinShape_CircleFilled : ImNodesPinShape_Circle;
                     ImNodes::BeginInputAttribute(attributeId, pinShape);
                     break;
                 }
+                case DependencyType::Expose:
                 case DependencyType::Write: {
                     ImNodes::BeginOutputAttribute(attributeId, ImNodesPinShape_CircleFilled);
                     break;
@@ -93,11 +93,11 @@ namespace rg
 
             switch (dependency.dependencyType)
             {
-                case DependencyType::Ignored:
                 case DependencyType::Read: {
                     ImNodes::EndInputAttribute();
                     break;
                 }
+                case DependencyType::Expose:
                 case DependencyType::Write: {
                     ImNodes::EndOutputAttribute();
                     break;

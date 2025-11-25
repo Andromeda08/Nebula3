@@ -32,7 +32,7 @@ namespace rg
 
         DependencyInfo& getDependencyInfo(const std::string& name);
 
-        const std::vector<DependencyInfo>& getDependencies() const
+        std::vector<DependencyInfo>& getDependencies()
         {
             return mDependencies;
         }
