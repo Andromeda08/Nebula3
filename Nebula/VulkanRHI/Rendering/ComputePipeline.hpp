@@ -23,16 +23,5 @@ namespace RHI
         static UPtr<ComputePipeline> create(ComputePipelineCreateInfo& createInfo);
 
         ~ComputePipeline() override = default;
-
-    private:
-        vk::Pipeline            mPipeline;
-        vk::PipelineLayout      mPipelineLayout;
-
-        vk::PushConstantRange   mPushConstantRange;
-
-        static constexpr auto   sPipelineType = PipelineType::Compute;
-        static constexpr auto   sBindPoint    = PipelineUtils::pipelineTypeToBindPoint(sPipelineType);
-
-        SPtr<Device>            mDevice;
     };
 }
