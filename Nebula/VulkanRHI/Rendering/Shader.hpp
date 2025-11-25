@@ -29,6 +29,8 @@ namespace RHI
     {
         static std::vector<char> readShaderFile(const char* filePath);
 
+        static CompiledShader compileShader(const Device* pDevice, const ShaderInfo& shaderInfo);
+
         static CompiledShaders compileShaders(const Device* pDevice, std::map<vk::ShaderStageFlagBits, ShaderInfo>& shaderInfos);
     };
 }

@@ -28,30 +28,37 @@ namespace RHI
         return buffer;
     }
 
+    CompiledShader Shader::compileShader(const Device* pDevice, const ShaderInfo& shaderInfo)
+    {
+        const auto shaderSrc = readShaderFile(shaderInfo.filePath);
+        auto shaderModuleCreateInfo = vk::ShaderModuleCreateInfo()
+            .setCodeSize(sizeof(char) * shaderSrc.size())
+            .setPCode(reinterpret_cast<const uint32_t*>(shaderSrc.data()));
+
+        const auto shaderModule = pDevice->getHandle().createShaderModule(shaderModuleCreateInfo);
+        const CompiledShader compiledShader = {
+            .shaderInfo      = shaderInfo,
+            .shaderModule    = shaderModule,
+            .shaderStageInfo = vk::PipelineShaderStageCreateInfo()
+                .setStage(shaderInfo.shaderStage)
+                .setModule(shaderModule)
+                .setPName(shaderInfo.entryPoint),
+        };
+
+        pDevice->nameObject<vk::ShaderModule>({
+            .debugName = shaderInfo.filePath,
+            .handle    = shaderModule,
+        });
+
+        return compiledShader;
+    }
+
     CompiledShaders Shader::compileShaders(const Device* pDevice, std::map<vk::ShaderStageFlagBits, ShaderInfo>& shaderInfos)
     {
         CompiledShaders result;
         for (const auto& [stage, shaderInfo] : shaderInfos)
         {
-            const auto shaderSrc = readShaderFile(shaderInfo.filePath);
-            auto shaderModuleCreateInfo = vk::ShaderModuleCreateInfo()
-                .setCodeSize(sizeof(char) * shaderSrc.size())
-                .setPCode(reinterpret_cast<const uint32_t*>(shaderSrc.data()));
-
-            const auto shaderModule = pDevice->getHandle().createShaderModule(shaderModuleCreateInfo);
-            result[stage] = {
-                .shaderInfo      = shaderInfo,
-                .shaderModule    = shaderModule,
-                .shaderStageInfo = vk::PipelineShaderStageCreateInfo()
-                    .setStage(stage)
-                    .setModule(shaderModule)
-                    .setPName(shaderInfo.entryPoint),
-            };
-
-            pDevice->nameObject<vk::ShaderModule>({
-                .debugName = shaderInfo.filePath,
-                .handle    = shaderModule,
-            });
+            result[stage] = compileShader(pDevice, shaderInfo);
         }
         return result;
     }
