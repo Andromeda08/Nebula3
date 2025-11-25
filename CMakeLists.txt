@@ -10,7 +10,15 @@ add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
 
+set("IMGUI_DIR" External/imgui)
+set("IMGUI_FILES"
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+    ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui.h ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
+)
+
 add_executable(Nebula3
+    ${IMGUI_FILES}
     Nebula/Core/Configuration.hpp
     Nebula/VulkanRHI/RHIConfiguration.hpp
     Nebula/Core/AppSpecification.hpp
@@ -66,6 +74,10 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Commands/CommandQueue.hpp
     Nebula/VulkanRHI/Commands/CommandQueue.cpp
     Nebula/VulkanRHI/Commands.hpp
+    Nebula/UserInterface/ImGuiRenderer.cpp
+    Nebula/UserInterface/ImGuiRenderer.hpp
+    Nebula/UserInterface/UserInterface.cpp
+    Nebula/UserInterface/UserInterface.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -73,6 +85,8 @@ target_include_directories(Nebula3 PUBLIC
     External/json/include
     External/glfw/include
     External/glm
+    External/imgui
+    External/imgui/backends
     External/vma/include
     ${Vulkan_INCLUDE_DIRS}
 )
@@ -90,6 +104,7 @@ target_compile_definitions(Nebula3 PUBLIC
     GLFW_INCLUDE_VULKAN
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
+    -DImTextureID=ImU64
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
 

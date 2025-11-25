@@ -27,7 +27,7 @@ namespace RHI
     {
     public:
         nbl_DISABLE_COPY(VulkanRHI);
-        nbl_CTOR(VulkanRHI);
+        nbl_CTOR_SHARED(VulkanRHI);
 
         FrameData beginFrame() const;
         void      endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const;
@@ -42,6 +42,9 @@ namespace RHI
         UPtr<ComputePipeline>  createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
 
         UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
+
+        Device* getDevice() const { return mDevice.get(); }
+        Instance* getInstance() const { return mInstance.get(); }
 
     private:
         SPtr<IWindow>       mWindow;

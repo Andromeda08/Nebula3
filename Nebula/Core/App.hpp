@@ -2,6 +2,7 @@
 
 #include "Types.hpp"
 #include "Math/DeltaTime.hpp"
+#include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/Window.hpp"
 
@@ -17,7 +18,8 @@ public:
 
 private:
     SPtr<Window>            mWindow;
-    UPtr<RHI::VulkanRHI>    mVulkanRHI;
+    SPtr<RHI::VulkanRHI>    mVulkanRHI;
+    UPtr<UserInterface>     mUserInterface;
     DeltaTime               mDeltaTime;
 };
 
