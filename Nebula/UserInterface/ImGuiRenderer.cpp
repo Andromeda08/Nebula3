@@ -3,8 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-
-#include "imgui_internal.h"
+#include <imnodes.h>
 
 ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
 : mFontFile(createInfo.fontFile)
@@ -25,6 +24,8 @@ ImGuiRenderer::~ImGuiRenderer()
 {
     const vk::Device device = mRHI->getDevice()->getHandle();
     device.waitIdle();
+
+    ImNodes::DestroyContext();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -233,4 +234,7 @@ void ImGuiRenderer::initImGuiContext() const
         .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
     };
     ImGui_ImplVulkan_Init(&initInfo);
+
+    ImNodes::CreateContext();
+    ImNodes::StyleColorsDark();
 }

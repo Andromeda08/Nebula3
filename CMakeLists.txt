@@ -17,8 +17,11 @@ set("IMGUI_FILES"
     ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
+set(IMNODES_DIR External/imnodes)
+set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
+
 add_executable(Nebula3
-    ${IMGUI_FILES}
+    ${IMGUI_FILES} ${IMNODES_FILES}
     Nebula/Core/Configuration.hpp
     Nebula/VulkanRHI/RHIConfiguration.hpp
     Nebula/Core/AppSpecification.hpp
