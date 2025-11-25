@@ -1,6 +1,8 @@
 #pragma once
 
+#include <format>
 #include <set>
+#include <vector>
 
 #include "RenderGraph.hpp"
 #include "RenderGraphTraits.hpp"
@@ -28,8 +30,21 @@ namespace rg
             return mRenderGraphs;
         }
 
+        void setActiveEditorRenderGraph(RenderGraph* pRenderGraph)
+        {
+            mActiveEditorGraph = pRenderGraph;
+        }
+
         RenderGraph* getActiveEditorRenderGraph() const
         {
+            return mActiveEditorGraph;
+        }
+
+        RenderGraph* createRenderGraph()
+        {
+            const auto name = std::format("RenderGraph #{}", mRenderGraphs.size());
+            mRenderGraphs.push_back(std::move(RenderGraph::create({ name })));
+            mActiveEditorGraph = mRenderGraphs.back().get();
             return mActiveEditorGraph;
         }
 

@@ -72,11 +72,23 @@ namespace rg
             return static_cast<int32_t>(mOutgoingEdges.size());
         }
 
+        void setGridPos(const ImVec2& gridPos)
+        {
+            mGridPos = gridPos;
+        }
+
+        const ImVec2& getGridPos() const
+        {
+            return mGridPos;
+        }
+
     private:
         const int32_t               mId;
         const std::string           mDisplayName;
         std::vector<Node*>          mIncomingEdges;
         std::vector<Node*>          mOutgoingEdges;
+
+        ImVec2                      mGridPos = {0, 0};
 
         std::vector<DependencyInfo> mDependencies;
         const NodeType              mNodeType = NodeType::Unknown;

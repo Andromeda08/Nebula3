@@ -3,6 +3,7 @@
 #include <array>
 #include <map>
 #include <nlohmann/json.hpp>
+#include <imgui.h>
 
 #include "RenderGraphTraits.hpp"
 
@@ -34,6 +35,8 @@ struct RGConfiguration
 {
     std::map<rg::NodeType, rg::NodeStyle>         nodeStyles     = {{rg::NodeType::Unknown, {}}};
     std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles = {{rg::ResourceType::Unknown, {}}};
+    ImGuiKey                                      bindDeleteEdge = ImGuiKey_X;
+    ImGuiKey                                      bindDeleteNode = ImGuiKey_C;
 
     const rg::NodeStyle& getNodeStyle(const rg::NodeType nodeType) noexcept
     {
@@ -53,4 +56,4 @@ struct RGConfiguration
         return resourceStyles[rg::ResourceType::Unknown];
     }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGConfiguration, nodeStyles, resourceStyles);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGConfiguration, nodeStyles, resourceStyles, bindDeleteEdge, bindDeleteNode);

@@ -26,6 +26,17 @@ namespace rg
         { NodeType::Present, "Present" },
     });
 
+    inline std::string toString(const NodeType nodeType) noexcept
+    {
+        using enum NodeType;
+        switch (nodeType)
+        {
+            case Scene:     return "Scene";
+            case Present:   return "Present";
+            default:        return "Unknown";
+        }
+    }
+
     constexpr std::set<NodeType> getAllNodeTypes() noexcept
     {
         using enum NodeType;
