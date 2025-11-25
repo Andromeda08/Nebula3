@@ -23,15 +23,14 @@ public:
             .label            = "HelloTriangle",
         });
 
-        RHI::GraphicsPipelineCreateInfo createInfo;
-        createInfo.addShader({ "Resources/Shaders/bin/HelloTriangle.vert.spv", "main", vk::ShaderStageFlagBits::eVertex });
-        createInfo.addShader({ "Resources/Shaders/bin/HelloTriangle.frag.spv", "main", vk::ShaderStageFlagBits::eFragment });
-        createInfo.attachmentInfo.colorAttachmentFormats.push_back(rhi->getSwapchain()->getProperties().format);
-        createInfo.debugName = "HelloTriangle";
-        createInfo.stateInfo = RHI::GraphicsPipelineStateInfo()
-            .setCullMode(vk::CullModeFlagBits::eNone);
-        createInfo.stateInfo.attachmentStates.push_back( RHI::PipelineUtils::makeColorBlendAttachmentState());
-        createInfo.stateInfo.update();
+        RHI::GraphicsPipelineCreateInfo createInfo = RHI::GraphicsPipelineCreateInfo()
+            .setStateInfo(RHI::GraphicsPipelineStateInfo()
+                .setCullMode(vk::CullModeFlagBits::eNone)
+                .addAttachmentState())
+            .addShader({ "Resources/Shaders/bin/HelloTriangle.vert.spv", "main", vk::ShaderStageFlagBits::eVertex })
+            .addShader({ "Resources/Shaders/bin/HelloTriangle.frag.spv", "main", vk::ShaderStageFlagBits::eFragment })
+            .addColorAttachmentFormat(rhi->getSwapchain()->getProperties().format)
+            .setDebugName("HelloTriangle");
 
         mPipeline = rhi->createGraphicsPipeline(createInfo);
 

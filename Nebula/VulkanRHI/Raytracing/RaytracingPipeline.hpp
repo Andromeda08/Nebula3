@@ -11,11 +11,22 @@
 
 namespace RHI
 {
-    struct RaytracingPipelineCreateInfo : public PipelineCreateInfo
-    {
+    begin_PipelineCreateInfoStruct(Raytracing)
         uint32_t                rayDepth                = 1;
         std::vector<ShaderInfo> raytracingShaderInfos   = {};
-    };
+
+        RaytracingPipelineCreateInfo& setRayDepth(const uint32_t value)
+        {
+            rayDepth = value;
+            return *this;
+        }
+
+        RaytracingPipelineCreateInfo& addShader(const ShaderInfo& shaderInfo)
+        {
+            raytracingShaderInfos.push_back(shaderInfo);
+            return *this;
+        }
+    end_PipelineCreateInfoStruct;
 
     class RaytracingPipeline final : public Pipeline
     {

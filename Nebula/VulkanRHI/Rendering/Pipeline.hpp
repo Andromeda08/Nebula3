@@ -22,22 +22,37 @@ namespace RHI
         vk::Format              stencilFormat           = vk::Format::eUndefined;
     };
 
-    struct PipelineCreateInfo
-    {
-        vk::PushConstantRange                           pushConstantRange       = {};
-        std::vector<vk::DescriptorSetLayout>            descriptorSetLayouts    = {};
-        std::map<vk::ShaderStageFlagBits, ShaderInfo>   shaderInfos             = {};
-        PipelineAttachmentInfo                          attachmentInfo          = {};
-        std::string                                     debugName               = "Unknown Pipeline";
-        vk::RenderPass                                  renderPass              = nullptr;
-        SPtr<Device>                                    device                  = nullptr;
+    #define begin_PipelineCreateInfoStruct(T)                                                       \
+        struct T##PipelineCreateInfo                                                                \
+        {                                                                                           \
+            vk::PushConstantRange                   pushConstantRange       = {};                   \
+            std::vector<vk::DescriptorSetLayout>    descriptorSetLayouts    = {};                   \
+            PipelineAttachmentInfo                  attachmentInfo          = {};                   \
+            std::string                             debugName               = "Unknown Pipeline";   \
+            vk::RenderPass                          renderPass              = nullptr;              \
+            SPtr<Device>                            device                  = nullptr;              \
+            T##PipelineCreateInfo& setPushConstantRange(const vk::PushConstantRange& value) {       \
+                pushConstantRange = value;                                                          \
+                return* this;                                                                       \
+            }                                                                                       \
+            T##PipelineCreateInfo& addDescriptorSetLayout(const vk::DescriptorSetLayout& layout) {  \
+                descriptorSetLayouts.push_back(layout);                                             \
+                return *this;                                                                       \
+            }                                                                                       \
+            T##PipelineCreateInfo& addColorAttachmentFormat(const vk::Format format) {              \
+                attachmentInfo.colorAttachmentFormats.push_back(format);                            \
+                return *this;                                                                       \
+            }                                                                                       \
+            T##PipelineCreateInfo& setDebugName(const std::string& string) {                        \
+                debugName = string;                                                                 \
+                return *this;                                                                       \
+            }                                                                                       \
+            T##PipelineCreateInfo& setDevice(const SPtr<Device>& d) {                               \
+                device = d;                                                                         \
+                return *this;                                                                       \
+            }
 
-        PipelineCreateInfo& addShader(const ShaderInfo& shaderInfo)
-        {
-            shaderInfos[shaderInfo.shaderStage] = shaderInfo;
-            return *this;
-        }
-    };
+    #define end_PipelineCreateInfoStruct };
 
     class Pipeline
     {

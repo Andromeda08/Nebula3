@@ -10,8 +10,6 @@ namespace RHI
         mPipelineType = PipelineType::Graphics;
         mBindPoint = PipelineUtils::pipelineTypeToBindPoint(mPipelineType);
 
-        assert(createInfo.shaderInfos.contains(vk::ShaderStageFlagBits::eCompute));
-
         const auto layoutCreateInfo = vk::PipelineLayoutCreateInfo()
             .setSetLayoutCount(createInfo.descriptorSetLayouts.size())
             .setPSetLayouts(createInfo.descriptorSetLayouts.data())
@@ -24,11 +22,10 @@ namespace RHI
             .handle    = mPipelineLayout,
         });
 
-        const auto shaders = Shader::compileShaders(mDevice.get(), createInfo.shaderInfos);
-        const auto shaderStageInfos = getStageCreateInfos(shaders);
+        const auto shader = Shader::compileShader(mDevice.get(), createInfo.computeShader);
 
         const auto computePipelineCreateInfo = vk::ComputePipelineCreateInfo()
-            .setStage(shaderStageInfos[0])
+            .setStage(shader.shaderStageInfo)
             .setLayout(mPipelineLayout);
 
         mPipeline = mDevice->getHandle().createComputePipeline(nullptr, computePipelineCreateInfo).value;

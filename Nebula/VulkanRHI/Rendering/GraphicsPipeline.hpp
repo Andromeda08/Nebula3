@@ -77,12 +77,30 @@ namespace RHI
             update();
             return *this;
         }
+
+        GraphicsPipelineStateInfo& addAttachmentState(const vk::PipelineColorBlendAttachmentState& state = PipelineUtils::makeColorBlendAttachmentState())
+        {
+            attachmentStates.push_back(state);
+            return *this;
+        }
     };
 
-    struct GraphicsPipelineCreateInfo : public PipelineCreateInfo
-    {
-        GraphicsPipelineStateInfo stateInfo = {};
-    };
+    begin_PipelineCreateInfoStruct(Graphics)
+        std::map<vk::ShaderStageFlagBits, ShaderInfo> shaderInfos;
+        GraphicsPipelineStateInfo                     stateInfo = {};
+
+        GraphicsPipelineCreateInfo& setStateInfo(const GraphicsPipelineStateInfo& value)
+        {
+            stateInfo = value;
+            return *this;
+        }
+
+        GraphicsPipelineCreateInfo& addShader(const ShaderInfo& shaderInfo)
+        {
+            shaderInfos[shaderInfo.shaderStage] = shaderInfo;
+            return *this;
+        }
+    end_PipelineCreateInfoStruct;
 
     class GraphicsPipeline final : public Pipeline
     {

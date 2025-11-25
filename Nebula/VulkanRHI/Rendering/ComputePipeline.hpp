@@ -10,9 +10,16 @@
 
 namespace RHI
 {
-    struct ComputePipelineCreateInfo : public PipelineCreateInfo
-    {
-    };
+    begin_PipelineCreateInfoStruct(Compute)
+        ShaderInfo computeShader;
+
+        ComputePipelineCreateInfo& setComputeShader(const ShaderInfo& shaderInfo)
+        {
+            assert(shaderInfo.shaderStage == vk::ShaderStageFlagBits::eCompute);
+            computeShader = shaderInfo;
+            return *this;
+        }
+    end_PipelineCreateInfoStruct;
 
     class ComputePipeline final : public Pipeline
     {

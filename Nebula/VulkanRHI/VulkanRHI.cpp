@@ -143,13 +143,13 @@ namespace RHI
 
     UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
     {
-        createInfo.device = mDevice;
+        createInfo.setDevice(mDevice);
         return GraphicsPipeline::create(createInfo);
     }
 
     UPtr<ComputePipeline> VulkanRHI::createComputePipeline(ComputePipelineCreateInfo& createInfo) const
     {
-        createInfo.device = mDevice;
+        createInfo.setDevice(mDevice);
         return ComputePipeline::create(createInfo);
     }
 
@@ -160,7 +160,7 @@ namespace RHI
             std::println("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
             return nullptr;
         }
-        createInfo.device = mDevice;
+        createInfo.setDevice(mDevice);
         return RaytracingPipeline::create(createInfo);
     }
 
