@@ -42,4 +42,9 @@ namespace RHI
     {
         return std::make_unique<ComputePipeline>(createInfo);
     }
+
+    void ComputePipeline::dispatch(const vk::CommandBuffer& commandBuffer, const uint32_t sizeX, const uint32_t sizeY, const uint32_t sizeZ) const
+    {
+        commandBuffer.dispatch(sizeX, sizeY, sizeZ);
+    }
 }

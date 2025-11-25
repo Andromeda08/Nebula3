@@ -23,5 +23,7 @@ namespace RHI
         static UPtr<ComputePipeline> create(ComputePipelineCreateInfo& createInfo);
 
         ~ComputePipeline() override = default;
+
+        void dispatch(const vk::CommandBuffer& commandBuffer, uint32_t sizeX = 1, uint32_t sizeY = 1, uint32_t sizeZ = 1) const;
     };
 }
