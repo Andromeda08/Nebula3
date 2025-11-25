@@ -153,6 +153,17 @@ namespace RHI
         return ComputePipeline::create(createInfo);
     }
 
+    UPtr<RaytracingPipeline> VulkanRHI::createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const
+    {
+        if (mFeatureLevel != RHIFeatureLevel::Complete)
+        {
+            std::println("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
+            return nullptr;
+        }
+        createInfo.device = mDevice;
+        return RaytracingPipeline::create(createInfo);
+    }
+
     UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const
     {
         return RenderPass::create(createInfo);

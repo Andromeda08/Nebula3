@@ -11,6 +11,7 @@
 #include "Image.hpp"
 #include "Instance.hpp"
 #include "IWindow.hpp"
+#include "Raytracing.hpp"
 #include "Rendering.hpp"
 #include "Swapchain.hpp"
 #include "VulkanCore.hpp"
@@ -40,8 +41,9 @@ namespace RHI
         SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
         SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
 
-        UPtr<GraphicsPipeline> createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
-        UPtr<ComputePipeline>  createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
+        UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
+        UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
+        UPtr<RaytracingPipeline> createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const;
 
         UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
 
