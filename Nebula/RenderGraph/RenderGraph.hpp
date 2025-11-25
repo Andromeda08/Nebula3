@@ -9,11 +9,12 @@ namespace rg
 {
     struct Edge
     {
-        int32_t id;
-        Node*   pSrc;
-        int32_t srcDependencyId;
-        Node*   pDst;
-        int32_t dstDependencyId;
+        int32_t         id;
+        Node*           pSrc;
+        int32_t         srcDependencyId;
+        Node*           pDst;
+        int32_t         dstDependencyId;
+        ResourceType    resourceType;
     };
 
     struct RenderGraphCreateInfo
@@ -56,6 +57,16 @@ namespace rg
         const std::string& getName() const
         {
             return mName;
+        }
+
+        bool hasSourceNode() const
+        {
+            return mHasSourceNode;
+        }
+
+        bool hasSinkNode() const
+        {
+            return mHasSinkNode;
         }
 
     private:

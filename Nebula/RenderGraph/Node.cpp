@@ -1,5 +1,6 @@
 #include "Node.hpp"
 
+#include <stdexcept>
 #include <imnodes.h>
 #include "RenderGraph.hpp"
 
@@ -122,7 +123,7 @@ namespace rg
                 return dependency;
             }
         }
-        assert(false);
+        throw std::runtime_error("Dependency not found.");
     }
 
     DependencyInfo& Node::getDependencyInfo(const std::string& name)
@@ -134,6 +135,6 @@ namespace rg
                 return dependency;
             }
         }
-        assert(false);
+        throw std::runtime_error("Dependency not found.");
     }
 }

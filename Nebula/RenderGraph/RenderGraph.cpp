@@ -4,7 +4,7 @@
 
 namespace rg
 {
-    int32_t RenderGraph::sIdSequence = -1;
+    int32_t RenderGraph::sIdSequence = 0;
 }
 
 namespace rg
@@ -55,12 +55,12 @@ namespace rg
             if (!eraseEdge(edgeId))
             {
                 std::println("Error occurred while deleting a node ({}): edge deletion failed [edgeId={}]",
-                    mNodes[nodeId]->getDisplayName(), edgeId);
+                    getNode(nodeId)->getDisplayName(), edgeId);
             }
         }
 
-        const auto nodeType = mNodes[nodeId]->getNodeType();
-        const auto nodeName = mNodes[nodeId]->getDisplayName();
+        const auto nodeType = getNode(nodeId)->getNodeType();
+        const auto nodeName = getNode(nodeId)->getDisplayName();
 
         mNodes.erase(it);
 
@@ -79,11 +79,11 @@ namespace rg
 
     bool RenderGraph::addEdge(const int32_t startNodeId, const int32_t startAttrId, const int32_t endNodeId, const int32_t endAttrId)
     {
-        const auto& startNode = mNodes[startNodeId];
-        auto&       startAttr = startNode->getDependencyInfo(startAttrId);
+        auto* startNode = getNode(startNodeId);
+        auto& startAttr = startNode->getDependencyInfo(startAttrId);
 
-        const auto& endNode = mNodes[endNodeId];
-        auto&       endAttr = endNode->getDependencyInfo(endAttrId);
+        auto* endNode = getNode(endNodeId);
+        auto& endAttr = endNode->getDependencyInfo(endAttrId);
 
         const auto edgeExists = std::ranges::any_of(mEdges, [&startAttr, &endAttr](const auto& edge){
             return edge.srcDependencyId == startAttr.id && edge.dstDependencyId == endAttr.id;
@@ -110,13 +110,14 @@ namespace rg
             return false;
         }
 
-        Node::makeDirectedEdge(startNode.get(), endNode.get());
+        Node::makeDirectedEdge(startNode, endNode);
         mEdges.push_back({
             .id = RenderGraph::nextId(),
-            .pSrc = startNode.get(),
+            .pSrc = startNode,
             .srcDependencyId = startAttrId,
-            .pDst = endNode.get(),
+            .pDst = endNode,
             .dstDependencyId = endAttrId,
+            .resourceType = startAttr.resourceType,
         });
         endAttr.isConnected = true;
 
