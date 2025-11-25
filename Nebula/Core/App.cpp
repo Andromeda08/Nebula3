@@ -2,6 +2,7 @@
 
 #include "Configuration.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
+#include "VulkanRHI/Barrier.hpp"
 
 App* gApplication = nullptr;
 
@@ -59,66 +60,24 @@ void App::run()
 
         const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
-        {
-            auto barrier = vk::ImageMemoryBarrier2()
-                .setImage(currentSwapchainImage->getImage())
-                .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
-                .setOldLayout(currentSwapchainImage->getState().layout)
-                .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setSrcAccessMask(vk::AccessFlagBits2::eNone)
-                .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
-                .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eClear);
-
-            auto dependencyInfo = vk::DependencyInfo()
-                .setImageMemoryBarrierCount(1)
-                .setPImageMemoryBarriers(&barrier);
-
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
-        }
+        RHI::Barrier()
+            .addImageBarrier({ RHI::ImageUsage::Clear, currentSwapchainImage })
+            .insert(commandList);
 
         commandList->getHandle().clearColorImage(
             currentSwapchainImage->getImage(), vk::ImageLayout::eTransferDstOptimal,
             vk::ClearColorValue().setFloat32({ 0.8f, 0.2f, 1.0f }),
             currentSwapchainImage->getProperties().subresourceRange);
 
-        {
-            auto barrier = vk::ImageMemoryBarrier2()
-                .setImage(currentSwapchainImage->getImage())
-                .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
-                .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setNewLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
-                .setDstAccessMask(vk::AccessFlagBits2::eColorAttachmentWrite)
-                .setSrcStageMask(vk::PipelineStageFlagBits2::eClear)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
-
-            auto dependencyInfo = vk::DependencyInfo()
-                .setImageMemoryBarrierCount(1)
-                .setPImageMemoryBarriers(&barrier);
-
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
-        }
+        RHI::Barrier()
+             .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage })
+             .insert(commandList);
 
         mUserInterface->draw(commandList, frameInfo);
 
-        {
-            auto barrier = vk::ImageMemoryBarrier2()
-                .setImage(currentSwapchainImage->getImage())
-                .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
-                .setOldLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                .setNewLayout(vk::ImageLayout::ePresentSrcKHR)
-                .setSrcAccessMask(vk::AccessFlagBits2::eColorAttachmentWrite)
-                .setDstAccessMask(vk::AccessFlagBits2::eMemoryRead)
-                .setSrcStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eBottomOfPipe);
-
-            auto dependencyInfo = vk::DependencyInfo()
-                .setImageMemoryBarrierCount(1)
-                .setPImageMemoryBarriers(&barrier);
-
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
-        }
+        RHI::Barrier()
+             .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage })
+             .insert(commandList);
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({

@@ -81,6 +81,8 @@ add_executable(Nebula3
     Nebula/UserInterface/IComponent.hpp
     Nebula/UserInterface/Components/StatisticsComponent.hpp
     Nebula/UserInterface/Components/StatisticsComponent.cpp
+    Nebula/VulkanRHI/Barrier.hpp
+    Nebula/VulkanRHI/Barrier.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

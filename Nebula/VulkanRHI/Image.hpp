@@ -63,6 +63,11 @@ namespace RHI
 
         ~Image();
 
+        void updateState(const ImageState& imageState)
+        {
+            mState = imageState;
+        }
+
         void useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo);
 
         const vk::Image&        getImage()      const { return mImage; }
