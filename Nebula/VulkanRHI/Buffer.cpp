@@ -43,6 +43,18 @@ namespace RHI
         vmaDestroyBuffer(mDevice->getAllocator(), mBuffer, mAllocation);
     }
 
+    void Buffer::map(void* ptr) const
+    {
+        assert(mBufferType == BufferType::ShaderBindingTable || mBufferType == BufferType::Staging);
+        vmaMapMemory(mDevice->getAllocator(), mAllocation, &ptr);
+    }
+
+    void Buffer::unmap() const
+    {
+        assert(mBufferType == BufferType::ShaderBindingTable || mBufferType == BufferType::Staging);
+        vmaUnmapMemory(mDevice->getAllocator(), mAllocation);
+    }
+
     void Buffer::setData(const void* pData, const uint64_t size, const uint64_t offset) const
     {
         const auto result = vmaCopyMemoryToAllocation(mDevice->getAllocator(), pData, mAllocation, offset, size);

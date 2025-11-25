@@ -41,6 +41,10 @@ namespace RHI
 
         ~Buffer();
 
+        void map(void* ptr) const;
+
+        void unmap() const;
+
         void setData(const void* pData, uint64_t size, uint64_t offset = 0) const;
 
         void readBack(void* pData, uint64_t size, uint64_t offset = 0) const;
