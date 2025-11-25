@@ -50,6 +50,11 @@ namespace RHI
         Device* getDevice() const { return mDevice.get(); }
         Instance* getInstance() const { return mInstance.get(); }
 
+        RHIFeatureLevel getFeatureLevel() const noexcept
+        {
+            return mFeatureLevel;
+        }
+
     private:
         SPtr<IWindow>       mWindow;
         RHIFeatureLevel     mFeatureLevel;
