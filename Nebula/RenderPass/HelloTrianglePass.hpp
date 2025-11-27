@@ -1,12 +1,15 @@
 #pragma once
 
+#include "IPass.hpp"
+#include "RenderGraph/Node.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
-class HelloTrianglePass
+class HelloTrianglePass final : public IPass
 {
 public:
     explicit HelloTrianglePass(const SPtr<RHI::VulkanRHI>& rhi)
+    : IPass()
     {
         const auto attachment = RHI::Attachment {
             .image = rhi->getSwapchain()->getImage(0),
@@ -37,7 +40,9 @@ public:
         mSwapchain = rhi->getSwapchain();
     }
 
-    void execute(const vk::CommandBuffer& commandBuffer, const RHI::FrameData& frameData)
+    ~HelloTrianglePass() override = default;
+
+    void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override
     {
         const auto attachment = RHI::Attachment {
             .image = mSwapchain->getImage(frameData.acquiredIndex),
@@ -51,10 +56,25 @@ public:
 
         mRenderPass->setColorAttachment(0, attachment);
 
-        mPipeline->bind(commandBuffer);
-        mRenderPass->execute(commandBuffer, [](const vk::CommandBuffer& cmd){
+        mPipeline->bind(commandList->getHandle());
+        mRenderPass->execute(commandList->getHandle(), [](const vk::CommandBuffer& cmd){
             cmd.draw(3, 1, 0, 0);
         });
+    }
+
+    static rg::NodeCreateInfo getNodeInfo()
+    {
+        return {
+            .nodeType     = rg::NodeType::HelloTrianglePresent,
+            .displayName  = "Hello Triangle",
+            .dependencies = {
+                rg::DependencyInfo {
+                    .name           = "Scene Data",
+                    .dependencyType = rg::DependencyType::Read,
+                    .resourceType   = rg::ResourceType::SceneData,
+                },
+            },
+        };
     }
 
 private:

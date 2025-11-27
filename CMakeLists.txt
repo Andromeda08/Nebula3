@@ -107,6 +107,18 @@ add_executable(Nebula3
     Nebula/RenderGraph/Editor/RenderGraphEditorComponent.cpp
     Nebula/RenderGraph/RenderGraphContext.cpp
     Nebula/RenderGraph/RGConfiguration.cpp
+    Nebula/RenderPass/Special/ScenePass.hpp
+    Nebula/RenderPass/IPass.hpp
+    Nebula/RenderGraph/Compiler/RenderGraphCompiler.hpp
+    Nebula/RenderGraph/Compiler/GraphAlgorithm.hpp
+    Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
+    Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
+    Nebula/RenderGraph/Resource.hpp
+    Nebula/RenderPass/Special/GBufferPass.hpp
+    Nebula/RenderPass/Special/LightingPass.hpp
+    Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
+    Nebula/RenderPass/Special/AntiAliasingPass.hpp
+    Nebula/RenderPass/Special/PresentPass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

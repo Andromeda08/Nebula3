@@ -81,7 +81,7 @@ void App::run()
         //     currentSwapchainImage->getProperties().subresourceRange);
 
         mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
-        helloTrianglePass->execute(commandList->getHandle(), frameInfo);
+        helloTrianglePass->execute(commandList, frameInfo);
 
         {
             auto barrier = RHI::Barrier()

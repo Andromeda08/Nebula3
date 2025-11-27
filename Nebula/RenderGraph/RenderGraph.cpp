@@ -2,6 +2,14 @@
 
 #include <print>
 
+#include "RenderPass/HelloTrianglePass.hpp"
+#include "RenderPass/Special/AmbientOcclusionPass.hpp"
+#include "RenderPass/Special/AntiAliasingPass.hpp"
+#include "RenderPass/Special/GBufferPass.hpp"
+#include "RenderPass/Special/LightingPass.hpp"
+#include "RenderPass/Special/PresentPass.hpp"
+#include "RenderPass/Special/ScenePass.hpp"
+
 namespace rg
 {
     int32_t RenderGraph::sIdSequence = 0;
@@ -9,6 +17,22 @@ namespace rg
 
 namespace rg
 {
+    NodeCreateInfo getNodeCreateInfo(const NodeType nodeType)
+    {
+        using enum NodeType;
+        switch (nodeType)
+        {
+            case Scene:                 return ScenePass::getNodeInfo();
+            case Present:               return PresentPass::getNodeInfo();
+            case HelloTrianglePresent:  return HelloTrianglePass::getNodeInfo();
+            case GBufferPass:           return GBufferPass::getNodeInfo();
+            case LightingPass:          return LightingPass::getNodeInfo();
+            case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
+            case AntiAliasingPass:      return AntiAliasingPass::getNodeInfo();
+            default:                    throw std::runtime_error("NodeType not supported");
+        }
+    }
+
     RenderGraph::RenderGraph(const RenderGraphCreateInfo& createInfo)
     : mName(createInfo.name)
     {
@@ -20,12 +44,17 @@ namespace rg
         nodeCreateInfo.nodeStyle = Configuration::getConfig().renderGraph.getNodeStyle(createInfo.nodeType);
 
         mNodes.push_back(std::move(makeUnique<Node>(createInfo)));
+        for (auto& dependency : mNodes.back().get()->getDependencies())
+        {
+            dependency.id = RenderGraph::nextId();
+            dependency.style = Configuration::getConfig().renderGraph.getResourceStyle(dependency.resourceType);
+        }
 
         if (createInfo.nodeType == NodeType::Scene)
         {
             mHasSourceNode = true;
         }
-        if (createInfo.nodeType == NodeType::Present)
+        if (createInfo.nodeType == NodeType::Present || createInfo.nodeType == NodeType::HelloTrianglePresent)
         {
             mHasSinkNode = true;
         }
@@ -177,5 +206,17 @@ namespace rg
         return (it == std::end(mNodes))
              ? nullptr
              : it->get();
+    }
+
+    Node* RenderGraph::getRootNode()
+    {
+        for (const auto& node : mNodes)
+        {
+            if (node->getNodeType() == NodeType::Scene)
+            {
+                return node.get();
+            }
+        }
+        return nullptr;
     }
 }

@@ -22,6 +22,8 @@ namespace rg
         std::string name;
     };
 
+    NodeCreateInfo getNodeCreateInfo(NodeType nodeType);
+
     class RenderGraph
     {
     public:
@@ -68,6 +70,8 @@ namespace rg
         {
             return mHasSinkNode;
         }
+
+        Node* getRootNode();
 
     private:
         static int32_t sIdSequence;

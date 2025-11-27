@@ -1,5 +1,7 @@
 #pragma once
 
+#include <concepts>
+#include <type_traits>
 #include <vector>
 
 #include "DependencyInfo.hpp"
@@ -15,6 +17,12 @@ namespace rg
         std::string                 displayName;
         std::vector<DependencyInfo> dependencies;
         NodeStyle                   nodeStyle;
+    };
+
+    template <class T>
+    concept HasGetNodeInfoFunction = requires
+    {
+        { T::getNodeInfo() } -> std::same_as<NodeCreateInfo>;
     };
 
     class Node
@@ -91,7 +99,7 @@ namespace rg
         ImVec2                      mGridPos = {0, 0};
 
         std::vector<DependencyInfo> mDependencies;
-        const NodeType              mNodeType = NodeType::Unknown;
+        const NodeType              mNodeType;
         const NodeStyle             mStyle;
     };
 }

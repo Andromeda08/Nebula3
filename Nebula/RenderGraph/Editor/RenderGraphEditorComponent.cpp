@@ -3,6 +3,8 @@
 #include <print>
 #include <imnodes.h>
 
+#include "RenderGraph/Compiler/RenderGraphCompiler.hpp"
+
 namespace rg
 {
     RenderGraphEditorComponent::RenderGraphEditorComponent(const SPtr<RenderGraphContext>& renderGraphContext)
@@ -60,15 +62,12 @@ namespace rg
                             continue;
                         }
 
-                        mActiveGraph->addNode({
-                            .nodeType     = nodeType,
-                            .displayName  = toString(nodeType),
-                            .dependencies = {
-                                DependencyInfo { RenderGraph::nextId(), "Read", DependencyType::Read, ResourceType::Image, false, mConfiguration.getResourceStyle(ResourceType::Image) },
-                                DependencyInfo { RenderGraph::nextId(), "Write", DependencyType::Write, ResourceType::Image, false, mConfiguration.getResourceStyle(ResourceType::Image) },
-                            },
-                            .nodeStyle    = mConfiguration.getNodeStyle(nodeType),
-                        });
+                        try {
+                            const auto nodeInfo = getNodeCreateInfo(nodeType);
+                            mActiveGraph->addNode(nodeInfo);
+                        } catch (const std::runtime_error& ex) {
+                            std::println("[RenderGraph] {}", ex.what());
+                        }
                     }
                 }
 
@@ -142,7 +141,16 @@ namespace rg
 
     void RenderGraphEditorComponent::handleCompile() const
     {
-        std::println("[RenderGraph] Compilation not implemented yet!");
+        const auto compiler = RenderGraphCompiler(mActiveGraph);
+        const auto result = compiler.compile();
+
+        std::println("[RenderGraph] Compilation of render graph {} : {}",
+            mActiveGraph->getName(), result.success ? "Succeeded" : "Failed");
+
+        for (const auto& message : result.messages)
+        {
+            std::println("{}", message);
+        }
     }
 
     void RenderGraphEditorComponent::handleConnection() const
