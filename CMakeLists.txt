@@ -120,7 +120,7 @@ add_executable(Nebula3
     Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
     Nebula/RenderPass/Special/PresentPass.hpp
-c    Nebula/RenderGraph/Compiler/RenderGraphCompiler.cpp
+    Nebula/RenderGraph/Compiler/RenderGraphCompiler.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
