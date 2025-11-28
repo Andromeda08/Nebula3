@@ -32,12 +32,13 @@ namespace rg
 
         RenderGraph* createRenderGraph();
 
-        [[nodiscard]] std::expected<UPtr<RenderGraph>, std::string> loadRenderGraph(const std::filesystem::path& filePath);
+        [[nodiscard]] std::expected<UPtr<RenderGraph>, std::string> loadRenderGraph(const std::filesystem::path& filePath) const;
 
         static void saveRenderGraph(const RenderGraph* pRenderGraph);
 
     private:
-        constexpr static auto sRenderGraphDirectory = "Resources/RenderGraphs";
+        constexpr static auto     sRenderGraphDirectory        = "Resources/RenderGraphs";
+        constexpr static uint32_t sRenderGraphSerializationVer = 1u;
 
         // Configuration
         std::set<NodeType>              mEnabledNodeTypes;

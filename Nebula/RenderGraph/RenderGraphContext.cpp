@@ -82,7 +82,7 @@ namespace rg
         return mActiveEditorGraph;
     }
 
-    std::expected<UPtr<RenderGraph>, std::string> RenderGraphContext::loadRenderGraph(const std::filesystem::path& filePath)
+    std::expected<UPtr<RenderGraph>, std::string> RenderGraphContext::loadRenderGraph(const std::filesystem::path& filePath) const
     {
         const auto name = filePath.filename().string();
         std::ifstream ifs(filePath);
@@ -92,6 +92,11 @@ namespace rg
         }
 
         const nlohmann::json renderGraphJson = nlohmann::json::parse(ifs);
+        if (renderGraphJson.at("version") != sRenderGraphSerializationVer)
+        {
+            return std::unexpected("[RenderGraph] Failed to load RenderGraph: out of date save format.");
+        }
+
         if (auto deserializedRenderGraph = RenderGraph::deserializeRenderGraph(renderGraphJson, mEnabledNodeTypes);
             deserializedRenderGraph.has_value())
         {
@@ -117,9 +122,12 @@ namespace rg
             return;
         }
 
-        if (const auto serialized = pRenderGraph->serializeRenderGraph(); serialized.has_value())
+        if (auto serialized = pRenderGraph->serializeRenderGraph(); serialized.has_value())
         {
-            ofs << serialized.value();
+            auto& json = serialized.value();
+            json["version"] = sRenderGraphSerializationVer;
+
+            ofs << json;
             std::println("[RenderGraph] Saved RenderGraph: {}", pRenderGraph->getName());
         }
         else
