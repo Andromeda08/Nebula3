@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #include "Node.hpp"
 #include "VulkanRHI/Barrier.hpp"
@@ -15,7 +16,11 @@ namespace rg
         Node*           pDst;
         int32_t         dstDependencyId;
         ResourceType    resourceType;
+
+        int32_t         srcId;
+        int32_t         dstId;
     };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Edge, id, srcId, srcDependencyId, dstId, dstDependencyId, resourceType);
 
     struct RenderGraphCreateInfo
     {
@@ -72,6 +77,10 @@ namespace rg
         }
 
         Node* getRootNode();
+
+        void saveRenderGraph();
+
+        void loadRenderGraph(const std::string& fileName);
 
     private:
         static int32_t sIdSequence;

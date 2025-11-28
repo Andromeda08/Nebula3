@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <nlohmann/json.hpp>
 
 #include "RenderGraphTraits.hpp"
 #include "RGConfiguration.hpp"

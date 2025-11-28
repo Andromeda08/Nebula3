@@ -147,6 +147,8 @@ namespace rg
             .pDst = endNode,
             .dstDependencyId = endAttrId,
             .resourceType = startAttr.resourceType,
+            .srcId = startNodeId,
+            .dstId = endNodeId,
         });
         endAttr.isConnected = true;
 
@@ -218,5 +220,15 @@ namespace rg
             }
         }
         return nullptr;
+    }
+
+    void RenderGraph::saveRenderGraph()
+    {
+
+    }
+
+    void RenderGraph::loadRenderGraph(const std::string& fileName)
+    {
+
     }
 }
