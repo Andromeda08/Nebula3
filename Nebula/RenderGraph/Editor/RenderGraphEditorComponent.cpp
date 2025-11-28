@@ -113,13 +113,6 @@ namespace rg
                     {
                         mRenderGraphContext->setActiveEditorRenderGraph(graph.get());
                         mActiveGraph = mRenderGraphContext->getActiveEditorRenderGraph();
-
-                        // Restore node positions
-                        for (auto& node : mActiveGraph->getNodes())
-                        {
-                            ImNodes::SetNodeGridSpacePos(node->getId(), node->getGridPos());
-                        }
-
                         std::println("[RenderGraph] Changed to RenderGraph: {}", mActiveGraph->getName());
                     }
                 }
