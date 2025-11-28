@@ -83,7 +83,11 @@ namespace RHI
 
         if (!missing.empty())
         {
-            std::println("[RHI] Error: Missing features!");
+            std::println("[RHI] Error: Missing features:");
+            for (const auto* feature : missing)
+            {
+                std::println("\t- {}", feature);
+            }
         }
 
         return allSupported;

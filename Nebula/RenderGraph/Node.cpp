@@ -58,6 +58,8 @@ namespace rg
         mStyle.pushColorStyles();
         ImNodes::BeginNode(mId);
 
+        ImNodes::SetNodeGridSpacePos(mId, mGridPos);
+
         ImNodes::BeginNodeTitleBar();
         ImGui::TextUnformatted(mDisplayName.c_str());
         ImNodes::EndNodeTitleBar();
@@ -136,5 +138,24 @@ namespace rg
             }
         }
         throw std::runtime_error("Dependency not found.");
+    }
+
+    UPtr<Node> Node::createFromJson(const nlohmann::json& json, const int32_t newId)
+    {
+        const NodeType nodeType = json.at("nodeType");
+        const NodeStyle nodeStyle = Configuration::getConfig().renderGraph.getNodeStyle(nodeType);
+
+        auto node = UPtr<Node>(new Node(newId, json.at("displayName"), nodeType, nodeStyle));
+        node->mDependencies = json.at("dependencies");
+
+        return node;
+    }
+
+    Node::Node(const int32_t id, const std::string& name, const NodeType nodeType, const NodeStyle& nodeStyle)
+    : mId(id)
+    , mDisplayName(name)
+    , mNodeType(nodeType)
+    , mStyle(nodeStyle)
+    {
     }
 }

@@ -1,6 +1,8 @@
 #pragma once
 
-#include <format>
+#include <expected>
+#include <filesystem>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -20,35 +22,23 @@ namespace rg
         nbl_DISABLE_COPY(RenderGraphContext)
         nbl_CTOR_SHARED(RenderGraphContext);
 
-        const std::set<NodeType>& getEnabledNodes() const noexcept
-        {
-            return mEnabledNodeTypes;
-        }
+        const std::set<NodeType>& getEnabledNodes() const noexcept;
 
-        const std::vector<UPtr<RenderGraph>>& getRenderGraphs() const
-        {
-            return mRenderGraphs;
-        }
+        const std::vector<UPtr<RenderGraph>>& getRenderGraphs() const;
 
-        void setActiveEditorRenderGraph(RenderGraph* pRenderGraph)
-        {
-            mActiveEditorGraph = pRenderGraph;
-        }
+        void setActiveEditorRenderGraph(RenderGraph* pRenderGraph);
 
-        RenderGraph* getActiveEditorRenderGraph() const
-        {
-            return mActiveEditorGraph;
-        }
+        RenderGraph* getActiveEditorRenderGraph() const;
 
-        RenderGraph* createRenderGraph()
-        {
-            const auto name = std::format("RenderGraph #{}", mRenderGraphs.size());
-            mRenderGraphs.push_back(std::move(RenderGraph::create({ name })));
-            mActiveEditorGraph = mRenderGraphs.back().get();
-            return mActiveEditorGraph;
-        }
+        RenderGraph* createRenderGraph();
+
+        [[nodiscard]] std::expected<UPtr<RenderGraph>, std::string> loadRenderGraph(const std::filesystem::path& filePath);
+
+        static void saveRenderGraph(const RenderGraph* pRenderGraph);
 
     private:
+        constexpr static auto sRenderGraphDirectory = "Resources/RenderGraphs";
+
         // Configuration
         std::set<NodeType>              mEnabledNodeTypes;
 

@@ -59,7 +59,7 @@ namespace RHI
 
         auto get_handle = [&](uint32_t i) { return handles.data() + i * shaderGroupHandleSize; };
 
-        void* mappedMemory;
+        void* mappedMemory = nullptr;
         mBuffer->map(mappedMemory);
         
         uint8_t* pSBT = reinterpret_cast<uint8_t*>(mappedMemory);

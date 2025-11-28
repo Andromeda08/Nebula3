@@ -2,6 +2,7 @@
 
 #include <print>
 #include <imnodes.h>
+#include <imgui_stdlib.h>
 
 #include "RenderGraph/Compiler/RenderGraphCompiler.hpp"
 
@@ -31,6 +32,12 @@ namespace rg
 
     void RenderGraphEditorComponent::update()
     {
+        if (mFirstUpdate)
+        {
+            mFirstUpdate = false;
+            return;
+        }
+
         // Update Node saved grid positions
         for (auto& node : mActiveGraph->getNodes())
         {
@@ -51,14 +58,14 @@ namespace rg
                         toString(nodeType).c_str(), nullptr, false,
                         mRenderGraphContext->getEnabledNodes().contains(nodeType)))
                     {
-                        if (nodeType == NodeType::Scene && mActiveGraph->hasSourceNode())
+                        if (isSourceNode(nodeType) && mActiveGraph->hasSourceNode())
                         {
-                            std::println("[RenderGraph] The RenderGraph can only have one Scene Node.");
+                            std::println("[RenderGraph] The RenderGraph can only have one source node.");
                             continue;
                         }
-                        if (nodeType == NodeType::Present && mActiveGraph->hasSinkNode())
+                        if (isSinkNode(nodeType) && mActiveGraph->hasSinkNode())
                         {
-                            std::println("[RenderGraph] The RenderGraph can only have one Present Node.");
+                            std::println("[RenderGraph] The RenderGraph can only have one sink node.");
                             continue;
                         }
 
@@ -74,9 +81,16 @@ namespace rg
                 ImGui::EndMenu();
             }
 
+            if (!mActiveGraph->getSupportsCurrentPlatform()) { ImGui::BeginDisabled(); }
             if (ImGui::Button("Compile"))
             {
                 handleCompile();
+            }
+            if (!mActiveGraph->getSupportsCurrentPlatform()) { ImGui::EndDisabled(); }
+
+            if (ImGui::Button("Save"))
+            {
+                handleSaveGraph();
             }
 
             if (ImGui::Button("Reset"))
@@ -122,6 +136,23 @@ namespace rg
     {
         ImNodes::BeginNodeEditor();
         {
+            if (!mActiveGraph->getSupportsCurrentPlatform())
+            {
+                ImGui::TextColored(ImVec4(251, 44, 54, 255), "This graph is only editable and cannot be compiled.");
+            }
+
+            ImGui::Dummy(ImVec2(0, 16));
+            ImGui::Indent(16);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+            ImGui::BeginChild("graphEdit", ImVec2(256, 36), true);
+            {
+                ImGui::SetNextItemWidth(200);
+                ImGui::InputText("Name", mActiveGraph->getPName());
+            }
+            ImGui::PopStyleVar();
+            ImGui::Unindent(16);
+            ImGui::EndChild();
+
             ImNodes::PushStyleVar(ImNodesStyleVar_PinCircleRadius, 4.0f);
             ImNodes::PushStyleVar(ImNodesStyleVar_LinkThickness, 3.0f);
             for (const auto& node : mActiveGraph->getNodes())
@@ -207,6 +238,11 @@ namespace rg
     {
         mActiveGraph->reset();
         std::println("[RenderGraph] The current RenderGraph has been reset.");
+    }
+
+    void RenderGraphEditorComponent::handleSaveGraph() const
+    {
+        mRenderGraphContext->saveRenderGraph(mActiveGraph);
     }
 
     void RenderGraphEditorComponent::handleCreateGraph()

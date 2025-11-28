@@ -45,6 +45,11 @@ namespace rg
             return mDependencies;
         }
 
+        const std::vector<DependencyInfo>& getDependencies() const
+        {
+            return mDependencies;
+        }
+
         NodeType getNodeType() const
         {
             return mNodeType;
@@ -90,16 +95,40 @@ namespace rg
             return mGridPos;
         }
 
+        [[nodiscard]] static UPtr<Node> createFromJson(const nlohmann::json& json, int32_t newId);
+
     private:
-        const int32_t               mId;
-        const std::string           mDisplayName;
+        Node(int32_t id, const std::string& name, NodeType nodeType, const NodeStyle& nodeStyle);
+
+        const int32_t               mId = -1;
+        const std::string           mDisplayName = "Unknown Node";
         std::vector<Node*>          mIncomingEdges;
         std::vector<Node*>          mOutgoingEdges;
 
         ImVec2                      mGridPos = {0, 0};
 
         std::vector<DependencyInfo> mDependencies;
-        const NodeType              mNodeType;
-        const NodeStyle             mStyle;
+        const NodeType              mNodeType = NodeType::Unknown;
+        const NodeStyle             mStyle = {};
     };
+
+    inline void to_json(nlohmann::json& json, const Node* node)
+    {
+        const auto incomingNodeIds = node->getIncomingEdges()
+            | std::views::transform([](const Node* pNode) -> int32_t { return pNode->getId(); })
+            | std::ranges::to<std::vector<int32_t>>();
+        const auto outgoingNodeIds = node->getOutgoingEdges()
+            | std::views::transform([](const Node* pNode) -> int32_t { return pNode->getId(); })
+            | std::ranges::to<std::vector<int32_t>>();
+
+        json = nlohmann::json {
+            { "id", node->getId() },
+            { "displayName", node->getDisplayName() },
+            { "gridPos", std::array{ node->getGridPos().x, node->getGridPos().y } },
+            { "incomingNodeIds", incomingNodeIds },
+            { "outgoingNodeIds", outgoingNodeIds },
+            { "dependencies", node->getDependencies() },
+            { "nodeType", node->getNodeType() }
+        };
+    }
 }

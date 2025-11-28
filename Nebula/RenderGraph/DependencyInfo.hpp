@@ -7,6 +7,21 @@
 #include "RGConfiguration.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
+namespace RHI
+{
+    NLOHMANN_JSON_SERIALIZE_ENUM(ImageUsage, {
+        { ImageUsage::Undefined,        "Undefined"         },
+        { ImageUsage::ColorAttachment,  "ColorAttachment"   },
+        { ImageUsage::Clear,            "Clear"             },
+        { ImageUsage::General,          "General"           },
+        { ImageUsage::ShaderReadOnly,   "ShaderReadOnly"    },
+        { ImageUsage::StorageImage,     "StorageImage"      },
+        { ImageUsage::TransferSrc,      "TransferSrc"       },
+        { ImageUsage::TransferDst,      "TransferDst"       },
+        { ImageUsage::PresentSrc,       "PresentSrc"        },
+    });
+}
+
 namespace rg
 {
     struct DependencyInfo
@@ -27,4 +42,5 @@ namespace rg
         // Meta data
         uint64_t            requiredMemory  = 0;
     };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DependencyInfo, id, name, dependencyType, resourceType, dontOptimize, imageUsage, requiredMemory);
 }

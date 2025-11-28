@@ -157,10 +157,9 @@ namespace RHI
         {
             std::vector<UPtr<DeviceExtension>> extensions;
 
-            if (featureLevel == RHIFeatureLevel::Basic)
-            {
+            #ifdef __APPLE__
                 extensions.push_back(std::make_unique<DeviceExtension>(gVulkanPortabilitySubsetExtensionName));
-            }
+            #endif
 
             if (featureLevel >= RHIFeatureLevel::Basic)
             {

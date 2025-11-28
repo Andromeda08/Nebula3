@@ -25,10 +25,12 @@ namespace rg
         void handleEdgeDelete() const;
         void handleNodeDelete() const;
         void handleResetGraph() const;
+        void handleSaveGraph()  const;
         void handleCreateGraph();
 
         RGConfiguration&         mConfiguration;
         RenderGraph*             mActiveGraph;
         SPtr<RenderGraphContext> mRenderGraphContext;
+        bool                     mFirstUpdate = true;
     };
 }

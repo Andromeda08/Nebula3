@@ -210,7 +210,7 @@ namespace rg
              : it->get();
     }
 
-    Node* RenderGraph::getRootNode()
+    Node* RenderGraph::getRootNode() const
     {
         for (const auto& node : mNodes)
         {
@@ -222,13 +222,100 @@ namespace rg
         return nullptr;
     }
 
-    void RenderGraph::saveRenderGraph()
+    std::expected<nlohmann::json, std::string> RenderGraph::serializeRenderGraph() const
     {
+        if (mNodes.empty())
+        {
+            return std::unexpected("Cannot save RenderGraph with no nodes.");
+        }
 
+        const auto nodes = mNodes
+            | std::views::transform([](const UPtr<Node>& node) -> Node* { return node.get(); })
+            | std::ranges::to<std::vector<Node*>>();
+
+        nlohmann::json json;
+        json["name"] = mName;
+        json["edges"] = mEdges;
+        json["nodes"] = nodes;
+        return json;
     }
 
-    void RenderGraph::loadRenderGraph(const std::string& fileName)
+    std::expected<UPtr<RenderGraph>, std::string> RenderGraph::deserializeRenderGraph(const nlohmann::json& json, const std::set<NodeType>& supportedNodes)
     {
+        auto renderGraph = RenderGraph::create({
+            .name = json.at("name"),
+        });
 
+        // 1. Load nodes and generate new IDs
+        std::map<int32_t, int32_t> nodeIdMap;   // Old ID -> New ID
+        for (const auto& nodeJson : json.at("nodes"))
+        {
+            const auto newId = RenderGraph::nextId();
+            nodeIdMap[nodeJson.at("id")] = newId;
+
+            auto newNode = Node::createFromJson(nodeJson, newId);
+            newNode->setGridPos(ImVec2(nodeJson.at("gridPos").at(0), nodeJson.at("gridPos").at(1)));
+
+            renderGraph->mNodes.push_back(std::move(newNode));
+        }
+
+        // 2. Generated new IDs for node dependencies
+        std::map<int32_t, int32_t> dependencyIdMap;  // Old ID -> New ID
+        for (const auto& node : renderGraph->mNodes)
+        {
+            for (auto& dependency : node->getDependencies())
+            {
+                const auto newId = RenderGraph::nextId();
+                dependencyIdMap[dependency.id] = newId;
+                dependency.id = newId;
+            }
+        }
+
+        // 2. Load edges then generate new edges from new IDs.
+        const std::vector<Edge> oldEdges = json.at("edges");
+        for (const auto& edge : oldEdges)
+        {
+            const auto result = renderGraph->addEdge(
+                nodeIdMap[edge.srcId], dependencyIdMap[edge.srcDependencyId],
+                nodeIdMap[edge.dstId], dependencyIdMap[edge.dstDependencyId]);
+            if (!result)
+            {
+                return std::unexpected(std::format("Failed to load edge with ID={}", edge.id));
+            }
+        }
+
+        // 4. Recover edges between nodes
+        for (const auto& edge : renderGraph->mEdges)
+        {
+            const auto result = Node::makeDirectedEdge(edge.pSrc, edge.pDst);
+            if (!result)
+            {
+                return std::unexpected(std::format("Failed to recover underlying edge for RenderGraph edge with ID={}", edge.id));
+            }
+        }
+
+        // 5. Check feature level support & set has sink and source node
+        for (const auto& node : renderGraph->mNodes)
+        {
+            const auto nodeType = node->getNodeType();
+
+            // Feature Level
+            if (!supportedNodes.contains(nodeType))
+            {
+                renderGraph->mSupportsCurrentPlatform = false;
+            }
+
+            // Source & Sink
+            if (isSourceNode(nodeType))
+            {
+                renderGraph->mHasSourceNode = true;
+            }
+            if (isSinkNode(nodeType))
+            {
+                renderGraph->mHasSinkNode = true;
+            }
+        }
+
+        return renderGraph;
     }
 }

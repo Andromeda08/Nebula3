@@ -53,10 +53,15 @@ namespace rg
         }
     }
 
-    constexpr std::set<NodeType> getAllNodeTypes() noexcept
+    inline std::set<NodeType> getAllNodeTypes() noexcept
     {
         using enum NodeType;
-        return { Unknown, Scene, Present, HelloTrianglePresent, GBufferPass, LightingPass, AmbientOcclusionPass, AntiAliasingPass };
+        return {
+            Unknown,
+            Scene,
+            Present, HelloTrianglePresent,
+            GBufferPass, LightingPass, AmbientOcclusionPass, AntiAliasingPass
+        };
     }
 
     constexpr RHIFeatureLevel getNodeRequiredFeatureLevel(const NodeType nodeType) noexcept
@@ -66,6 +71,7 @@ namespace rg
         {
             // [RHI Feature Level : Complete]
             case AmbientOcclusionPass:
+                return RHIFeatureLevel::Complete;
 
             // [RHI Feature Level : Basic]
             case Unknown:
@@ -79,6 +85,17 @@ namespace rg
                 return RHIFeatureLevel::Basic;
             }
         }
+    }
+
+    constexpr bool isSourceNode(const NodeType nodeType) noexcept
+    {
+        return nodeType == NodeType::Scene;
+    }
+
+    constexpr bool isSinkNode(const NodeType nodeType) noexcept
+    {
+        return nodeType == NodeType::Present
+            || nodeType == NodeType::HelloTrianglePresent;
     }
 
     enum class ResourceType

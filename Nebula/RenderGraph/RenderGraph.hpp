@@ -1,5 +1,7 @@
 #pragma once
 
+#include <expected>
+#include <set>
 #include <vector>
 #include <nlohmann/json.hpp>
 
@@ -76,11 +78,21 @@ namespace rg
             return mHasSinkNode;
         }
 
-        Node* getRootNode();
+        Node* getRootNode() const;
 
-        void saveRenderGraph();
+        [[nodiscard]] std::expected<nlohmann::json, std::string> serializeRenderGraph() const;
 
-        void loadRenderGraph(const std::string& fileName);
+        [[nodiscard]] static std::expected<UPtr<RenderGraph>, std::string> deserializeRenderGraph(const nlohmann::json& json, const std::set<NodeType>& supportedNodes);
+
+        bool getSupportsCurrentPlatform() const
+        {
+            return mSupportsCurrentPlatform;
+        }
+
+        std::string* getPName()
+        {
+            return &mName;
+        }
 
     private:
         static int32_t sIdSequence;
@@ -91,5 +103,7 @@ namespace rg
 
         bool                        mHasSourceNode = false;
         bool                        mHasSinkNode   = false;
+
+        bool                        mSupportsCurrentPlatform = true;
     };
 }

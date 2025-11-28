@@ -15,6 +15,7 @@ set("IMGUI_FILES"
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
     ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui.h ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
 set(IMNODES_DIR External/imnodes)
@@ -127,6 +128,7 @@ target_include_directories(Nebula3 PUBLIC
     External/glm
     External/imgui
     External/imgui/backends
+    External/imgui/misc/cpp
     External/imnodes
     External/json/include
     External/stb
