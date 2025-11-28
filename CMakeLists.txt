@@ -121,6 +121,7 @@ add_executable(Nebula3
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
     Nebula/RenderPass/Special/PresentPass.hpp
     Nebula/RenderGraph/Compiler/RenderGraphCompiler.cpp
+    Nebula/RenderGraph/Compiler/GraphAlgorithm.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
