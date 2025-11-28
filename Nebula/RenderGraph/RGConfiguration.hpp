@@ -30,12 +30,16 @@ namespace rg
         Color cLink = { 196, 196, 196 };
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ResourceStyle, cPin, cLink);
+
+    std::map<NodeType, NodeStyle> getDefaultNodeStyles();
+
+    std::map<ResourceType, ResourceStyle> getDefaultResourceStyles();
 }
 
 struct RGConfiguration
 {
-    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles     = {{rg::NodeType::Unknown, {}}};
-    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles = {{rg::ResourceType::Unknown, {}}};
+    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles     = rg::getDefaultNodeStyles();
+    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles = rg::getDefaultResourceStyles();
     ImGuiKey                                      bindDeleteEdge = ImGuiKey_X;
     ImGuiKey                                      bindDeleteNode = ImGuiKey_C;
 

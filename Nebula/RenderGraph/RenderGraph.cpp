@@ -43,7 +43,7 @@ namespace rg
         auto nodeCreateInfo = createInfo;
         nodeCreateInfo.nodeStyle = Configuration::getConfig().renderGraph.getNodeStyle(createInfo.nodeType);
 
-        mNodes.push_back(std::move(makeUnique<Node>(createInfo)));
+        mNodes.push_back(std::move(makeUnique<Node>(nodeCreateInfo)));
         for (auto& dependency : mNodes.back().get()->getDependencies())
         {
             dependency.id = RenderGraph::nextId();
@@ -259,7 +259,7 @@ namespace rg
             renderGraph->mNodes.push_back(std::move(newNode));
         }
 
-        // 2. Generated new IDs for node dependencies
+        // 2. Generated new IDs for node dependencies (and load styles)
         std::map<int32_t, int32_t> dependencyIdMap;  // Old ID -> New ID
         for (const auto& node : renderGraph->mNodes)
         {
@@ -268,6 +268,7 @@ namespace rg
                 const auto newId = RenderGraph::nextId();
                 dependencyIdMap[dependency.id] = newId;
                 dependency.id = newId;
+                dependency.style = Configuration::getConfig().renderGraph.getResourceStyle(dependency.resourceType);
             }
         }
 

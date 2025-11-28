@@ -16,13 +16,9 @@ namespace rg
         {
             return {
                 .nodeType     = NodeType::AmbientOcclusionPass,
-                .displayName  = "Ambient Occlusion (RTAO)",
+                .displayName  = "Ambient Occlusion",
+                .subTitle     = "Mode: RTAO",
                 .dependencies = {
-                    DependencyInfo {
-                        .name           = "Top=level AS",
-                        .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::TopLevelAS,
-                    },
                     DependencyInfo {
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Read,
@@ -34,6 +30,11 @@ namespace rg
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
                         .imageUsage     = RHI::ImageUsage::StorageImage,
+                    },
+                    DependencyInfo {
+                        .name           = "Top=level AS",
+                        .dependencyType = DependencyType::Read,
+                        .resourceType   = ResourceType::TopLevelAS,
                     },
                     DependencyInfo {
                         .name           = "AO Buffer",

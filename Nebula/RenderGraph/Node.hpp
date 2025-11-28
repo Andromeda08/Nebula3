@@ -15,6 +15,7 @@ namespace rg
     {
         NodeType                    nodeType;
         std::string                 displayName;
+        std::string                 subTitle;
         std::vector<DependencyInfo> dependencies;
         NodeStyle                   nodeStyle;
     };
@@ -65,6 +66,11 @@ namespace rg
             return mDisplayName;
         }
 
+        const std::string& getSubTitle() const
+        {
+            return mSubTitle;
+        }
+
         const std::vector<Node*>& getIncomingEdges() const
         {
             return mIncomingEdges;
@@ -98,10 +104,11 @@ namespace rg
         [[nodiscard]] static UPtr<Node> createFromJson(const nlohmann::json& json, int32_t newId);
 
     private:
-        Node(int32_t id, const std::string& name, NodeType nodeType, const NodeStyle& nodeStyle);
+        Node(int32_t id, const std::string& name, const std::string& subTitle, NodeType nodeType, const NodeStyle& nodeStyle);
 
         const int32_t               mId = -1;
         const std::string           mDisplayName = "Unknown Node";
+        const std::string           mSubTitle = "";
         std::vector<Node*>          mIncomingEdges;
         std::vector<Node*>          mOutgoingEdges;
 
@@ -124,6 +131,7 @@ namespace rg
         json = nlohmann::json {
             { "id", node->getId() },
             { "displayName", node->getDisplayName() },
+            { "subTitle", node->getSubTitle() },
             { "gridPos", std::array{ node->getGridPos().x, node->getGridPos().y } },
             { "incomingNodeIds", incomingNodeIds },
             { "outgoingNodeIds", outgoingNodeIds },

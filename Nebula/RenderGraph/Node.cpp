@@ -47,6 +47,7 @@ namespace rg
     Node::Node(const NodeCreateInfo& createInfo)
     : mId(RenderGraph::nextId())
     , mDisplayName(createInfo.displayName)
+    , mSubTitle(createInfo.subTitle)
     , mDependencies(createInfo.dependencies)
     , mNodeType(createInfo.nodeType)
     , mStyle(createInfo.nodeStyle)
@@ -62,6 +63,15 @@ namespace rg
 
         ImNodes::BeginNodeTitleBar();
         ImGui::TextUnformatted(mDisplayName.c_str());
+        if (!mSubTitle.empty())
+        {
+            ImGui::SetWindowFontScale(0.75f);
+            {
+                ImGui::TextUnformatted(mSubTitle.c_str());
+            }
+            ImGui::SetWindowFontScale(1.0f);
+
+        }
         ImNodes::EndNodeTitleBar();
 
         for (const auto& dependency : mDependencies)
@@ -145,15 +155,16 @@ namespace rg
         const NodeType nodeType = json.at("nodeType");
         const NodeStyle nodeStyle = Configuration::getConfig().renderGraph.getNodeStyle(nodeType);
 
-        auto node = UPtr<Node>(new Node(newId, json.at("displayName"), nodeType, nodeStyle));
+        auto node = UPtr<Node>(new Node(newId, json.at("displayName"), json.at("subTitle"), nodeType, nodeStyle));
         node->mDependencies = json.at("dependencies");
 
         return node;
     }
 
-    Node::Node(const int32_t id, const std::string& name, const NodeType nodeType, const NodeStyle& nodeStyle)
+    Node::Node(const int32_t id, const std::string& name, const std::string& subTitle, const NodeType nodeType, const NodeStyle& nodeStyle)
     : mId(id)
     , mDisplayName(name)
+    , mSubTitle(subTitle)
     , mNodeType(nodeType)
     , mStyle(nodeStyle)
     {

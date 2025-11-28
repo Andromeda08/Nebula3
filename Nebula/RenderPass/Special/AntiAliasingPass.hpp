@@ -16,7 +16,8 @@ namespace rg
         {
             return {
                 .nodeType     = NodeType::AntiAliasingPass,
-                .displayName  = "Anti-Aliasing (FXAA)",
+                .displayName  = "Anti-Aliasing",
+                .subTitle     = "Mode: FXAA",
                 .dependencies = {
                     DependencyInfo {
                         .name           = "AA Input",

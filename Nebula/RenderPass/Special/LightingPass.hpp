@@ -19,11 +19,6 @@ namespace rg
                 .displayName  = "Lighting Pass",
                 .dependencies = {
                     DependencyInfo {
-                        .name           = "Top-level AS",
-                        .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::TopLevelAS,
-                    },
-                    DependencyInfo {
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
@@ -40,6 +35,11 @@ namespace rg
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
                         .imageUsage     = RHI::ImageUsage::ShaderReadOnly,
+                    },
+                    DependencyInfo {
+                        .name           = "Top-level AS",
+                        .dependencyType = DependencyType::Read,
+                        .resourceType   = ResourceType::TopLevelAS,
                     },
                     DependencyInfo {
                         .name           = "Lighting Result",
