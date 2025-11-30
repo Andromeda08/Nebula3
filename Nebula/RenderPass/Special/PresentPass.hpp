@@ -22,7 +22,7 @@ namespace rg
                         .name           = "PresentSrc",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::PresentSrc,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },
             };
