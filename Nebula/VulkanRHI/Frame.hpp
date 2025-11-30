@@ -18,8 +18,8 @@ namespace RHI
 
     struct PresentSubmitInfo
     {
-        const FrameData frameData;
-        CommandList*    pCommandList;
+        const FrameData     frameData;
+        class CommandList*  pCommandList;
     };
 
     struct FrameSync
