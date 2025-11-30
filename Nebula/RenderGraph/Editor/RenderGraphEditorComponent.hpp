@@ -1,10 +1,14 @@
 #pragma once
 
-#include "RenderGraph/RenderGraphContext.hpp"
+#include "Core/Types.hpp"
+#include "RenderGraph/RGConfiguration.hpp"
 #include "UserInterface/IComponent.hpp"
 
 namespace rg
 {
+    class RenderGraph;
+    class RenderGraphContext;
+
     class RenderGraphEditorComponent final : public IComponent
     {
     public:

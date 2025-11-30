@@ -4,7 +4,8 @@
 #include <imnodes.h>
 #include <imgui_stdlib.h>
 
-#include "RenderGraph/Compiler/RenderGraphCompiler.hpp"
+#include "RenderGraph/RenderGraph.hpp"
+#include "RenderGraph/RenderGraphContext.hpp"
 
 namespace rg
 {
