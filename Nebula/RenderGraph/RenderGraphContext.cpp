@@ -137,4 +137,33 @@ namespace rg
         }
         ofs.close();
     }
+
+    bool RenderGraphContext::hasQueuedRenderPathChange() const noexcept
+    {
+        return mNextRenderPath != nullptr;
+    }
+
+    void RenderGraphContext::queueRenderPath(const RenderGraphCompilerResult& compilerResult) noexcept
+    {
+        mNextRenderPath = RenderPath::create({
+            .rhi            = mRHI,
+            .compilerResult = compilerResult,
+        });
+    }
+
+    void RenderGraphContext::changeToQueuedRenderPath() noexcept
+    {
+        if (!hasQueuedRenderPathChange())
+        {
+            std::println("[RenderGraph] There is no queued RenderPath to change to.");
+            return;
+        }
+        mActiveRenderPath = std::move(mNextRenderPath);
+        std::println("[RenderGraph] Changed to new RenderPath for graph: {}", mActiveRenderPath->getName());
+    }
+
+    RenderPath* RenderGraphContext::getCurrentRenderPath() const noexcept
+    {
+        return mActiveRenderPath.get();
+    }
 }

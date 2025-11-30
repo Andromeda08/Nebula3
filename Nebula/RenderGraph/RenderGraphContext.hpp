@@ -8,6 +8,7 @@
 
 #include "RenderGraph.hpp"
 #include "RenderGraphTraits.hpp"
+#include "RenderPath/RenderPath.hpp"
 
 namespace rg
 {
@@ -44,6 +45,18 @@ namespace rg
 
         static void saveRenderGraph(const RenderGraph* pRenderGraph);
 
+        // =====================================
+        // RenderGraph : GPU Realization
+        // =====================================
+
+        [[nodiscard]] bool hasQueuedRenderPathChange() const noexcept;
+
+        void queueRenderPath(const RenderGraphCompilerResult& compilerResult) noexcept;
+
+        void changeToQueuedRenderPath() noexcept;
+
+        [[nodiscard]] RenderPath* getCurrentRenderPath() const noexcept;
+
     private:
         // Configuration
         constexpr static auto           sRenderGraphDirectory        = "Resources/RenderGraphs";
@@ -54,7 +67,10 @@ namespace rg
         std::vector<UPtr<RenderGraph>>  mRenderGraphs;
         RenderGraph*                    mActiveEditorGraph = nullptr;
 
-        // RenderPath
+        // Graph GPU Realization
+        UPtr<RenderPath>                mActiveRenderPath;
+        UPtr<RenderPath>                mNextRenderPath;
+
         SPtr<RHI::VulkanRHI>            mRHI;
     };
 }
