@@ -23,11 +23,6 @@ namespace rg
                         .dependencyType = DependencyType::Expose,
                         .resourceType   = ResourceType::SceneData,
                     },
-                    DependencyInfo {
-                        .name           = "Top-level AS",
-                        .dependencyType = DependencyType::Expose,
-                        .resourceType   = ResourceType::TopLevelAS,
-                    },
                 },
             };
         }
