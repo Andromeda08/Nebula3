@@ -141,6 +141,33 @@ namespace RHI
         return Descriptor::create(descriptorInfo);
     }
 
+    Allocation VulkanRHI::allocatedAliasedImageMemory(const std::vector<SPtr<Image>>& images) const
+    {
+        vk::MemoryRequirements finalRequirements = { 0, 0, 0 };
+
+        for (const auto& image : images)
+        {
+            vk::MemoryRequirements memoryRequirements;
+            mDevice->getHandle().getImageMemoryRequirements(image->getImage(), &memoryRequirements);
+
+            finalRequirements.size           = std::max(finalRequirements.size, memoryRequirements.size);
+            finalRequirements.alignment      = std::max(finalRequirements.alignment, memoryRequirements.alignment);
+            finalRequirements.memoryTypeBits = finalRequirements.memoryTypeBits & memoryRequirements.memoryTypeBits;
+        }
+
+        VmaAllocationCreateInfo allocationCreateInfo = {};
+        allocationCreateInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+        VmaAllocation alloc;
+        VmaAllocationInfo allocInfo;
+        const VkResult result = vmaAllocateMemory(
+            mDevice->getAllocator(), reinterpret_cast<VkMemoryRequirements*>(&finalRequirements),
+            &allocationCreateInfo, &alloc, &allocInfo);
+        assert(result == VK_SUCCESS);
+
+        return Allocation(alloc, allocInfo, mDevice);
+    }
+
     UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
     {
         createInfo.setDevice(mDevice);

@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "Allocation.hpp"
 #include "Buffer.hpp"
 #include "Commands.hpp"
 #include "DebugContext.hpp"
@@ -40,6 +41,8 @@ namespace RHI
         SPtr<Buffer>     createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
         SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
+
+        Allocation allocatedAliasedImageMemory(const std::vector<SPtr<Image>>& images) const;
 
         UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
         UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
