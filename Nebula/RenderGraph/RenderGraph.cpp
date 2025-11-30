@@ -93,11 +93,11 @@ namespace rg
 
         mNodes.erase(it);
 
-        if (nodeType == NodeType::Scene)
+        if (isSourceNode(nodeType))
         {
             mHasSourceNode = false;
         }
-        if (nodeType == NodeType::Present)
+        if (isSinkNode(nodeType))
         {
             mHasSinkNode = false;
         }
