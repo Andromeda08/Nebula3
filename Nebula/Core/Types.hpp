@@ -23,7 +23,7 @@ template <class T>
 using SPtr = std::shared_ptr<T>;
 
 template <class T, class... Args>
-constexpr UPtr<T> makeShared(Args&&... args)
+constexpr SPtr<T> makeShared(Args&&... args)
 {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
