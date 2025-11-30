@@ -27,7 +27,7 @@ App::App()
     mUserInterface->addComponent<StatisticsComponent>();
 
     mRenderGraphContext = rg::RenderGraphContext::create({
-        .rhiFeatureLevel = mVulkanRHI->getFeatureLevel(),
+        .rhi = mVulkanRHI,
     });
     mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 }

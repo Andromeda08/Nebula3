@@ -13,7 +13,7 @@ namespace rg
 {
     struct RenderGraphContextCreateInfo
     {
-        RHIFeatureLevel rhiFeatureLevel;
+        SPtr<RHI::VulkanRHI> rhi;
     };
 
     class RenderGraphContext
@@ -55,5 +55,6 @@ namespace rg
         RenderGraph*                    mActiveEditorGraph = nullptr;
 
         // RenderPath
+        SPtr<RHI::VulkanRHI>            mRHI;
     };
 }

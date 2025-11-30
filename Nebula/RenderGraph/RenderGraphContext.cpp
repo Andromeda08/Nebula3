@@ -7,10 +7,11 @@
 namespace rg
 {
     RenderGraphContext::RenderGraphContext(const RenderGraphContextCreateInfo& createInfo)
+    : mRHI(createInfo.rhi)
     {
         for (const auto nodeType : getAllNodeTypes())
         {
-            if (createInfo.rhiFeatureLevel >= getNodeRequiredFeatureLevel(nodeType))
+            if (mRHI->getFeatureLevel() >= getNodeRequiredFeatureLevel(nodeType))
             {
                 mEnabledNodeTypes.insert(nodeType);
             }
