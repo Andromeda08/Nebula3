@@ -23,13 +23,13 @@ namespace rg
                         .name           = "AA Input",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::ShaderReadOnly,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "AA Output",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::ColorAttachment,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },
             };

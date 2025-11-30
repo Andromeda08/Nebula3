@@ -27,19 +27,19 @@ namespace rg
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::ColorAttachment,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                     DependencyInfo {
                         .name           = "Normal Buffer",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::ColorAttachment,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                     DependencyInfo {
                         .name           = "Albedo Buffer",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::ColorAttachment,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },
             };

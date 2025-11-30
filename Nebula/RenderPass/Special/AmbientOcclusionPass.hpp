@@ -23,13 +23,13 @@ namespace rg
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::StorageImage,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                     DependencyInfo {
                         .name           = "Normal Buffer",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::StorageImage,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                     DependencyInfo {
                         .name           = "Top=level AS",
@@ -40,7 +40,7 @@ namespace rg
                         .name           = "AO Buffer",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
-                        .imageUsage     = RHI::ImageUsage::StorageImage,
+                        .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                 },
             };
