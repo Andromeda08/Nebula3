@@ -7,7 +7,7 @@ namespace RHI
     Barrier& Barrier::addImageBarrier(const ImageBarrier& imageBarrier)
     {
         const auto state    = imageBarrier.image->getState();
-        const auto newState = getImageState(imageBarrier.dstUsage);
+        const auto newState = getImageStateForUsage(imageBarrier.dstUsage);
 
         const auto barrier  = vk::ImageMemoryBarrier2()
             .setOldLayout(state.layout)
