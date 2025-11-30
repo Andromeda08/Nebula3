@@ -23,6 +23,8 @@ namespace rg
 
         std::vector<std::string>                     messages;
         ResourceOptimizerResultMeta                  optimizerResultMeta;
+
+        std::string                                  inputGraphName;
     };
 
     class RenderGraphCompiler

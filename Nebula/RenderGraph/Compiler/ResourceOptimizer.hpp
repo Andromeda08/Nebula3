@@ -40,6 +40,7 @@ namespace rg
         int32_t         userNodeId       = -1;
         std::string     usedBy;
         DependencyType  dependencyType   = DependencyType::Ignored;
+        DependencyInfo  dependencyInfo   = {};
 
         [[nodiscard]] static UsagePoint fromResourceInfo(const ResourceInfo& resourceInfo) noexcept;
         [[nodiscard]] static UsagePoint fromConsumerInfo(const ConsumerInfo& consumerInfo) noexcept;

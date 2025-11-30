@@ -70,7 +70,11 @@ namespace rg
             for (const auto& usageRange : optimizerResource.usageRanges)
             {
                 const UsagePoint firstUsagePoint = optimizerResource.getUsagePoint(usageRange.start).value();
-                const RHI::ImageUsage newUsage = mRenderGraph->getNode(firstUsagePoint.userNodeId)->getDependencyInfo(firstUsagePoint.userDependencyId).imageUsage;
+
+                const auto& resourceParams = mRenderGraph->getNode(firstUsagePoint.userNodeId)->getDependencyInfo(firstUsagePoint.userDependencyId).resourceParams;
+                auto* params = std::get_if<ImageInfo>(&resourceParams);
+                const RHI::ImageUsage newUsage = params->imageUsage;
+
                 imageBarriers[optimizerResource.id].push_back({ firstUsagePoint.point, newUsage });
             }
         }
@@ -87,6 +91,7 @@ namespace rg
             .imageBarrierTemplates  = imageBarriers,
             .messages               = messages,
             .optimizerResultMeta    = optimizerResult.meta,
+            .inputGraphName         = mRenderGraph->getName(),
         };
     }
 }

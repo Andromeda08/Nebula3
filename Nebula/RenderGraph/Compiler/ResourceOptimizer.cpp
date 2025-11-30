@@ -24,6 +24,7 @@ namespace rg
 
     UsagePoint UsagePoint::fromResourceInfo(const ResourceInfo& resourceInfo) noexcept
     {
+        const auto dependencyInfo = resourceInfo.pNode->getDependencyInfo(resourceInfo.originalDepId);
         return {
             .point            = resourceInfo.consumeIdx,
             .userDependencyId = resourceInfo.originalDepId,
@@ -31,18 +32,21 @@ namespace rg
             .userNodeId       = resourceInfo.pNode->getId(),
             .usedBy           = resourceInfo.pNode->getDisplayName(),
             .dependencyType   = resourceInfo.initDepType,
+            .dependencyInfo   = dependencyInfo,
         };
     }
 
     UsagePoint UsagePoint::fromConsumerInfo(const ConsumerInfo& consumerInfo) noexcept
     {
+        const auto dependencyInfo = consumerInfo.pNode->getDependencyInfo(consumerInfo.depId);
         return {
             .point            = consumerInfo.consumeIdx,
             .userDependencyId = consumerInfo.depId,
             .usedAs           = consumerInfo.depName,
             .userNodeId       = consumerInfo.pNode->getId(),
             .usedBy           = consumerInfo.pNode->getDisplayName(),
-            .dependencyType   = consumerInfo.pNode->getDependencyInfo(consumerInfo.depId).dependencyType,
+            .dependencyType   = dependencyInfo.dependencyType,
+            .dependencyInfo   = dependencyInfo,
         };
     }
 
