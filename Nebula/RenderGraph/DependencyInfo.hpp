@@ -1,11 +1,12 @@
 #pragma once
 
+#include <optional>
 #include <string>
+#include <variant>
 #include <nlohmann/json.hpp>
 
 #include "RenderGraphTraits.hpp"
-#include "RGConfiguration.hpp"
-#include "VulkanRHI/Barrier.hpp"
+#include "VulkanRHI/Image.hpp"
 
 namespace RHI
 {
@@ -22,8 +23,28 @@ namespace RHI
     });
 }
 
+namespace vk
+{
+    struct Extent2D;
+
+    void to_json(nlohmann::json& json, const Extent2D& extent);
+    void from_json(const nlohmann::json& json, Extent2D& extent);
+}
+
 namespace rg
 {
+    struct ImageInfo
+    {
+        constexpr static auto sDefaultFormat = vk::Format::eR32G32B32A32Sfloat;
+        constexpr static auto sType          = "ImageInfo";
+
+        RHI::ImageUsage             imageUsage = RHI::ImageUsage::Undefined;
+        vk::Format                  format     = sDefaultFormat;
+
+        // ❗Extent is optional, will default to current swapchain extent.
+        std::optional<vk::Extent2D> extent     = std::nullopt;
+    };
+
     struct DependencyInfo
     {
         std::int32_t        id              = -1;
@@ -36,11 +57,11 @@ namespace rg
         // Dependency flags
         bool                dontOptimize    = false;
 
-        // ❗If resourceType is Image
-        RHI::ImageUsage     imageUsage      = RHI::ImageUsage::Undefined;
-
-        // Meta data
-        uint64_t            requiredMemory  = 0;
+        // Resource Type specific
+        std::variant<std::monostate, ImageInfo> resourceParams;
     };
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DependencyInfo, id, name, dependencyType, resourceType, dontOptimize, imageUsage, requiredMemory);
+
+    void to_json(nlohmann::json& json, const DependencyInfo& dependencyInfo);
+
+    void from_json(const nlohmann::json& json, DependencyInfo& dependencyInfo);
 }
