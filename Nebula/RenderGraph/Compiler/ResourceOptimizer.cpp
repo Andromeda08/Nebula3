@@ -74,6 +74,15 @@ namespace rg
         return (it == usagePoints.end()) ? std::nullopt : std::make_optional(*it);
     }
 
+    std::optional<UsagePoint> OptimizerResource::getFirstUsagePoint() const noexcept
+    {
+        if (usagePoints.empty())
+        {
+            return std::nullopt;
+        }
+        return *std::min_element(usagePoints.begin(), usagePoints.end());
+    }
+
     bool OptimizerResource::insertUsagePoints(const std::set<UsagePoint>& inserts) noexcept
     {
         std::vector<UsagePoint> intersection;

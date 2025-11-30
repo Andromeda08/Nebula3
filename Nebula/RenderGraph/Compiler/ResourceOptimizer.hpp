@@ -71,6 +71,8 @@ namespace rg
 
         [[nodiscard]] std::optional<UsagePoint> getUsagePoint(int32_t point) const noexcept;
 
+        [[nodiscard]] std::optional<UsagePoint> getFirstUsagePoint() const noexcept;
+
         bool insertUsagePoints(const std::set<UsagePoint>& inserts) noexcept;
     };
 
