@@ -5,6 +5,7 @@ namespace RHI
     CommandList::CommandList(const CommandListCreateInfo& createInfo)
     : mCommandBuffer(createInfo.commandBuffer)
     , mSingleTime(createInfo.singleTimeSubmit)
+    , mDebug(Configuration::getConfig().rhi.debugFeatures)
     {
     }
 
@@ -29,4 +30,28 @@ namespace RHI
 
         mCommandBuffer.end();
     }
+
+    void CommandList::beginLabel(const std::array<float, 3>& color, const std::string& name) const
+    {
+        if (!mDebug)
+        {
+            return;
+        }
+
+        const auto label = vk::DebugUtilsLabelEXT()
+            .setColor({ color[0], color[1], color[2], 1.0f })
+            .setPLabelName(name.c_str());
+        mCommandBuffer.beginDebugUtilsLabelEXT(label);
+    }
+
+    void CommandList::endLabel() const
+    {
+        if (!mDebug)
+        {
+            return;
+        }
+
+        mCommandBuffer.endDebugUtilsLabelEXT();
+    }
+
 }

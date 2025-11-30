@@ -28,6 +28,10 @@ namespace RHI
 
         void end();
 
+        void beginLabel(const std::array<float, 3>& color, const std::string& name) const;
+
+        void endLabel() const;
+
         [[nodiscard]] vk::CommandBuffer getHandle() const noexcept { return mCommandBuffer; }
 
     private:
@@ -35,5 +39,6 @@ namespace RHI
 
         bool                mIsRecording = false;
         const bool          mSingleTime  = false;
+        const bool          mDebug       = false;
     };
 }
