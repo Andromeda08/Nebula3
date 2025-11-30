@@ -165,16 +165,8 @@ namespace rg
 
     void RenderGraphEditorComponent::handleCompile() const
     {
-        const auto compiler = RenderGraphCompiler(mActiveGraph);
-        const auto result = compiler.compile();
-
-        std::println("[RenderGraph] Compilation of render graph {} : {}",
-            mActiveGraph->getName(), result.success ? "Succeeded" : "Failed");
-
-        for (const auto& message : result.messages)
-        {
-            std::println("{}", message);
-        }
+        const auto result = RenderGraphContext::compileRenderGraph(mActiveGraph);
+        mRenderGraphContext->queueRenderPath(result);
     }
 
     void RenderGraphEditorComponent::handleConnection() const

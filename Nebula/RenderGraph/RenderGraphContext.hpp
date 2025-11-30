@@ -37,6 +37,8 @@ namespace rg
 
         RenderGraph* createRenderGraph();
 
+        static RenderGraphCompilerResult compileRenderGraph(RenderGraph* pRenderGraph);
+
         // =====================================
         // RenderGraph : Serialization
         // =====================================

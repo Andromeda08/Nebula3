@@ -83,6 +83,22 @@ namespace rg
         return mActiveEditorGraph;
     }
 
+    RenderGraphCompilerResult RenderGraphContext::compileRenderGraph(RenderGraph* pRenderGraph)
+    {
+        const auto compiler = RenderGraphCompiler(pRenderGraph);
+        const auto result = compiler.compile();
+
+        std::println("[RenderGraph] Compilation of render graph {} : {}",
+            pRenderGraph->getName(), result.success ? "Succeeded" : "Failed");
+
+        for (const auto& message : result.messages)
+        {
+            std::println("{}", message);
+        }
+
+        return result;
+    }
+
     std::expected<UPtr<RenderGraph>, std::string> RenderGraphContext::loadRenderGraph(const std::filesystem::path& filePath) const
     {
         const auto name = filePath.filename().string();
