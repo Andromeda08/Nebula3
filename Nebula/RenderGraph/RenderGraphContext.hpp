@@ -24,6 +24,10 @@ namespace rg
 
         const std::set<NodeType>& getEnabledNodes() const noexcept;
 
+        // =====================================
+        // RenderGraph : Graph Management
+        // =====================================
+
         const std::vector<UPtr<RenderGraph>>& getRenderGraphs() const;
 
         void setActiveEditorRenderGraph(RenderGraph* pRenderGraph);
@@ -32,18 +36,21 @@ namespace rg
 
         RenderGraph* createRenderGraph();
 
+        // =====================================
+        // RenderGraph : Serialization
+        // =====================================
+
         [[nodiscard]] std::expected<UPtr<RenderGraph>, std::string> loadRenderGraph(const std::filesystem::path& filePath) const;
 
         static void saveRenderGraph(const RenderGraph* pRenderGraph);
 
     private:
-        constexpr static auto     sRenderGraphDirectory        = "Resources/RenderGraphs";
-        constexpr static uint32_t sRenderGraphSerializationVer = 1u;
-
         // Configuration
+        constexpr static auto           sRenderGraphDirectory        = "Resources/RenderGraphs";
+        constexpr static uint32_t       sRenderGraphSerializationVer = 2u;
         std::set<NodeType>              mEnabledNodeTypes;
 
-        // RenderGraphs
+        // Graph Management
         std::vector<UPtr<RenderGraph>>  mRenderGraphs;
         RenderGraph*                    mActiveEditorGraph = nullptr;
 
