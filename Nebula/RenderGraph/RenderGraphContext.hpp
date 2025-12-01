@@ -36,7 +36,7 @@ namespace rg
 
         RenderGraph* getActiveEditorRenderGraph() const;
 
-        RenderGraph* createRenderGraph();
+        RenderGraph* createRenderGraph(bool changeActiveGraph = false);
 
         RenderGraphBuilder createBuilder();
 

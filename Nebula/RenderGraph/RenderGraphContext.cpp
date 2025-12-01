@@ -78,12 +78,17 @@ namespace rg
         return mActiveEditorGraph;
     }
 
-    RenderGraph* RenderGraphContext::createRenderGraph()
+    RenderGraph* RenderGraphContext::createRenderGraph(const bool changeActiveGraph)
     {
         const auto name = std::format("RenderGraph #{}", mRenderGraphs.size());
         mRenderGraphs.push_back(std::move(RenderGraph::create({ name })));
-        mActiveEditorGraph = mRenderGraphs.back().get();
-        return mActiveEditorGraph;
+
+        auto* pGraph = mRenderGraphs.back().get();
+        if (changeActiveGraph)
+        {
+            mActiveEditorGraph = pGraph;
+        }
+        return pGraph;
     }
 
     RenderGraphBuilder RenderGraphContext::createBuilder()
@@ -209,7 +214,10 @@ namespace rg
         }
 
         // Did not find one -> Create an initial graph.
-        auto builder = createBuilder();
+        auto* pRenderGraph = createRenderGraph();
+        pRenderGraph->setHidden(true);
+
+        auto builder = RenderGraphBuilder(pRenderGraph);
         builder.setName("Initial_RenderGraph");
 
         auto* sourceNode        = builder.addNode(NodeType::Scene);
