@@ -53,6 +53,9 @@ namespace rg
         // Set first Render Graph as active.
         assert(!mRenderGraphs.empty());
         mActiveEditorGraph = mRenderGraphs[0].get();
+
+        // Compile initial RenderPath (First loaded RenderGraph or create one using Builder)
+        createInitialRenderPath();
     }
 
     const std::set<NodeType>& RenderGraphContext::getEnabledNodes() const noexcept
@@ -186,5 +189,36 @@ namespace rg
     RenderPath* RenderGraphContext::getCurrentRenderPath() const noexcept
     {
         return mActiveRenderPath.get();
+    }
+
+    void RenderGraphContext::createInitialRenderPath()
+    {
+        // Check loaded graphs for candidate and use it for initial RenderPath. (Unless this feature is disabled)
+        if (!Configuration::getConfig().renderGraph.alwaysGenInitialGraph)
+        {
+            for (const auto& renderGraph : mRenderGraphs)
+            {
+                if (renderGraph->hasSinkNode() && renderGraph->hasSourceNode() && renderGraph->getNodes().size() >= 2)
+                {
+                    const auto result = compileRenderGraph(renderGraph.get());
+                    queueRenderPath(result);
+                    changeToQueuedRenderPath();
+                    return;
+                }
+            }
+        }
+
+        // Did not find one -> Create an initial graph.
+        auto builder = createBuilder();
+        builder.setName("Initial_RenderGraph");
+
+        auto* sourceNode        = builder.addNode(NodeType::Scene);
+        auto* helloTriangleNode = builder.addNode(NodeType::HelloTrianglePresent);
+
+        auto result = builder.addEdge(sourceNode, "Scene Data", helloTriangleNode, "Scene Data");
+
+        const auto compilerResult = builder.compile();
+        queueRenderPath(compilerResult);
+        changeToQueuedRenderPath();
     }
 }

@@ -63,6 +63,8 @@ namespace rg
         [[nodiscard]] RenderPath* getCurrentRenderPath() const noexcept;
 
     private:
+        void createInitialRenderPath();
+
         // Configuration
         constexpr static auto           sRenderGraphDirectory        = "Resources/RenderGraphs";
         constexpr static uint32_t       sRenderGraphSerializationVer = 2u;

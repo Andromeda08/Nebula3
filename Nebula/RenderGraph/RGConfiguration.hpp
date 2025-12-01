@@ -38,10 +38,11 @@ namespace rg
 
 struct RGConfiguration
 {
-    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles     = rg::getDefaultNodeStyles();
-    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles = rg::getDefaultResourceStyles();
-    ImGuiKey                                      bindDeleteEdge = ImGuiKey_X;
-    ImGuiKey                                      bindDeleteNode = ImGuiKey_C;
+    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles            = rg::getDefaultNodeStyles();
+    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles        = rg::getDefaultResourceStyles();
+    ImGuiKey                                      bindDeleteEdge        = ImGuiKey_X;
+    ImGuiKey                                      bindDeleteNode        = ImGuiKey_C;
+    bool                                          alwaysGenInitialGraph = true;
 
     const rg::NodeStyle& getNodeStyle(const rg::NodeType nodeType) noexcept
     {
@@ -61,4 +62,4 @@ struct RGConfiguration
         return resourceStyles[rg::ResourceType::Unknown];
     }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGConfiguration, nodeStyles, resourceStyles, bindDeleteEdge, bindDeleteNode);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGConfiguration, nodeStyles, resourceStyles, bindDeleteEdge, bindDeleteNode, alwaysGenInitialGraph);
