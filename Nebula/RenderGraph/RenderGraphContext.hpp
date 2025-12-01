@@ -8,6 +8,7 @@
 
 #include "RenderGraph.hpp"
 #include "RenderGraphTraits.hpp"
+#include "Builder/RenderGraphBuilder.hpp"
 #include "RenderPath/RenderPath.hpp"
 
 namespace rg
@@ -36,6 +37,8 @@ namespace rg
         RenderGraph* getActiveEditorRenderGraph() const;
 
         RenderGraph* createRenderGraph();
+
+        RenderGraphBuilder createBuilder();
 
         static RenderGraphCompilerResult compileRenderGraph(RenderGraph* pRenderGraph);
 

@@ -94,6 +94,11 @@ namespace rg
             return &mName;
         }
 
+        void setName(const std::string& name) noexcept
+        {
+            mName = name;
+        }
+
     private:
         static int32_t sIdSequence;
 

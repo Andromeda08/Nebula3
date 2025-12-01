@@ -83,6 +83,11 @@ namespace rg
         return mActiveEditorGraph;
     }
 
+    RenderGraphBuilder RenderGraphContext::createBuilder()
+    {
+        return RenderGraphBuilder(createRenderGraph());
+    }
+
     RenderGraphCompilerResult RenderGraphContext::compileRenderGraph(RenderGraph* pRenderGraph)
     {
         const auto compiler = RenderGraphCompiler(pRenderGraph);

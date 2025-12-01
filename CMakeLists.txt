@@ -130,6 +130,7 @@ add_executable(Nebula3
     Nebula/RenderGraph/DependencyInfo.cpp
     Nebula/VulkanRHI/Allocation.hpp
     Nebula/RenderGraph/Builder/RenderGraphBuilder.hpp
+    Nebula/RenderGraph/Builder/RenderGraphBuilder.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
