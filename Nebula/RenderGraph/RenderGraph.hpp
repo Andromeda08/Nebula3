@@ -99,6 +99,16 @@ namespace rg
             mName = name;
         }
 
+        bool isHidden() const noexcept
+        {
+            return mIsHidden;
+        }
+
+        void setHidden(const bool value) noexcept
+        {
+            mIsHidden = value;
+        }
+
     private:
         static int32_t sIdSequence;
 
@@ -110,5 +120,6 @@ namespace rg
         bool                        mHasSinkNode   = false;
 
         bool                        mSupportsCurrentPlatform = true;
+        bool                        mIsHidden                = false;
     };
 }

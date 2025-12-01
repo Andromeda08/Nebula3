@@ -110,6 +110,7 @@ namespace rg
 
                 for (const auto& graph : mRenderGraphContext->getRenderGraphs())
                 {
+                    if (graph->isHidden()) continue;
                     if (ImGui::MenuItem(graph->getName().c_str(), nullptr, false, mActiveGraph->getName() != graph->getName()))
                     {
                         mRenderGraphContext->setActiveEditorRenderGraph(graph.get());
@@ -233,7 +234,7 @@ namespace rg
 
     void RenderGraphEditorComponent::handleCreateGraph()
     {
-        mActiveGraph = mRenderGraphContext->createRenderGraph();
+        mActiveGraph = mRenderGraphContext->createRenderGraph(true);
         std::println("[RenderGraph] Created new empty RenderGraph");
     }
 }
