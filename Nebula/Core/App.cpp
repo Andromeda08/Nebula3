@@ -104,3 +104,79 @@ void App::run()
         });
     }
 }
+
+void App::run_renderPathLoop()
+{
+    mDeltaTime.initialize();
+
+    const SPtr<RHI::CommandPool> graphicsCommandPool = mVulkanRHI->getGraphicsQueue()->createCommandPool();
+
+    PerFrameArray<RHI::CommandList*> commandLists;
+    for (auto i = 0; i < commandLists.size(); i++)
+    {
+        commandLists[i] = graphicsCommandPool->allocate();
+    }
+
+    const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
+
+    // Main Loop
+    while (!mWindow->shouldClose())
+    {
+        const float dt = mDeltaTime.getDeltaTime();
+        auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
+
+        // Input
+        mWindow->pollEvents();
+
+        // Rendering
+        const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
+        RHI::CommandList*    commandList = commandLists[frameData.currentFrame];
+
+        // Updates
+        pRenderPath->update(dt, frameData);
+        mUserInterface->update();
+
+        commandList->begin();
+
+        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex);
+
+        mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
+
+        // =====================================
+        // RenderPath
+        // =====================================
+        pRenderPath->initialize(commandList);   // Runs once
+
+        pRenderPath->execute(commandList, frameData);
+
+        // =====================================
+        // User Interface
+        // =====================================
+        #pragma region
+        {
+            auto barrier = RHI::Barrier()
+                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+             barrier.insert(commandList);
+        }
+
+        mUserInterface->draw(commandList, frameData);
+
+        {
+            auto barrier = RHI::Barrier()
+                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
+             barrier.insert(commandList);
+        }
+        #pragma endregion
+
+        commandList->end();
+        mVulkanRHI->endFrame_submitAndPresent({
+            .frameData    = frameData,
+            .pCommandList = commandList,
+        });
+
+        if (mRenderGraphContext->hasQueuedRenderPathChange())
+        {
+            mRenderGraphContext->changeToQueuedRenderPath();
+        }
+    }
+}

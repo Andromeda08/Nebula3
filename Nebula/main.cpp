@@ -13,7 +13,7 @@ int main()
     gApplication = lApplication.get();
 
     // 3. Run application
-    lApplication->run();
+    lApplication->run_renderPathLoop();
 
     lApplication.reset();
 

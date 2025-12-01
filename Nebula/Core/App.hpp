@@ -17,6 +17,8 @@ public:
 
     void run();
 
+    void run_renderPathLoop();
+
 private:
     DeltaTime                    mDeltaTime;
     SPtr<Window>                 mWindow;
