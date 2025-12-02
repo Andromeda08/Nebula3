@@ -25,6 +25,7 @@ namespace rg
         LightingPass,
         AmbientOcclusionPass,
         AntiAliasingPass,
+        CombinePass,
     };
     NLOHMANN_JSON_SERIALIZE_ENUM(NodeType, {
         { NodeType::Unknown,              "Unknown"              },
@@ -35,6 +36,7 @@ namespace rg
         { NodeType::LightingPass,         "LightingPass"         },
         { NodeType::AmbientOcclusionPass, "AmbientOcclusionPass" },
         { NodeType::AntiAliasingPass,     "AntiAliasingPass"     },
+        { NodeType::CombinePass,          "CombinePass"          },
     });
 
     inline std::string toString(const NodeType nodeType) noexcept
@@ -49,6 +51,7 @@ namespace rg
             case LightingPass:          return "LightingPass";
             case AmbientOcclusionPass:  return "AmbientOcclusionPass";
             case AntiAliasingPass:      return "AntiAliasingPass";
+            case CombinePass:           return "CombinePass";
             default:                    return "Unknown";
         }
     }
@@ -60,7 +63,7 @@ namespace rg
             Unknown,
             Scene,
             Present, HelloTrianglePresent,
-            GBufferPass, LightingPass, AmbientOcclusionPass, AntiAliasingPass
+            GBufferPass, LightingPass, AmbientOcclusionPass, AntiAliasingPass, CombinePass,
         };
     }
 
@@ -81,6 +84,7 @@ namespace rg
             case GBufferPass:
             case LightingPass:
             case AntiAliasingPass:
+            case CombinePass:
             default: {
                 return RHIFeatureLevel::Basic;
             }

@@ -5,6 +5,7 @@
 #include "RenderPass/HelloTrianglePass.hpp"
 #include "RenderPass/Special/AmbientOcclusionPass.hpp"
 #include "RenderPass/Special/AntiAliasingPass.hpp"
+#include "RenderPass/Special/Combine.hpp"
 #include "RenderPass/Special/GBufferPass.hpp"
 #include "RenderPass/Special/LightingPass.hpp"
 #include "RenderPass/Special/PresentPass.hpp"
@@ -29,6 +30,7 @@ namespace rg
             case LightingPass:          return LightingPass::getNodeInfo();
             case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
             case AntiAliasingPass:      return AntiAliasingPass::getNodeInfo();
+            case CombinePass:           return CombinePass::getNodeInfo();
             default:                    throw std::runtime_error("NodeType not supported");
         }
     }

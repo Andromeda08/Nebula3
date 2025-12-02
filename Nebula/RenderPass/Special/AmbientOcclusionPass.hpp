@@ -32,9 +32,9 @@ namespace rg
                         .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                     DependencyInfo {
-                        .name           = "Top=level AS",
+                        .name           = "Scene TLAS",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::TopLevelAS,
+                        .resourceType   = ResourceType::SceneData,
                     },
                     DependencyInfo {
                         .name           = "AO Buffer",

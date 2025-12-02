@@ -21,6 +21,11 @@ namespace rg
     class RenderGraphContext
     {
     public:
+        // Constants
+        constexpr static auto     sRenderGraphDirectory        = "Resources/RenderGraphs";
+        constexpr static auto     sRenderGraphExportDirectory  = "Resources/RenderGraphs/Export";
+        constexpr static uint32_t sRenderGraphSerializationVer = 2u;
+
         nbl_DISABLE_COPY(RenderGraphContext)
         nbl_CTOR_SHARED(RenderGraphContext);
 
@@ -66,8 +71,6 @@ namespace rg
         void createInitialRenderPath();
 
         // Configuration
-        constexpr static auto           sRenderGraphDirectory        = "Resources/RenderGraphs";
-        constexpr static uint32_t       sRenderGraphSerializationVer = 2u;
         std::set<NodeType>              mEnabledNodeTypes;
 
         // Graph Management

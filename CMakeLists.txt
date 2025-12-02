@@ -131,6 +131,9 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Allocation.hpp
     Nebula/RenderGraph/Builder/RenderGraphBuilder.hpp
     Nebula/RenderGraph/Builder/RenderGraphBuilder.cpp
+    Nebula/RenderGraph/Compiler/Export.hpp
+    Nebula/RenderGraph/Compiler/Export.cpp
+    Nebula/RenderPass/Special/Combine.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

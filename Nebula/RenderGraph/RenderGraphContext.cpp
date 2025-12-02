@@ -4,6 +4,8 @@
 #include <fstream>
 #include <print>
 
+#include "Compiler/Export.hpp"
+
 namespace rg
 {
     RenderGraphContext::RenderGraphContext(const RenderGraphContextCreateInfo& createInfo)
@@ -15,6 +17,11 @@ namespace rg
             {
                 mEnabledNodeTypes.insert(nodeType);
             }
+        }
+
+        if (!std::filesystem::exists(sRenderGraphExportDirectory))
+        {
+            std::filesystem::create_directory(sRenderGraphExportDirectory);
         }
 
         // Setup import/export directory
@@ -108,6 +115,8 @@ namespace rg
         {
             std::println("{}", message);
         }
+
+        Export::json_compilerResult(result);
 
         return result;
     }

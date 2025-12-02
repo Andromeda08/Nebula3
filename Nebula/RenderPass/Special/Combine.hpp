@@ -5,44 +5,34 @@
 
 namespace rg
 {
-    class LightingPass final : public IPass
+    class CombinePass final : public IPass
     {
     public:
-        ~LightingPass() override = default;
+        ~CombinePass() override = default;
 
         void execute(const RHI::CommandList* commandBuffer, const RHI::FrameData& frameData) override {}
 
         static NodeCreateInfo getNodeInfo()
         {
             return {
-                .nodeType     = NodeType::LightingPass,
-                .displayName  = "Lighting Pass",
+                .nodeType     = NodeType::CombinePass,
+                .displayName  = "Combine",
+                .subTitle     = "Mode: Add",
                 .dependencies = {
                     DependencyInfo {
-                        .name           = "Position Buffer",
+                        .name           = "A",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
-                        .name           = "Normal Buffer",
+                        .name           = "B",
                         .dependencyType = DependencyType::Read,
                         .resourceType   = ResourceType::Image,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
-                        .name           = "Albedo Buffer",
-                        .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
-                        .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
-                    },
-                    DependencyInfo {
-                        .name           = "Scene TLAS",
-                        .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::SceneData,
-                    },
-                    DependencyInfo {
-                        .name           = "Lighting Result",
+                        .name           = "Out",
                         .dependencyType = DependencyType::Write,
                         .resourceType   = ResourceType::Image,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
