@@ -33,7 +33,7 @@ namespace rg
         int32_t loadedCount = 0;
         for (const auto& file : std::filesystem::directory_iterator(sRenderGraphDirectory))
         {
-            if (file.is_regular_file())
+            if (file.is_regular_file() && file.path().extension() == ".json")
             {
                 if (auto loadResult = loadRenderGraph(file.path()); loadResult.has_value())
                 {
