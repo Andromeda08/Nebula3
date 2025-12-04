@@ -14,57 +14,48 @@ namespace rg
         Write,      // Resource is written
     };
 
+    #define NODE_TYPES(X) \
+        X(Scene) \
+        X(Present) \
+        X(HelloTrianglePresent) \
+        X(GBufferPass) \
+        X(LightingPass) \
+        X(AmbientOcclusionPass) \
+        X(AntiAliasingPass) \
+        X(CombinePass) \
+
+    #pragma region "NodeType : Enum, JSON Serialization, toString"
     enum class NodeType
     {
-        Unknown,
-        Scene,
-        Present,
-        HelloTrianglePresent,
-
-        GBufferPass,
-        LightingPass,
-        AmbientOcclusionPass,
-        AntiAliasingPass,
-        CombinePass,
+        #define X(name) name,
+        NODE_TYPES(X)
+        #undef X
     };
+
+    #define X(name) { NodeType::name, #name },
     NLOHMANN_JSON_SERIALIZE_ENUM(NodeType, {
-        { NodeType::Unknown,              "Unknown"              },
-        { NodeType::Scene,                "Scene"                },
-        { NodeType::Present,              "Present"              },
-        { NodeType::HelloTrianglePresent, "HelloTrianglePresent" },
-        { NodeType::GBufferPass,          "GBufferPass"          },
-        { NodeType::LightingPass,         "LightingPass"         },
-        { NodeType::AmbientOcclusionPass, "AmbientOcclusionPass" },
-        { NodeType::AntiAliasingPass,     "AntiAliasingPass"     },
-        { NodeType::CombinePass,          "CombinePass"          },
+        NODE_TYPES(X)
     });
+    #undef X
 
     inline std::string toString(const NodeType nodeType) noexcept
     {
-        using enum NodeType;
+        #define X(name) case NodeType::name: return #name;
         switch (nodeType)
         {
-            case Scene:                 return "Scene";
-            case Present:               return "Present";
-            case HelloTrianglePresent:  return "HelloTrianglePresent";
-            case GBufferPass:           return "GBufferPass";
-            case LightingPass:          return "LightingPass";
-            case AmbientOcclusionPass:  return "AmbientOcclusionPass";
-            case AntiAliasingPass:      return "AntiAliasingPass";
-            case CombinePass:           return "CombinePass";
-            default:                    return "Unknown";
+            NODE_TYPES(X)
+            default: return "Unknown";
         }
+        #undef X
     }
+    #pragma endregion
 
     inline std::set<NodeType> getAllNodeTypes() noexcept
     {
         using enum NodeType;
-        return {
-            Unknown,
-            Scene,
-            Present, HelloTrianglePresent,
-            GBufferPass, LightingPass, AmbientOcclusionPass, AntiAliasingPass, CombinePass,
-        };
+        #define X(name) name,
+        return { NODE_TYPES(X) };
+        #undef X
     }
 
     constexpr RHIFeatureLevel getNodeRequiredFeatureLevel(const NodeType nodeType) noexcept
@@ -77,7 +68,6 @@ namespace rg
                 return RHIFeatureLevel::Complete;
 
             // [RHI Feature Level : Basic]
-            case Unknown:
             case Scene:
             case Present:
             case HelloTrianglePresent:
@@ -102,32 +92,48 @@ namespace rg
             || nodeType == NodeType::HelloTrianglePresent;
     }
 
+    #undef NODE_TYPES
+
+    #define RESOURCE_TYPES(X) \
+        X(Unknown) \
+        X(SceneData) \
+        X(Buffer) \
+        X(Image) \
+        X(TopLevelAS)
+
+    #pragma region "ResourceType : Enum, JSON Serialization, toString"
     enum class ResourceType
     {
-        Unknown,
-        SceneData,
-        Buffer,
-        Image,
-        TopLevelAS,
+        #define X(name) name,
+        RESOURCE_TYPES(X)
+        #undef X
     };
+
+    #define X(name) { ResourceType::name, #name },
     NLOHMANN_JSON_SERIALIZE_ENUM(ResourceType, {
-        { ResourceType::Unknown,    "Unknown"    },
-        { ResourceType::SceneData,  "SceneData"  },
-        { ResourceType::Buffer,     "Buffer"     },
-        { ResourceType::Image,      "Image"      },
-        { ResourceType::TopLevelAS, "TopLevelAS" },
+        RESOURCE_TYPES(X)
     });
+    #undef X
 
     inline std::string toString(const ResourceType nodeType) noexcept
     {
-        using enum ResourceType;
+        #define X(name) case ResourceType::name: return #name;
         switch (nodeType)
         {
-            case SceneData:     return "SceneData";
-            case Buffer:        return "Buffer";
-            case Image:         return "Image";
-            case TopLevelAS:    return "TopLevelAS";
-            default:            return "Unknown";
+            RESOURCE_TYPES(X)
+            default: return "Unknown";
         }
+        #undef X
     }
+    #pragma endregion
+
+    inline std::set<ResourceType> getAllResourceTypes() noexcept
+    {
+        using enum ResourceType;
+        #define X(name) name,
+        return { RESOURCE_TYPES(X) };
+        #undef X
+    }
+
+    #undef RESOURCE_TYPES
 }
