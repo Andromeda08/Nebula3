@@ -15,6 +15,7 @@ namespace rg
     };
 
     #define NODE_TYPES(X) \
+        X(Unknown) \
         X(Scene) \
         X(Present) \
         X(HelloTrianglePresent) \
