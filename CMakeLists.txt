@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 
 find_package(Vulkan REQUIRED)
 
+include(Tools/nst-cmake/nst.cmake)
+
 add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
