@@ -21,7 +21,7 @@ namespace RHI
 
     struct RenderPassCreateInfo
     {
-        vk::Rect2D              renderArea;
+        vk::Rect2D              renderArea = {{0, 0}, {0, 0}};
         std::vector<Attachment> colorAttachments;
         Attachment              depthAttachment;
         std::string             label = "Unknown Pass";

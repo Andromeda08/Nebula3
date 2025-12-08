@@ -2,14 +2,7 @@
 
 #include <print>
 
-#include "RenderPass/HelloTrianglePass.hpp"
-#include "RenderPass/Special/AmbientOcclusionPass.hpp"
-#include "RenderPass/Special/AntiAliasingPass.hpp"
-#include "RenderPass/Special/Combine.hpp"
-#include "RenderPass/Special/GBufferPass.hpp"
-#include "RenderPass/Special/LightingPass.hpp"
-#include "RenderPass/Special/PresentPass.hpp"
-#include "RenderPass/Special/ScenePass.hpp"
+#include "RenderPass/RenderPass.hpp"
 
 namespace rg
 {
