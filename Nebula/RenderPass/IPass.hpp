@@ -8,6 +8,15 @@ namespace rg
     class Resource;
 }
 
+namespace res
+{
+    static constexpr auto rScene = "Scene Data";
+    static constexpr auto rPositionBuffer = "Position Buffer";
+    static constexpr auto rNormalBuffer = "Normal Buffer";
+    static constexpr auto rAlbedoBuffer = "Albedo Buffer";
+    static constexpr auto rDepthBuffer = "Depth Buffer";
+}
+
 class IPass
 {
 public:
