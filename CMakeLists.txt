@@ -119,7 +119,7 @@ add_executable(Nebula3
     Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
     Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
     Nebula/RenderGraph/RenderPath/Resource.hpp
-    Nebula/RenderPass/Special/GBufferPass.hpp
+    Nebula/RenderPass/GBufferPass.hpp
     Nebula/RenderPass/Special/LightingPass.hpp
     Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
