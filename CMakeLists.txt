@@ -143,6 +143,7 @@ add_executable(Nebula3
     Nebula/Scene/Vertex.hpp
     Nebula/Scene/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
+    Nebula/Scene/SceneConfiguration.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

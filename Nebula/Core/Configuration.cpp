@@ -25,6 +25,11 @@ std::string Configuration::getShaderFilePath(const std::string& shaderFile) noex
     return std::format("{}/{}", sInstance->mData.app.shadersDir, shaderFile);
 }
 
+std::string Configuration::getTextureFilePath(const std::string& textureFile) noexcept
+{
+    return std::format("{}/{}", sInstance->mData.scenes.texturesDir, textureFile);
+}
+
 Configuration::Configuration()
 {
     #ifdef NBL_CONFIG_REGEN

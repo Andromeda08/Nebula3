@@ -6,6 +6,7 @@
 #include "Core/AppSpecification.hpp"
 #include "Core/Types.hpp"
 #include "RenderGraph/RGConfiguration.hpp"
+#include "Scene/SceneConfiguration.hpp"
 #include "VulkanRHI/RHIConfiguration.hpp"
 
 constexpr auto gConfigurationPath = "nbl.json";
@@ -15,10 +16,11 @@ constexpr auto gConfigurationPath = "nbl.json";
  */
 struct ConfigurationData
 {
-    uint32_t         version     = 1u;  // ConfigurationData version tag
-    AppSpecification app         = {};
-    RHIConfiguration rhi         = {};
-    RGConfiguration  renderGraph = {};
+    uint32_t            version     = 1u;  // ConfigurationData version tag
+    AppSpecification    app         = {};
+    RHIConfiguration    rhi         = {};
+    RGConfiguration     renderGraph = {};
+    SceneConfiguration  scenes      = {};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, version, app, rhi, renderGraph);
 
@@ -39,6 +41,8 @@ public:
 
     // Quick-access utilities
     static std::string getShaderFilePath(const std::string& shaderFile) noexcept;
+
+    static std::string getTextureFilePath(const std::string& textureFile) noexcept;
 
 private:
     Configuration();
