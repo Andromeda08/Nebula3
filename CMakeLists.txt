@@ -143,7 +143,6 @@ add_executable(Nebula3
     Nebula/Scene/Vertex.hpp
     Nebula/Scene/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
-    Resources/Shaders/inc/Common.h
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -158,8 +157,6 @@ target_include_directories(Nebula3 PUBLIC
     External/stb
     External/vma/include
     ${Vulkan_INCLUDE_DIRS}
-
-    Resources/Shaders/inc
 )
 
 target_link_libraries(Nebula3 PUBLIC
