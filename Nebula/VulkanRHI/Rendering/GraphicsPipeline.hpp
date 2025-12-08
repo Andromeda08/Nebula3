@@ -1,8 +1,11 @@
 #pragma once
 
+#include <algorithm>
+#include <ranges>
 #include <vulkan/vulkan.hpp>
 
 #include "Pipeline.hpp"
+#include "VertexTraits.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 #include "VulkanRHI/Device.hpp"
@@ -42,20 +45,31 @@ namespace RHI
             dynamicState.setPDynamicStates(dynamicStates.data());
         }
 
-        template <class T>
-        GraphicsPipelineStateInfo& addAttributeDescriptions(uint32_t base_location = 0, uint32_t binding = 0)
+        template <VertexType T>
+        GraphicsPipelineStateInfo& addAttributeDescriptions(uint32_t baseLocation = 0, uint32_t binding = 0)
         {
-            for (const auto& attribute : T::attribute_descriptions(base_location, binding))
-            {
-                attributeDescriptions.push_back(attribute);
-            }
+            attributeDescriptions.append_range(T::getAttributes(baseLocation, binding));
             return *this;
         }
 
-        template <class T>
+        template <VertexType T>
         GraphicsPipelineStateInfo& addBindingDescriptions(uint32_t binding = 0)
         {
-            bindingDescriptions.push_back(T::binding_description(binding));
+            bindingDescriptions.push_back(T::getBinding(binding));
+            return *this;
+        }
+
+        template <VertexType T>
+        GraphicsPipelineStateInfo& addVertexType(uint32_t binding = 0)
+        {
+            auto it = std::ranges::max_element(attributeDescriptions,
+                [](const vk::VertexInputAttributeDescription& a, const vk::VertexInputAttributeDescription& b) -> bool {
+               return a.location < b.binding;
+            });
+            uint32_t nextLocation = it->location + 1;
+
+            attributeDescriptions.append_range(T::getAttributes(nextLocation, binding));
+            bindingDescriptions.push_back(T::getBinding(binding));
             return *this;
         }
 
