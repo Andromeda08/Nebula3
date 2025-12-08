@@ -37,6 +37,9 @@ public:
     // Directly get the configuration data.
     static ConfigurationData& getConfig();
 
+    // Quick-access utilities
+    static std::string getShaderFilePath(const std::string& shaderFile) noexcept;
+
 private:
     Configuration();
 

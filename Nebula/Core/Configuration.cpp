@@ -20,6 +20,11 @@ ConfigurationData& Configuration::getConfig()
     return sInstance->mData;
 }
 
+std::string Configuration::getShaderFilePath(const std::string& shaderFile) noexcept
+{
+    return std::format("{}/{}", sInstance->mData.app.shadersDir, shaderFile);
+}
+
 Configuration::Configuration()
 {
     #ifdef NBL_CONFIG_REGEN
