@@ -53,6 +53,24 @@ namespace rg
         return mImages[i];
     }
 
+    vk::RenderingAttachmentInfo ImageResource::getBasicAttachmentInfo(const uint32_t i) const noexcept
+    {
+        return vk::RenderingAttachmentInfo()
+            .setClearValue(vk::ClearValue().setColor({ 0.0f, 0.0f, 0.0f, 1.0f }))
+            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+            .setImageView(mImages[i]->getImageView())
+            .setLoadOp(vk::AttachmentLoadOp::eClear)
+            .setStoreOp(vk::AttachmentStoreOp::eStore);
+    }
+
+    RHI::Attachment ImageResource::getBasicAttachment(const uint32_t i) const noexcept
+    {
+        return {
+            .image          = mImages[i],
+            .attachmentInfo = getBasicAttachmentInfo(i),
+        };
+    }
+
     ResourceFactory::ResourceFactory(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
     {
     }

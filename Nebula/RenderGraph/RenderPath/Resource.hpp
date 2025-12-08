@@ -61,6 +61,16 @@ namespace rg
 
         [[nodiscard]] SPtr<RHI::Image> getImage(uint32_t i = 0) const noexcept;
 
+        // [Load: Clear, Store: Store, Clear Color: Black, Layout: ColorAttachmentOpt]
+        [[nodiscard]] vk::RenderingAttachmentInfo getBasicAttachmentInfo(uint32_t i = 0) const noexcept;
+
+        [[nodiscard]] RHI::Attachment getBasicAttachment(uint32_t i = 0) const noexcept;
+
+        vk::Format getFormat(uint32_t i = 0) const noexcept
+        {
+            return mImages[i]->getProperties().format;
+        }
+
     private:
         std::vector<SPtr<RHI::Image>>   mImages;
         std::optional<RHI::Allocation>  mAliasedMemory = std::nullopt;
