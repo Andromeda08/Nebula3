@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 #include "RenderGraph/RenderPath/Resource.hpp"
-#include "Scene/GPUObjectData.hpp"
+#include "Scene/GPUObjectInstanceData.hpp"
 #include "Scene/Vertex.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
