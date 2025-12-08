@@ -193,6 +193,11 @@ namespace RHI
 
     UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const
     {
-        return RenderPass::create(createInfo);
+        auto privateCreateInfo = RenderPassCreateInfo(createInfo);
+        if (createInfo.renderArea.extent.width == 0 && createInfo.renderArea.extent.height == 0)
+        {
+            privateCreateInfo.renderArea = mSwapchain->getProperties().area;
+        }
+        return RenderPass::create(privateCreateInfo);
     }
 }
