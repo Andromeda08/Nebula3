@@ -13,8 +13,9 @@ class IPass
 public:
     virtual ~IPass() = default;
 
+    virtual void initialize() {}
     virtual void update() {}
-    virtual void execute(const RHI::CommandList* commandBuffer, const RHI::FrameData& frameData) = 0;
+    virtual void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) = 0;
 
     virtual void setResource(const std::string& name, const SPtr<rg::Resource>& resource) {}
     virtual rg::Resource* getResource(const std::string& name)
