@@ -14,6 +14,7 @@ namespace rg
         Write,      // Resource is written
     };
 
+    // [AddNode-1] Add to enum type
     #define NODE_TYPES(X) \
         X(Unknown) \
         X(Scene) \

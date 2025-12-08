@@ -11,6 +11,7 @@ namespace rg
 
 namespace rg
 {
+    // [AddNode-2] Add to getNodeCreateInfo
     NodeCreateInfo getNodeCreateInfo(const NodeType nodeType)
     {
         using enum NodeType;
