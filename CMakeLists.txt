@@ -140,9 +140,10 @@ add_executable(Nebula3
     Nebula/RenderPass/Special/Combine.hpp
     Nebula/RenderPass/RenderPass.hpp
     Nebula/RenderPass/GBufferPass.cpp
-    Nebula/Scene/Vertex.hpp
-    Nebula/Scene/GPUObjectInstanceData.hpp
+    Nebula/Scene/Types/Vertex.hpp
+    Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
+    Nebula/Scene/Types/LightParameters.hpp
     Nebula/Scene/SceneConfiguration.hpp
 )
 

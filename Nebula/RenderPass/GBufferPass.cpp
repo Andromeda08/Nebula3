@@ -2,8 +2,8 @@
 
 #include <glm/glm.hpp>
 #include "RenderGraph/RenderPath/Resource.hpp"
-#include "Scene/GPUObjectInstanceData.hpp"
-#include "Scene/Vertex.hpp"
+#include "Scene/Types/GPUObjectInstanceData.hpp"
+#include "Scene/Types/Vertex.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 GBufferPass::GBufferPass(const GBufferPassCreateInfo& createInfo)
