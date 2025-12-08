@@ -30,8 +30,8 @@ public:
             .setStateInfo(RHI::GraphicsPipelineStateInfo()
                 .setCullMode(vk::CullModeFlagBits::eNone)
                 .addAttachmentState())
-            .addShader({ "Resources/Shaders/bin/HelloTriangle.vert.spv", "main", vk::ShaderStageFlagBits::eVertex })
-            .addShader({ "Resources/Shaders/bin/HelloTriangle.frag.spv", "main", vk::ShaderStageFlagBits::eFragment })
+            .addShader({ "Resources/Shaders/bin/HelloTriangle.vert.spv", vk::ShaderStageFlagBits::eVertex })
+            .addShader({ "Resources/Shaders/bin/HelloTriangle.frag.spv", vk::ShaderStageFlagBits::eFragment })
             .addColorAttachmentFormat(rhi->getSwapchain()->getProperties().format)
             .setDebugName("HelloTriangle");
 

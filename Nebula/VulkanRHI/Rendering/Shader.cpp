@@ -13,7 +13,7 @@ namespace RHI
             | std::ranges::to<std::vector<vk::PipelineShaderStageCreateInfo>>();
     }
 
-    std::vector<char> Shader::readShaderFile(const char* filePath)
+    std::vector<char> Shader::readShaderFile(const std::string& filePath)
     {
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
         assert(file.is_open());

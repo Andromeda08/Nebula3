@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 
@@ -10,9 +11,9 @@ namespace RHI
 {
     struct ShaderInfo
     {
-        const char*             filePath;
-        const char*             entryPoint;
+        std::string             filePath;
         vk::ShaderStageFlagBits shaderStage;
+        const char*             entryPoint = "main";
     };
 
     struct CompiledShader
@@ -27,7 +28,7 @@ namespace RHI
 
     struct Shader
     {
-        static std::vector<char> readShaderFile(const char* filePath);
+        static std::vector<char> readShaderFile(const std::string& filePath);
 
         static CompiledShader compileShader(const Device* pDevice, const ShaderInfo& shaderInfo);
 
