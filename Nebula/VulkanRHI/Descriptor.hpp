@@ -35,7 +35,7 @@ namespace RHI
 
         DescriptorWriteInfo& writeStorageBuffers(uint32_t binding, uint32_t bufferInfoCount, const vk::DescriptorBufferInfo* pBufferInfos);
 
-        DescriptorWriteInfo& writeCombinedImageSamplers(uint32_t binding, uint32_t imageInfoCount, const vk::DescriptorImageInfo* pImageInfos);
+        DescriptorWriteInfo& writeCombinedImageSamplers(uint32_t binding, uint32_t imageInfoCount, const vk::DescriptorImageInfo* pImageInfos, uint32_t dstElement = 0);
 
         DescriptorWriteInfo& writeStorageImages(uint32_t binding, uint32_t imageInfoCount, const vk::DescriptorImageInfo* pImageInfos);
     };

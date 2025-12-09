@@ -61,13 +61,14 @@ namespace RHI
     DescriptorWriteInfo& DescriptorWriteInfo::writeCombinedImageSamplers(
         const uint32_t                 binding,
         const uint32_t                 imageInfoCount,
-        const vk::DescriptorImageInfo* pImageInfos)
+        const vk::DescriptorImageInfo* pImageInfos,
+        const uint32_t                 dstElement)
     {
         const auto write = vk::WriteDescriptorSet()
             .setDstBinding(binding)
             .setDescriptorCount(imageInfoCount)
             .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-            .setDstArrayElement(0)
+            .setDstArrayElement(dstElement)
             .setPImageInfo(pImageInfos);
         writes.push_back(write);
         return *this;
@@ -91,7 +92,8 @@ namespace RHI
     #pragma endregion
 
     Descriptor::Descriptor(const DescriptorCreateInfo& createInfo)
-    : mSetCount(createInfo.setCount)
+    : mBindings(createInfo.bindings)
+    , mSetCount(createInfo.setCount)
     , mDebugName(createInfo.debugName)
     , mDevice(createInfo.device)
     {
@@ -121,7 +123,7 @@ namespace RHI
     void Descriptor::write(DescriptorWriteInfo writeInfo) const
     {
         assert(writeInfo.setIndex < mSetCount);
-        if (writeInfo.writes.emplace_back())
+        if (writeInfo.writes.empty())
         {
             std::println("[RHI] Warning: Empty descriptor write for Descriptor {} set #{}", mDebugName, writeInfo.setIndex);
             return;
@@ -151,7 +153,7 @@ namespace RHI
         std::vector<vk::DescriptorPoolSize> poolSizes;
         for (const auto& binding : mBindings)
         {
-            poolSizes.push_back(vk::DescriptorPoolSize().setDescriptorCount(binding.descriptorCount).setType(binding.descriptorType));
+            poolSizes.push_back(vk::DescriptorPoolSize().setDescriptorCount(binding.descriptorCount * mSetCount).setType(binding.descriptorType));
         }
 
         const auto poolCreateInfo = vk::DescriptorPoolCreateInfo()
