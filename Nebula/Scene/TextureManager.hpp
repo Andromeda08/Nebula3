@@ -1,106 +1,108 @@
 #pragma once
 
+#include <array>
+#include <expected>
+#include <string>
+#include <unordered_set>
+
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
-#include "VulkanRHI/Barrier.hpp"
-#include "VulkanRHI/VulkanRHI.hpp"
 
 namespace RHI
 {
+    class Buffer;
+    class CommandList;
     class Descriptor;
     class Image;
     class VulkanRHI;
 }
 
+struct TextureManagerCreateInfo
+{
+    SPtr<RHI::VulkanRHI> rhi;
+};
+
 class TextureManager
 {
+    struct TextureLoadInfo
+    {
+        SPtr<RHI::Buffer> stagingBuffer;
+        SPtr<RHI::Image>  textureImage;
+        uint32_t          slot;
+    };
 public:
-    static constexpr uint32_t sMaxTextureCount = 100;
+    static constexpr uint32_t sMaxTextureCount  = 100;
+    static constexpr uint32_t sMissingTextureId = 0;
 
     nbl_DISABLE_COPY(TextureManager);
+    nbl_CTOR(TextureManager);
 
-    explicit TextureManager(const SPtr<RHI::VulkanRHI>& rhi)
-    : mRHI(rhi)
-    {
-        for (int32_t& value : mMetaData)
-        {
-            value = 0;
-        }
+    ~TextureManager() = default;
 
-        mMetaTexture = mRHI->createImage({
-            .extent        = { sMaxTextureCount, 1 },
-            .format        = vk::Format::eR32Sint,
-            .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-            .createSampler = true,
-            .debugName     = "TextureMeta"
-        });
+    /**
+     * Loads a Texture from the specified file into a given slot.
+     * [Note!] By default, this function will load the texture immediately, if deferred is true
+     * updating the meta texture and descriptor will be done on the next update() call.
+     * @returns If successfully loaded true, otherwise an error message.
+     */
+    std::expected<bool, std::string> loadTexture(const std::string& textureFile, uint32_t slot, bool deferred = false) noexcept;
 
-        mMetaStaging = mRHI->createBuffer({
-            .size      = sMaxTextureCount * sizeof(int32_t),
-            .type      = RHI::BufferType::Staging,
-            .debugName = "TextureMeta-Staging",
-        });
-
-        // TODO: loadTexture("missingTexture.png", 0);
-
-        createDescriptor();
-    }
-
-    void update(const vk::CommandBuffer& commandBuffer);
+    void update(const RHI::CommandList* commandList);
 
 private:
-    void updateMetaTexture(const vk::CommandBuffer& commandBuffer)
+    // Blocking texture load.
+    void loadImmediately(const TextureLoadInfo& textureLoadInfo) noexcept;
+
+    // Add a deferred texture load to the queue.
+    void loadDeferred(const TextureLoadInfo& textureLoadInfo);
+
+    // Update slot validity in metadata, mark as dirty if needed.
+    void setSlot(uint32_t slot, bool hasTexture) noexcept;
+
+    // If dirty, update the metadata texture.
+    void updateMetaTexture(const RHI::CommandList* commandList) const;
+
+    /**
+     * For all textures whose loading was deferred:
+     * - Set image in mTextures
+     * - Write descriptor for new texture
+     * - Update slot metadata
+     * - Update metadata texture via updateMetaTexture()
+     */
+    void uploadQueuedTextures(const RHI::CommandList* commandList);
+
+    // Clears the done tasks from the upload queue. (should be called from update())
+    void clearUploadQueue();
+
+    // =====================================
+    // Constructor functions
+    // =====================================
+    void createMetadataResources();
+    void createDescriptor();
+
+    // =====================================
+    // Utility functions
+    // =====================================
+    [[nodiscard]] static uint64_t getTextureSize(const int w, const int h, const int c = 4) noexcept
     {
-        mMetaStaging->setData(mMetaData.data(), sMaxTextureCount * sizeof(int32_t));
-        // TODO: Buffer to Image copy
+        return static_cast<uint64_t>(w) * static_cast<uint64_t>(h) * c;
     }
 
-    void createDescriptor()
-    {
-        mDescriptor = mRHI->createDescriptor({
-            .bindings = {
-                vk::DescriptorSetLayoutBinding()
-                    .setBinding(0)
-                    .setDescriptorCount(sMaxTextureCount)
-                    .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                    .setStageFlags(vk::ShaderStageFlagBits::eFragment),
-                vk::DescriptorSetLayoutBinding()
-                    .setBinding(1)
-                    .setDescriptorCount(1)
-                    .setDescriptorType(vk::DescriptorType::eStorageImage)
-                    .setStageFlags(vk::ShaderStageFlagBits::eFragment),
-            },
-            .setCount = gFramesInFlight,
-            .debugName = "TextureDescriptor",
-        });
+    static constexpr auto sMissingTextureName = "missingTexture.png";
 
-        // Set all textures in the descriptor array to the missing texture.
-        std::array<vk::DescriptorImageInfo, sMaxTextureCount> textureImageInfos;
-        for (size_t i = 1; i < sMaxTextureCount; i++)
-        {
-            textureImageInfos[i] = vk::DescriptorImageInfo()
-                .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                .setImageView(mTextures[0]->getImageView())
-                .setSampler(mTextures[0]->getSampler());
-        }
-
-        const auto metaImageInfo = vk::DescriptorImageInfo()
-            .setImageLayout(vk::ImageLayout::eGeneral)
-            .setImageView(mMetaTexture->getImageView())
-            .setSampler(mMetaTexture->getSampler());
-
-        auto initialWrite = RHI::DescriptorWriteInfo()
-            .writeCombinedImageSamplers(0, textureImageInfos.size(), textureImageInfos.data())
-            .writeStorageImages(1, 1, &metaImageInfo);
-
-    }
-
-    SPtr<RHI::Descriptor>               mDescriptor;
+    // Textures
     std::array<SPtr<RHI::Image>, 100>   mTextures;
 
+    // Deferred loading
+    std::vector<TextureLoadInfo>        mQueuedLoads;
+    std::unordered_set<uint32_t>        mLoadInfoDeletionQueue; // By slot ID
+
+    // Meta Texture
+    bool                                mMetaIsDirty = false;
     SPtr<RHI::Image>                    mMetaTexture;
     SPtr<RHI::Buffer>                   mMetaStaging;
     std::array<int32_t, 100>            mMetaData {};
 
+    SPtr<RHI::Descriptor>               mDescriptor;
     SPtr<RHI::VulkanRHI>                mRHI;
 };
