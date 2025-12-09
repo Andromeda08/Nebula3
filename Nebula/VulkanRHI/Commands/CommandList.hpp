@@ -7,6 +7,15 @@
 
 namespace RHI
 {
+    class Buffer;
+    class Image;
+
+    struct BufferImageCopyInfo
+    {
+        Buffer* pSrcBuffer;
+        Image*  pDstImage;
+    };
+
     struct CommandListCreateInfo
     {
         vk::CommandBuffer  commandBuffer;
@@ -25,12 +34,12 @@ namespace RHI
         ~CommandList() = default;
 
         void begin();
-
         void end();
 
         void beginLabel(const std::array<float, 3>& color, const std::string& name) const;
-
         void endLabel() const;
+
+        void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;
 
         [[nodiscard]] vk::CommandBuffer getHandle() const noexcept { return mCommandBuffer; }
 

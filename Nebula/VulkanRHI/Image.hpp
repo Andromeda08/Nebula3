@@ -18,6 +18,11 @@ namespace RHI
         vk::ImageSubresourceRange  subresourceRange  = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
         vk::ImageSubresourceLayers subresourceLayers = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
         bool                       isAliased         = false;
+
+        [[nodiscard]] vk::Extent3D getExtent3D() const
+        {
+                return { extent.width, extent.height, 1 };
+        }
     };
 
     // Mutable state of a Vulkan Image

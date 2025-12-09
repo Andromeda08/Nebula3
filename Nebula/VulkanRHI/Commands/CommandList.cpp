@@ -1,5 +1,8 @@
 #include "CommandList.hpp"
 
+#include "VulkanRHI/Buffer.hpp"
+#include "VulkanRHI/Image.hpp"
+
 namespace RHI
 {
     CommandList::CommandList(const CommandListCreateInfo& createInfo)
@@ -54,4 +57,22 @@ namespace RHI
         mCommandBuffer.endDebugUtilsLabelEXT();
     }
 
+    void CommandList::copyBufferToImage(const BufferImageCopyInfo& copyInfo) const
+    {
+        const auto imageProperties = copyInfo.pDstImage->getProperties();
+        const auto copyRegion = vk::BufferImageCopy2()
+            .setBufferOffset(0)
+            .setBufferRowLength(0)
+            .setBufferImageHeight(0)
+            .setImageSubresource(imageProperties.subresourceLayers)
+            .setImageOffset({0, 0, 0})
+            .setImageExtent(imageProperties.getExtent3D());
+        const auto copyBufferToImageInfo = vk::CopyBufferToImageInfo2()
+            .setDstImage(copyInfo.pDstImage->getImage())
+            .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+            .setSrcBuffer(copyInfo.pSrcBuffer->getHandle())
+            .setRegions(copyRegion);
+
+        mCommandBuffer.copyBufferToImage2(copyBufferToImageInfo);
+    }
 }
