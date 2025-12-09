@@ -149,6 +149,8 @@ add_executable(Nebula3
     Nebula/Scene/SceneConfiguration.hpp
     Nebula/Scene/TextureManager.cpp
     Nebula/Scene/Scene.cpp
+    Nebula/Scene/Components/SceneInfoComponent.hpp
+    Nebula/Scene/Components/SceneInfoComponent.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
