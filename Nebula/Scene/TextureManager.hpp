@@ -39,6 +39,8 @@ public:
 
     ~TextureManager() = default;
 
+    RHI::Image* getTexture(uint32_t slot) const noexcept;
+
     /**
      * Loads a Texture from the specified file into a given slot.
      * [Note!] By default, this function will load the texture immediately, if deferred is true

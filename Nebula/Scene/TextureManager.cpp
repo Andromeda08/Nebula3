@@ -15,6 +15,12 @@ TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
     createDescriptor();
 }
 
+RHI::Image* TextureManager::getTexture(const uint32_t slot) const noexcept
+{
+    assert(slot < mTextures.size());
+    return mTextures[slot].get();
+}
+
 std::expected<bool, std::string> TextureManager::loadTexture(const std::string& textureFile, const uint32_t slot, const bool deferred) noexcept
 {
     if (slot >= mTextures.size())
