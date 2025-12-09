@@ -27,6 +27,8 @@ public:
     nbl_CTOR(Scene);
 
 private:
+    friend class SceneInfoComponent;
+
     std::string             mName;
     UPtr<TextureManager>    mTextureManager;
 };
