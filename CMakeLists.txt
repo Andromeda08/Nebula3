@@ -153,6 +153,8 @@ add_executable(Nebula3
     Nebula/Scene/Components/SceneInfoComponent.cpp
     Nebula/Scene/Geometry/Geometry.hpp
     Nebula/Scene/Geometry/Geometry.cpp
+    Nebula/Scene/Types/CameraData.hpp
+    Nebula/Scene/Camera/ICamera.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
