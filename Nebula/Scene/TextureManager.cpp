@@ -91,7 +91,10 @@ void TextureManager::loadImmediately(const TextureLoadInfo& textureLoadInfo) noe
             .dstUsage = RHI::ImageUsage::TransferDst,
             .image = textureImage,
         }).insert(commandList);
-        // TODO: Buffer to Image copy
+        commandList->copyBufferToImage({
+            .pSrcBuffer = stagingBuffer.get(),
+            .pDstImage  = textureImage.get(),
+        });
         RHI::Barrier().addImageBarrier({
             .dstUsage = RHI::ImageUsage::ShaderReadOnly,
             .image = textureImage,
@@ -144,7 +147,10 @@ void TextureManager::updateMetaTexture(const RHI::CommandList* commandList) cons
         .dstUsage = RHI::ImageUsage::TransferDst,
         .image = mMetaTexture,
     }).insert(commandList);
-    // TODO: Buffer to Image copy
+    commandList->copyBufferToImage({
+        .pSrcBuffer = mMetaStaging.get(),
+        .pDstImage  = mMetaTexture.get(),
+    });
     RHI::Barrier().addImageBarrier({
         .dstUsage = RHI::ImageUsage::ShaderReadOnly,
         .image = mMetaTexture,
@@ -183,7 +189,10 @@ void TextureManager::uploadQueuedTextures(const RHI::CommandList* commandList)
     toTransferDstBarrier.insert(commandList);
     for (const auto& loadInfo : mQueuedLoads)
     {
-        // TODO: Buffer to Image copy
+        commandList->copyBufferToImage({
+            .pSrcBuffer = loadInfo.stagingBuffer.get(),
+            .pDstImage  = loadInfo.textureImage.get(),
+        });
     }
     toShaderReadOnlyBarrier.insert(commandList);
 
