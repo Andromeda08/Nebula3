@@ -151,6 +151,8 @@ add_executable(Nebula3
     Nebula/Scene/Scene.cpp
     Nebula/Scene/Components/SceneInfoComponent.hpp
     Nebula/Scene/Components/SceneInfoComponent.cpp
+    Nebula/Scene/Geometry/Geometry.hpp
+    Nebula/Scene/Geometry/Geometry.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
