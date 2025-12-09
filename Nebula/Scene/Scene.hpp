@@ -4,6 +4,7 @@
 #include "Core/Types.hpp"
 
 #include "TextureManager.hpp"
+#include "VulkanRHI/Frame.hpp"
 
 namespace RHI
 {
@@ -25,6 +26,10 @@ class Scene
 public:
     nbl_DISABLE_COPY(Scene);
     nbl_CTOR(Scene);
+
+    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
+    {
+    }
 
 private:
     friend class SceneInfoComponent;

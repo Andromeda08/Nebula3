@@ -73,6 +73,7 @@ void App::run()
         RHI::CommandList*    commandList = commandLists[frameInfo.currentFrame];
 
         commandList->begin();
+        mScene->update(commandList, frameInfo, dt);
 
         const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
@@ -140,6 +141,7 @@ void App::run_renderPathLoop()
         RHI::CommandList*    commandList = commandLists[frameData.currentFrame];
 
         // Updates
+        mScene->update(commandList, frameData, dt);
         pRenderPath->update(dt, frameData);
         mUserInterface->update();
 
