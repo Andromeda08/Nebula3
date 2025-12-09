@@ -3,6 +3,7 @@
 #include "Configuration.hpp"
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "RenderPass/HelloTrianglePass.hpp"
+#include "Scene/Components/SceneInfoComponent.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
@@ -30,6 +31,12 @@ App::App()
         .rhi = mVulkanRHI,
     });
     mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+
+    mScene = Scene::create({
+        .rhi  = mVulkanRHI,
+        .name = "Default Scene",
+    });
+    mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 }
 
 UPtr<App> App::create() noexcept
