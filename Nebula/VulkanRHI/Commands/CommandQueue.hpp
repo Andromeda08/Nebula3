@@ -1,7 +1,10 @@
 #pragma once
 
+#include <functional>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 
+#include "Core/Types.hpp"
 #include "VulkanRHI/Device.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
@@ -38,9 +41,11 @@ namespace RHI
         void              waitIdle() const;
         void              submit(const SubmitInfo& submitInfo);
 
+        void immediate(const std::function<void(const CommandList*)>& fn) const;
+
     private:
-        SPtr<Device>                 mDevice;
-        DeviceQueue                  mQueue;
-        std::vector<vk::CommandPool> mCommandPools;
+        SPtr<Device>        mDevice;
+        DeviceQueue         mQueue;
+        SPtr<CommandPool>   mImmediatePool;
     };
 }

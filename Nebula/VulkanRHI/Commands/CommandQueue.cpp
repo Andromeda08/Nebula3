@@ -8,6 +8,10 @@ namespace RHI
     : mDevice(createInfo.device)
     , mQueue(createInfo.queue)
     {
+        mImmediatePool = CommandPool::create({
+            .queue  = mQueue,
+            .device = mDevice,
+        });
     }
 
     QueueType CommandQueue::getQueueType() const noexcept
@@ -64,5 +68,25 @@ namespace RHI
             .setSignalSemaphoreInfoCount(signalSemaphoreInfos.size());
 
         mQueue.queue.submit2(vkSubmitInfo, submitInfo.fence);
+    }
+
+    void CommandQueue::immediate(const std::function<void(const CommandList*)>& fn) const
+    {
+        auto* commandList = mImmediatePool->allocate();
+        const auto handle = commandList->getHandle();
+
+        commandList->begin();
+        fn(commandList);
+        commandList->end();
+
+        const auto submitInfo = vk::SubmitInfo()
+            .setCommandBufferCount(1)
+            .setPCommandBuffers(&handle);
+
+        const auto result = mQueue.queue.submit(1, &submitInfo, nullptr);
+        assert(result == vk::Result::eSuccess);
+
+        mQueue.queue.waitIdle();
+        mImmediatePool->free(commandList);
     }
 }
