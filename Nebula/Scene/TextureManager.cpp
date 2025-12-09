@@ -9,10 +9,14 @@ TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
 : mRHI(createInfo.rhi)
 {
     createMetadataResources();
-
-    const auto result = loadTexture(sMissingTextureName, sMissingTextureId);
-
     createDescriptor();
+
+    const auto result = loadTexture(sMissingTextureName, sMissingTextureId, true);
+    mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+        update(commandList);
+    });
+
+    writeInitialDescriptors();
 }
 
 RHI::Image* TextureManager::getTexture(const uint32_t slot) const noexcept
@@ -38,7 +42,7 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
         return std::unexpected(std::format("Failed to load texture: {}", textureFile));
     }
 
-    const auto size = getTextureSize(width, height, channels);
+    const auto size = getTextureSize(width, height);
     const auto stagingBuffer = mRHI->createBuffer({
         .size      = size,
         .type      = RHI::BufferType::Staging,
@@ -168,6 +172,8 @@ void TextureManager::uploadQueuedTextures(const RHI::CommandList* commandList)
     // Prepare
     auto toTransferDstBarrier = RHI::Barrier();
     auto toShaderReadOnlyBarrier = RHI::Barrier();
+
+    auto write = RHI::DescriptorWriteInfo();
     std::vector<vk::DescriptorImageInfo> textureImageInfos;
 
     for (const auto& loadInfo : mQueuedLoads)
@@ -180,13 +186,15 @@ void TextureManager::uploadQueuedTextures(const RHI::CommandList* commandList)
             .dstUsage = RHI::ImageUsage::ShaderReadOnly,
             .image    = loadInfo.textureImage
         });
-        textureImageInfos.push_back(vk::DescriptorImageInfo()
-            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-            .setImageView(loadInfo.textureImage->getImageView())
-            .setSampler(loadInfo.textureImage->getSampler()));
 
         mTextures[loadInfo.slot] = loadInfo.textureImage;
         setSlot(loadInfo.slot, true);
+
+        textureImageInfos.push_back(vk::DescriptorImageInfo()
+            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+            .setImageView(mTextures[loadInfo.slot]->getImageView())
+            .setSampler(mTextures[loadInfo.slot]->getSampler()));
+        write.writeCombinedImageSamplers(0, 1, &(textureImageInfos.back()), loadInfo.slot);
 
         mLoadInfoDeletionQueue.insert(loadInfo.slot);
     }
@@ -204,8 +212,6 @@ void TextureManager::uploadQueuedTextures(const RHI::CommandList* commandList)
 
     updateMetaTexture(commandList);
 
-    auto write = RHI::DescriptorWriteInfo()
-        .writeCombinedImageSamplers(0, textureImageInfos.size(), textureImageInfos.data());
 
     for (auto i = 0; i < mDescriptor->getSetCount(); i++)
     {
@@ -264,15 +270,21 @@ void TextureManager::createDescriptor()
         .setCount = gFramesInFlight,
         .debugName = "TextureDescriptor",
     });
+}
+
+void TextureManager::writeInitialDescriptors() const
+{
+    auto initialWrite = RHI::DescriptorWriteInfo();
 
     // Set all textures in the descriptor array to the missing texture.
     std::array<vk::DescriptorImageInfo, sMaxTextureCount> textureImageInfos;
-    for (size_t i = 1; i < sMaxTextureCount; i++)
+    for (size_t i = 0; i < sMaxTextureCount; i++)
     {
         textureImageInfos[i] = vk::DescriptorImageInfo()
             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
             .setImageView(mTextures[0]->getImageView())
             .setSampler(mTextures[0]->getSampler());
+        initialWrite.writeCombinedImageSamplers(0, 1, &textureImageInfos[i], i);
     }
 
     const auto metaImageInfo = vk::DescriptorImageInfo()
@@ -280,9 +292,7 @@ void TextureManager::createDescriptor()
             .setImageView(mMetaTexture->getImageView())
             .setSampler(mMetaTexture->getSampler());
 
-    auto initialWrite = RHI::DescriptorWriteInfo()
-        .writeCombinedImageSamplers(0, textureImageInfos.size(), textureImageInfos.data())
-        .writeStorageImages(1, 1, &metaImageInfo);
+    initialWrite.writeStorageImages(1, 1, &metaImageInfo);
 
     for (auto i = 0; i < mDescriptor->getSetCount(); i++)
     {

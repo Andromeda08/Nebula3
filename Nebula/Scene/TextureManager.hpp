@@ -81,6 +81,7 @@ private:
     // =====================================
     void createMetadataResources();
     void createDescriptor();
+    void writeInitialDescriptors() const;
 
     // =====================================
     // Utility functions
