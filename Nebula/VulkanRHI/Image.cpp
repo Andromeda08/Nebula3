@@ -73,6 +73,7 @@ namespace RHI
                 .setAddressModeV(vk::SamplerAddressMode::eRepeat)
                 .setAddressModeW(vk::SamplerAddressMode::eRepeat)
                 .setAnisotropyEnable(true)
+                .setMaxAnisotropy(1.0)
                 .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
                 .setUnnormalizedCoordinates(false)
                 .setCompareEnable(false)
