@@ -1,8 +1,9 @@
-mod resources;
+mod res;
 mod nst;
 mod util;
 
 use std::env;
+use colored::Colorize;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -19,12 +20,15 @@ fn main() {
     match cmd.as_str() {
         "build-shaders" => {
             match nst::nst(&args) {
-                Err(e) => println!("[nrt] Error: {0}", e),
+                Err(e) => println!("{}", format!("{0} Error: {1}", "[nrt]".bright_red().bold(), e)),
                 _ => {},
             }
         },
         "copy-resources" => {
-            println!("[nrt] The command \"copy-resources\" is not implemented yet");
+            match res::copy_resources(&args) {
+                Err(e) => println!("{}", format!("{0} Error: {1}", "[nrt]".bright_red().bold(), e)),
+                _ => {},
+            }
         },
         _ => {}
     }
