@@ -2,31 +2,15 @@ use std::collections::HashSet;
 use std::env;
 use colored::Colorize;
 use glob;
+use crate::util;
 
-struct Params {
+pub struct NSTParams {
     src:     std::path::PathBuf,
     bin_dir: std::path::PathBuf,
     debug:   bool,
 }
 
-fn get_key_value(key: &str, args: &Vec<String>) -> Result<String, String> {
-    if args.contains(&String::from(key)) {
-        let arg_idx = match args.iter().position(|a| a == &String::from(key)) {
-            None => return Err(String::from(format!("Failed to find the argument index for {0}", key))),
-            Some(v) => v
-        };
-        if arg_idx + 1 < args.len() {
-            let param = &args[arg_idx + 1];
-            return match param.starts_with("--") || param.starts_with("-") {
-                true => Err(String::from(format!("The argument {0} must specify a parameter", key))),
-                false => Ok(String::from(param))
-            }
-        }
-    }
-    Err(String::from(format!("No key found by the name {0}", key)))
-}
-
-fn parse_arguments(args: &Vec<String>) -> Result<Params, String> {
+fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
     let debug = args.contains(&String::from("-d"));
     let cwd = match env::current_dir() {
         Ok(p) => p,
@@ -36,10 +20,10 @@ fn parse_arguments(args: &Vec<String>) -> Result<Params, String> {
     };
 
     let mut missing_params: Vec<&str> = vec!();
-    let path = get_key_value("-p", args.as_ref());
-    let file = get_key_value("-f", args.as_ref());
+    let path = util::get_key_value("-p", args.as_ref());
+    let file = util::get_key_value("-f", args.as_ref());
 
-    let bin = get_key_value("-b", args.as_ref());
+    let bin = util::get_key_value("-b", args.as_ref());
     if bin.is_err() {
         missing_params.push("-b");
     }
@@ -60,14 +44,14 @@ fn parse_arguments(args: &Vec<String>) -> Result<Params, String> {
         return Err(String::from(format!("Missing required param(s): {0}", missing_params.join(", "))));
     }
 
-    Ok(Params {
+    Ok(NSTParams {
         src: std::path::PathBuf::new().join(cwd.clone()).join(src),
         bin_dir: std::path::PathBuf::new().join(cwd.clone()).join(bin?),
         debug,
     })
 }
 
-fn collect_shaders(params: &Params) -> Vec<std::path::PathBuf> {
+fn collect_shaders(params: &NSTParams) -> Vec<std::path::PathBuf> {
     let excluded_extensions = HashSet::from(["inc", "h"]);
     let mut result: Vec<std::path::PathBuf> = vec!();
     for entry in glob::glob(format!("{0}/**/*.glsl", params.src.to_str().unwrap()).as_str()).expect("Failed to read glob pattern") {
@@ -82,7 +66,7 @@ fn collect_shaders(params: &Params) -> Vec<std::path::PathBuf> {
     result
 }
 
-fn compile_shaders(params: &Params, shaders: &Vec<std::path::PathBuf>) -> i32 {
+fn compile_shaders(params: &NSTParams, shaders: &Vec<std::path::PathBuf>) -> i32 {
     let mut compiled = 0;
     for shader in shaders {
         let mut cmd = std::process::Command::new("glslangValidator");
@@ -111,32 +95,30 @@ fn compile_shaders(params: &Params, shaders: &Vec<std::path::PathBuf>) -> i32 {
     compiled
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    let params_result = parse_arguments(args.as_ref());
-
-    let has_help_flag = args.contains(&String::from("-h"));
-    if params_result.is_err() || has_help_flag {
-        println!("{0}{1}\
-            \nUsage: nst [options]\
+pub fn nst(args: &Vec<String>) -> Result<(), String> {
+    if args.contains(&String::from("-h")) {
+        println!("{0}\
+            \nUsage: nrt build-shaders [options]\
             \n\nOptions:\
             \n\t-h\t\tDisplay available options\
             \n\t-p [dir]\tShader source directory\
             \n\t-f [shader]\tSpecific shader source file\
             \n\t-b [dir]\tOutput directory\
             \n\t-d\t\tInclude debug information in compiled shaders",
-            "[Nebula Shader Tools]".bright_purple().bold(),
-            if params_result.is_err() && !has_help_flag { format!("\n\nError: {0}", params_result.err().unwrap()).bright_red() } else { "\n".normal() }
-        );
-        return;
+            "[Nebula Resource Tools]".bright_purple().bold());
+        return Ok(());
     }
 
-    let params = params_result.unwrap();
-    // println!("Params:\n\tsrc: {0}\n\tbin: {1}\n\tdebug: {2}", params.src.display(), params.bin_dir.display(), params.debug);
+    let params = match parse_arguments(args.as_ref()) {
+        Ok(x) => x,
+        Err(e) => return Err(e),
+    };
 
     if !params.bin_dir.exists() {
-        std::fs::create_dir(params.bin_dir.clone()).expect("Failed to create output directory.");
+        match std::fs::create_dir(params.bin_dir.clone()) {
+            Err(_e) => return Err("Failed to create output directory.".to_string()),
+            _ => {}
+        }
     }
 
     let shaders = collect_shaders(&params);
@@ -147,4 +129,6 @@ fn main() {
         "Compiled shaders:".bright_blue(),
         compiled_count.to_string().bold(),
         format!("(out of {0})", shaders.len()).to_string().italic());
+
+    Ok(())
 }

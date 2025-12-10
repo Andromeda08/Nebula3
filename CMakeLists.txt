@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 23)
 find_package(Vulkan REQUIRED)
 
 # Shader Tools
-include(Tools/nst/cmake/nst.cmake)
-nst_build()
+include(Tools/nrt/cmake/nrt.cmake)
+nrt_build()
 
 add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
