@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Nebula (+nrt)" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Nebula3" TARGET_NAME="Nebula3" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Nebula3" RUN_TARGET_NAME="Nebula3">
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="false" run_configuration_name="nrt_shaders" run_configuration_type="CargoCommandRunConfiguration" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="nrt_resources" run_configuration_type="CargoCommandRunConfiguration" />
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
