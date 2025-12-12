@@ -16,3 +16,6 @@
 [submodule "External/imnodes"]
 	path = External/imnodes
 	url = https://github.com/Nelarius/imnodes.git
+[submodule "Tools/rg-vis"]
+	path = Tools/rg-vis
+	url = https://github.com/Andromeda08/nbl-rg-vis
