@@ -16,9 +16,9 @@
 [submodule "External/imnodes"]
 	path = External/imnodes
 	url = https://github.com/Nelarius/imnodes.git
-[submodule "ext/gemmi"]
-	path = ext/gemmi
-	url = https://github.com/project-gemmi/gemmi.git
 [submodule "Tools/rg-vis"]
 	path = Tools/rg-vis
 	url = https://github.com/Andromeda08/nbl-rg-vis
+[submodule "External/gemmi"]
+	path = External/gemmi
+	url = https://github.com/project-gemmi/gemmi.git
