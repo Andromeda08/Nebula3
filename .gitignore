@@ -3,6 +3,9 @@
 
 cmake-build-debug
 cmake-build-release
+Debug
+Release
+x64/*
 CMakeFiles
 Nebula3.dir
 nrt
@@ -13,3 +16,4 @@ nrt
 CMakeCache.txt
 cmake_install.cmake
 *.sln
+nbl.json
