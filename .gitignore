@@ -1,7 +1,15 @@
 .idea
+.vs
 
 cmake-build-debug
 cmake-build-release
+CMakeFiles
+Nebula3.dir
+nrt
 
 *.spv
+*.vcxproj*
 .DS_Store
+CMakeCache.txt
+cmake_install.cmake
+*.sln
