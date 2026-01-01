@@ -19,6 +19,3 @@
 [submodule "Tools/rg-vis"]
 	path = Tools/rg-vis
 	url = https://github.com/Andromeda08/nbl-rg-vis
-[submodule "External/gemmi"]
-	path = External/gemmi
-	url = https://github.com/project-gemmi/gemmi.git
