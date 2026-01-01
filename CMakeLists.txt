@@ -13,6 +13,7 @@ add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
+add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -155,6 +156,8 @@ add_executable(Nebula3
     Nebula/Scene/Geometry/Geometry.cpp
     Nebula/Scene/Types/CameraData.hpp
     Nebula/Scene/Camera/ICamera.hpp
+    Nebula/Utils/CIFParser.cpp
+    Nebula/Utils/CIFParser.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -168,6 +171,7 @@ target_include_directories(Nebula3 PUBLIC
     External/json/include
     External/stb
     External/vma/include
+    External/gemmi/include
     ${Vulkan_INCLUDE_DIRS}
 )
 
@@ -176,6 +180,7 @@ target_link_libraries(Nebula3 PUBLIC
     ${Vulkan_LIBRARIES}
     glfw
     glm::glm
+    gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
 )
 
