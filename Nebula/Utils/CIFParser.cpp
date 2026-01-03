@@ -56,6 +56,7 @@ void CIFParser::loadCIFFile(const std::string& filename)
 	}
 
 	m_useAtomSite = std::find(mmcif_categories.begin(), mmcif_categories.end(), OPTIONAL_MMCIF_CATEGORIES[0]) != mmcif_categories.end();
+	m_fractTransfData = std::find(mmcif_categories.begin(), mmcif_categories.end(), OPTIONAL_MMCIF_CATEGORIES[1]) != mmcif_categories.end();
 
 	getAtoms();
 	getBonds();
@@ -78,9 +79,11 @@ void CIFParser::printAtoms()
 void CIFParser::printBonds()
 {
 	std::cout << "Bonds: \n";
-	for (const auto& [k, v] : bonds) {
-		for (const auto& e : v) {
-			std::cout << k << ": " << e.compId << ", " << e.atom2Id << ", " << static_cast<int>(e.bondType) << '\n';
+	for (const auto& [compId, v2] : bonds) {
+		for (const auto& [atomId, v] : v2) {
+			for (const auto& e : v) {
+				std::cout << compId << '[' << atomId << "]: " << e.atom2Id << ", " << static_cast<int>(e.bondType) << '\n';
+			}
 		}
 	}
 }
@@ -88,17 +91,19 @@ void CIFParser::printBonds()
 void CIFParser::printPositions()
 {
 	std::cout << "Positions (Observed | Expected): \n";
-	for (const auto& [k, v] : positions) {
-		for (const auto& e : v) {
-			std::cout << k << ": ";
-			for (auto i = 0; i < 3; i++) {
-				std::cout << e.observed[i] << ' ';
+	for (const auto& [compId, v2] : positions) {
+		for (const auto& [atomId, v] : v2) {
+			for (const auto& e : v) {
+				std::cout << compId << '[' << atomId << "]: ";
+				for (auto i = 0; i < 3; i++) {
+					std::cout << e.observed[i] << ' ';
+				}
+				std::cout << "| ";
+				for (auto i = 0; i < 3; i++) {
+					std::cout << e.expected[i] << ' ';
+				}
+				std::cout << '\n';
 			}
-			std::cout << "| ";
-			for (auto i = 0; i < 3; i++) {
-				std::cout << e.expected[i] << ' ';
-			}
-			std::cout << '\n';
 		}
 	}
 }
@@ -125,7 +130,7 @@ void CIFParser::getAtoms()
 		atoms[compIds[i]].emplace_back(compIds[i], atomIds[i], typeSymbols[i]);
 	}
 
-	getPositions(table, atomIds);
+	getPositions(table, compIds, atomIds);
 }
 
 void CIFParser::getBonds()
@@ -144,11 +149,11 @@ void CIFParser::getBonds()
 	for (auto i = 0; i < table.length(); i++) {
 		auto bond = bondTypes[i];
 		std::transform(bond.begin(), bond.end(), bond.begin(), [](unsigned char c) { return std::tolower(c); });
-		bonds[atom1Ids[i]].emplace_back(compIds[i], atom2Ids[i], BOND_TYPE_CONV_TABLE.at(bond));
+		bonds[compIds[i]][atom1Ids[i]].emplace_back(compIds[i], atom2Ids[i], BOND_TYPE_CONV_TABLE.at(bond));
 	}
 }
 
-void CIFParser::getPositions(cif::Table& table, cif::Column& atomIds)
+void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Column& atomIds)
 {
 	// model_cartn_xyz: Experimentally determined coordinates
 	// pdbx_model_cartn_xyz_ideal: Expected coordinates
@@ -161,7 +166,7 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& atomIds)
 		auto idealZ = table.find_column("pdbx_model_Cartn_z_ideal");
 
 		for (auto i = 0; i < table.length(); i++) {
-			positions[atomIds[i]].emplace_back(
+			positions[compIds[i]][atomIds[i]].emplace_back(
 				cif::as_number(cartnX[i]),
 				cif::as_number(cartnY[i]),
 				cif::as_number(cartnZ[i]),
@@ -170,5 +175,38 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& atomIds)
 				cif::as_number(idealZ[i])
 			);
 		}
+	}
+	else {
+		const std::string ATOM_SITE_CAT = OPTIONAL_MMCIF_CATEGORIES[0];
+		auto siteTable = m_block.find_mmcif_category(ATOM_SITE_CAT);
+		auto siteCompIds = siteTable.find_column("label_comp_id");
+		auto siteAtomIds = siteTable.find_column("label_atom_id");
+		auto cartnX = siteTable.find_column("Cartn_x");
+		auto cartnY = siteTable.find_column("Cartn_y");
+		auto cartnZ = siteTable.find_column("Cartn_z");
+
+		for (auto i = 0; i < siteTable.length(); i++) {
+			positions[siteCompIds[i]][siteAtomIds[i]].emplace_back(
+				cif::as_number(cartnX[i]),
+				cif::as_number(cartnY[i]),
+				cif::as_number(cartnZ[i])
+			);
+		}
+
+#ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
+		if (m_fractTransfData) {
+			const std::string ATOM_SITES_CAT = OPTIONAL_MMCIF_CATEGORIES[1];
+			auto sitesTable = m_block.find_mmcif_category(ATOM_SITES_CAT);
+
+			for (auto i = 0; i < 3; i++) {
+				for (auto j = 0; j < 3; j++) {
+					auto matEntry = sitesTable.find_column("fract_transf_matrix[" + std::to_string(i + 1) + "][" + std::to_string(j + 1) + "]");
+					fractTrans.transfMatrix[i * 3 + j] = cif::as_number(matEntry[0]);
+				}
+				auto vecEntry = sitesTable.find_column("fract_transf_vector[" + std::to_string(i + 1) + "]");
+				fractTrans.translVector[i] = cif::as_number(vecEntry[0]);
+			}
+		}
+#endif
 	}
 }
