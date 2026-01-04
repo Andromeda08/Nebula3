@@ -45,7 +45,12 @@ public:
 private:
     friend class SceneInfoComponent;
 
-    UPtr<ICamera>           mCamera;
+    SPtr<RHI::VulkanRHI>                mRHI;
+
+    UPtr<ICamera>                       mCamera;
+    PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
+    SPtr<RHI::Descriptor>               mSceneDescriptor;
+
     std::string             mName;
     UPtr<TextureManager>    mTextureManager;
 };
