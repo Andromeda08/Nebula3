@@ -14,6 +14,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     mCamera = OrbitCamera::create({
         .aspect = createInfo.rhi->getSwapchain()->getProperties().aspectRatio,
     });
+    const auto cameraData = mCamera->getCameraData();
     for (auto& cameraUb : mCameraUB)
     {
         cameraUb = mRHI->createBuffer({
@@ -21,6 +22,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .type      = RHI::BufferType::Uniform,
             .debugName = "CameraUB",
         });
+        cameraUb->setData(&cameraData, sizeof(CameraData));
     }
 
     /* Scene Descriptor */ {
@@ -47,4 +49,10 @@ void Scene::registerUIComponents(UserInterface* pUserInterface) const
 {
     pUserInterface->addComponent<OrbitCameraComponent>(
         dynamic_cast<OrbitCamera*>(mCamera.get()));
+}
+
+void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
+{
+    const auto cameraData = mCamera->getCameraData();
+    mCameraUB[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
 }

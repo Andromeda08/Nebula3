@@ -38,9 +38,7 @@ public:
         mCamera->registerMouse(pWindow);
     }
 
-    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
-    {
-    }
+    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
 
 private:
     friend class SceneInfoComponent;
