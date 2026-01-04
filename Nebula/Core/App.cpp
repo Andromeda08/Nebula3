@@ -37,6 +37,7 @@ App::App()
         .name = "Default Scene",
     });
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+    mScene->registerUIComponents(mUserInterface.get());
 }
 
 UPtr<App> App::create() noexcept
