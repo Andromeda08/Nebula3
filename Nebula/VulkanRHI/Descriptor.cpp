@@ -100,12 +100,6 @@ namespace RHI
         createPool();
         createLayout();
         createSets();
-
-        if (createInfo.initialWrite.has_value())
-        {
-            const auto& initialWrite = createInfo.initialWrite.value();
-            write(initialWrite);
-        }
     }
 
     Descriptor::~Descriptor()
@@ -120,7 +114,7 @@ namespace RHI
         device.destroyDescriptorSetLayout(mLayout);
     }
 
-    void Descriptor::write(DescriptorWriteInfo writeInfo) const
+    void Descriptor::write_old(DescriptorWriteInfo writeInfo) const
     {
         assert(writeInfo.setIndex < mSetCount);
         if (writeInfo.writes.empty())
@@ -135,6 +129,19 @@ namespace RHI
         }
 
         mDevice->getHandle().updateDescriptorSets(writeInfo.writes, {});
+    }
+
+    void Descriptor::write(DescriptorWrite descriptorWrite) const noexcept
+    {
+        for (const auto& i : descriptorWrite.mWriteSetIndices)
+        {
+            const auto dstSet = getSet(i);
+            for (auto& write : descriptorWrite.mWrites)
+            {
+                write.setDstSet(dstSet);
+            }
+            mDevice->getHandle().updateDescriptorSets(descriptorWrite.mWrites, {});
+        }
     }
 
     vk::DescriptorSet Descriptor::getSet(const size_t i) const

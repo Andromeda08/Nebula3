@@ -161,8 +161,10 @@ add_executable(Nebula3
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
+    Nebula/VulkanRHI/Image3D.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
+    Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

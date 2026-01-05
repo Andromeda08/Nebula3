@@ -78,13 +78,13 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .setCount     = 2,
             .debugName    = "SceneDescriptor",
         });
+
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
-            const auto bufferInfo = vk::DescriptorBufferInfo().setBuffer(mCameraUB[i]->getHandle()).setOffset(0).setRange(sizeof(CameraData));
-            const auto descriptorWrite = RHI::DescriptorWriteInfo()
-                .writeUniformBuffers(0, 1, &bufferInfo)
-                .setSetIndex(i);
-            mSceneDescriptor->write(descriptorWrite);
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                .addSetIndex(i)
+                .writeUniformBuffer(0, { mCameraUB[i]->getHandle(), 0, sizeof(CameraData) });
+            mSceneDescriptor->write(std::move(descriptorWrite));
         }
     }
 
