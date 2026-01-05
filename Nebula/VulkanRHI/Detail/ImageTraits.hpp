@@ -31,7 +31,7 @@ namespace RHI
     }
 
     // Get the number of mip levels for an extent.
-    [[nodiscard]] constexpr uint32_t getMipLevels(const vk::Extent2D& extent) noexcept
+    [[nodiscard]] inline uint32_t getMipLevels(const vk::Extent2D& extent) noexcept
     {
         return static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1;
     }
