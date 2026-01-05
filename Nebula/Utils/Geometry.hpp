@@ -5,6 +5,13 @@
 
 namespace geom
 {
+	struct BondTransform {
+		glm::vec3 position;
+		glm::vec3 axis;
+		float angle;
+		float dist;
+	};
+
 	struct Data {
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
@@ -17,6 +24,23 @@ namespace geom
 			}
 		}
 	};
+
+	BondTransform calcBondTransforms(const glm::vec3& atom1, const glm::vec3& atom2) {
+		BondTransform bt;
+
+		glm::vec3 dir = atom2 - atom1;
+		bt.dist = glm::length(dir);
+
+		glm::vec3 v1(0.f, 1.f, 0.f);
+		glm::vec3 v2 = dir / bt.dist;
+		float angle = glm::acos(glm::dot(v1, v2));
+
+		bt.axis = glm::cross(v1, v2);
+		bt.angle = 180.f * angle / glm::pi<float>();
+		bt.position = (atom1 + atom2) / 2.f;
+
+		return bt;
+	}
 
 	// From ECG solution
 	Data createSphereData(float radius, uint32_t latSeg, uint32_t lngSeg) {

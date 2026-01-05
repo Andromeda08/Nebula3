@@ -39,9 +39,45 @@ struct AtomData
 
 struct BondData
 {
-	std::string compId;
 	std::string atom2Id;
 	BondType bondType;
+};
+
+struct AtomSiteId
+{
+	AtomSiteId(const std::string& asymId, const std::string& seqId, const std::string& compId, const std::string& atomId)
+		: asymId{ asymId }, seqId{ seqId }, compId{ compId }, atomId{ atomId }
+	{
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, const AtomSiteId& id) {
+		os << id.compId << ", " << id.atomId << ", " << id.asymId << ", " << id.seqId;
+		return os;
+	}
+	auto operator<=>(const AtomSiteId&) const = default;
+
+	std::string asymId;
+	std::string seqId;
+	std::string compId;
+	std::string atomId;
+};
+
+//https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+struct AtomSiteHasher
+{
+	std::size_t operator()(const AtomSiteId& id) const
+	{
+		using std::size_t;
+		using std::hash;
+		using std::string;
+
+		size_t res = 17;
+		res = res * 31 + hash<string>()(id.asymId);
+		res = res * 31 + hash<string>()(id.seqId);
+		res = res * 31 + hash<string>()(id.compId);
+		res = res * 31 + hash<string>()(id.atomId);
+		return res;
+	}
 };
 
 /*
@@ -51,6 +87,8 @@ struct BondData
  */
 struct PositionData
 {
+	PositionData() = default;
+
 	PositionData(double ox, double oy, double oz, double ex = 0, double ey = 0, double ez = 0) {
 		observed[0] = ox;
 		observed[1] = oy;
@@ -82,13 +120,14 @@ struct FractionalTransform
 };
 #endif
 
-template <typename T> using CIFContainer1 = std::unordered_map<std::string, std::vector<T>>;
-template <typename T> using CIFContainer2 = std::unordered_map<std::string, std::unordered_map<std::string, std::vector<T>>>;
+using AtomContainer = std::unordered_map<std::string, std::vector<AtomData>>;
+using BondContainer = std::unordered_map<std::string, std::unordered_map<std::string, std::vector<BondData>>>;
+using AtomSiteContainer = std::unordered_map<AtomSiteId, PositionData, AtomSiteHasher>;
 
 class CIFParser
 {
 public:
-	CIFParser(const std::string& filename);
+	CIFParser(const std::string& filename, bool centerPos = false);
 
 	void printAtoms();
 	void printBonds();
@@ -96,9 +135,12 @@ public:
 
 	inline bool hasFractTransfData() const { return m_fractTransfData; }
 
-	CIFContainer1<AtomData> atoms;
-	CIFContainer2<BondData> bonds;
-	CIFContainer2<PositionData> positions;
+	AtomContainer atoms;
+	BondContainer bonds;
+	AtomSiteContainer positions;
+#ifdef USE_GLM
+	glm::vec3 centerOffset;
+#endif
 #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
 	FractionalTransform fractTrans;
 #endif
@@ -112,5 +154,6 @@ private:
 	gemmi::cif::Block m_block;
 	bool m_useAtomSite;
 	bool m_fractTransfData;
+	bool m_centerPos;
 };
 

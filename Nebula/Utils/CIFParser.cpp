@@ -32,7 +32,8 @@ const std::unordered_map<std::string, BondType> BOND_TYPE_CONV_TABLE = {
 };
 
 
-CIFParser::CIFParser(const std::string& filename)
+CIFParser::CIFParser(const std::string& filename, bool centerPos)
+	: m_centerPos{ centerPos }
 {
 	loadCIFFile(filename);
 }
@@ -57,6 +58,7 @@ void CIFParser::loadCIFFile(const std::string& filename)
 
 	m_useAtomSite = std::find(mmcif_categories.begin(), mmcif_categories.end(), OPTIONAL_MMCIF_CATEGORIES[0]) != mmcif_categories.end();
 	m_fractTransfData = std::find(mmcif_categories.begin(), mmcif_categories.end(), OPTIONAL_MMCIF_CATEGORIES[1]) != mmcif_categories.end();
+	centerOffset = glm::vec3(0.f);
 
 	getAtoms();
 	getBonds();
@@ -65,42 +67,37 @@ void CIFParser::loadCIFFile(const std::string& filename)
 void CIFParser::printAtoms()
 {
 	std::cout << "Atoms: \n";
+	uint64_t cnt = 0;
 	for (const auto& [k, v] : atoms) {
 		for (const auto& e : v) {
 			std::cout << k << ": " << e.atomId << ", " << e.typeSymbol << '\n';
+			cnt++;
 		}
 	}
+	std::cout << cnt << std::endl;
 }
 
 void CIFParser::printBonds()
 {
 	std::cout << "Bonds: \n";
+	uint64_t cnt = 0;
 	for (const auto& [compId, v2] : bonds) {
 		for (const auto& [atomId, v] : v2) {
 			for (const auto& e : v) {
 				std::cout << compId << '[' << atomId << "]: " << e.atom2Id << ", " << static_cast<int>(e.bondType) << '\n';
+				cnt++;
 			}
 		}
 	}
+	std::cout << cnt << std::endl;
 }
 
 void CIFParser::printPositions()
 {
 	std::cout << "Positions (Observed | Expected): \n";
-	for (const auto& [compId, v2] : positions) {
-		for (const auto& [atomId, v] : v2) {
-			for (const auto& e : v) {
-				std::cout << compId << '[' << atomId << "]: ";
-				for (auto i = 0; i < 3; i++) {
-					std::cout << e.observed[i] << ' ';
-				}
-				std::cout << "| ";
-				for (auto i = 0; i < 3; i++) {
-					std::cout << e.expected[i] << ' ';
-				}
-				std::cout << '\n';
-			}
-		}
+	for (const auto& [k, v] : positions) {
+		std::cout << k << ": " << v.observed[0] << v.observed[1] << v.observed[2]
+			<< " | " << v.expected[0] << v.expected[1] << v.expected[2] << '\n';
 	}
 }
 
@@ -139,7 +136,7 @@ void CIFParser::getBonds()
 	for (auto i = 0; i < table.length(); i++) {
 		auto bond = bondTypes[i];
 		std::transform(bond.begin(), bond.end(), bond.begin(), [](unsigned char c) { return std::tolower(c); });
-		bonds[compIds[i]][atom1Ids[i]].emplace_back(compIds[i], atom2Ids[i], BOND_TYPE_CONV_TABLE.at(bond));
+		bonds[compIds[i]][atom1Ids[i]].emplace_back(atom2Ids[i], BOND_TYPE_CONV_TABLE.at(bond));
 	}
 }
 
@@ -156,7 +153,12 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
 		auto idealZ = table.find_column("pdbx_model_Cartn_z_ideal");
 
 		for (auto i = 0; i < table.length(); i++) {
-			positions[compIds[i]][atomIds[i]].emplace_back(
+			if (m_centerPos) {
+				// Hopefully works
+				centerOffset += (1.f / (i + 1)) * (glm::vec3(cif::as_number(cartnX[i]), cif::as_number(cartnY[i]), cif::as_number(cartnZ[i])) - centerOffset);
+			}
+			AtomSiteId key = { "", "", compIds[i], atomIds[i] }; // "" Non existant in this case, unique id possible with compId and atomId
+			positions[key] = PositionData(
 				cif::as_number(cartnX[i]),
 				cif::as_number(cartnY[i]),
 				cif::as_number(cartnZ[i]),
@@ -165,22 +167,41 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
 				cif::as_number(idealZ[i])
 			);
 		}
+
+		if (m_centerPos) {
+			for (auto& [k, v] : positions) {
+				v.observed -= centerOffset;
+			}
+		}
 	}
 	else {
 		const std::string ATOM_SITE_CAT = OPTIONAL_MMCIF_CATEGORIES[0];
 		auto siteTable = m_block.find_mmcif_category(ATOM_SITE_CAT);
 		auto siteCompIds = siteTable.find_column("label_comp_id");
 		auto siteAtomIds = siteTable.find_column("label_atom_id");
+		auto siteSeqIds = siteTable.find_column("label_seq_id");
+		auto siteAsymIds = siteTable.find_column("label_asym_id");
 		auto cartnX = siteTable.find_column("Cartn_x");
 		auto cartnY = siteTable.find_column("Cartn_y");
 		auto cartnZ = siteTable.find_column("Cartn_z");
 
 		for (auto i = 0; i < siteTable.length(); i++) {
-			positions[siteCompIds[i]][siteAtomIds[i]].emplace_back(
+			if (m_centerPos) {
+				// Hopefully works
+				centerOffset += (1.f / (i + 1)) * (glm::vec3(cif::as_number(cartnX[i]), cif::as_number(cartnY[i]), cif::as_number(cartnZ[i])) - centerOffset);
+			}
+			AtomSiteId id = { siteAsymIds[i], siteSeqIds[i], siteCompIds[i], siteAtomIds[i] };
+			positions[id] = PositionData(
 				cif::as_number(cartnX[i]),
 				cif::as_number(cartnY[i]),
 				cif::as_number(cartnZ[i])
 			);
+		}
+
+		if (m_centerPos) {
+			for (auto& [k, v] : positions) {
+				v.observed -= centerOffset;
+			}
 		}
 
 #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
