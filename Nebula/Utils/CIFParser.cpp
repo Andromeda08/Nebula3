@@ -60,10 +60,6 @@ void CIFParser::loadCIFFile(const std::string& filename)
 
 	getAtoms();
 	getBonds();
-
-	/*for (const auto& e : mmcif_categories) {
-		std::cout << e << '\n';
-	}*/
 }
 
 void CIFParser::printAtoms()
@@ -107,12 +103,6 @@ void CIFParser::printPositions()
 		}
 	}
 }
-
-//array_xyz mmCIFFile::applySymmetryXYZ(const array_xyz& fracts, const std::string& symmetry)
-//{
-//	gemmi::Op op = gemmi::parse_triplet(symmetry);
-//	return op.apply_to_xyz(fracts);
-//}
 
 void CIFParser::getAtoms()
 {
@@ -201,7 +191,11 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
 			for (auto i = 0; i < 3; i++) {
 				for (auto j = 0; j < 3; j++) {
 					auto matEntry = sitesTable.find_column("fract_transf_matrix[" + std::to_string(i + 1) + "][" + std::to_string(j + 1) + "]");
+#ifndef USE_GLM
 					fractTrans.transfMatrix[i * 3 + j] = cif::as_number(matEntry[0]);
+#else
+					fractTrans.transfMatrix[j][i] = cif::as_number(matEntry[0]);
+#endif
 				}
 				auto vecEntry = sitesTable.find_column("fract_transf_vector[" + std::to_string(i + 1) + "]");
 				fractTrans.translVector[i] = cif::as_number(vecEntry[0]);

@@ -8,7 +8,6 @@ int main()
 {
     // 0.5 Test CIFparser integration
     CIFParser cif("Resources/CIFFiles/IBP.cif");
-    //cif.printPositions();
 
     // 1. Load Nebula configuration
     auto* config = Configuration::getInstance();

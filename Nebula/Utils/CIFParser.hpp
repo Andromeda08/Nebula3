@@ -1,14 +1,22 @@
 #pragma once
 
 #include <string>
-#include <array>
 #include <unordered_map>
 #include <vector>
 
 #include <gemmi/cif.hpp>
 
+// If defined, uses glm datatypes instead of std datatypes
+#define USE_GLM
+
 // If defined, converts cartesian to fractional coords and stores those in the expected field of PositionData instead of 0
 #define CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
+
+#ifndef USE_GLM
+#include <array>
+#else
+#include <glm/glm.hpp>
+#endif
 
 enum class BondType
 {
@@ -51,17 +59,26 @@ struct PositionData
 		expected[1] = ey;
 		expected[2] = ez;
 	}
-
+#ifndef USE_GLM
 	std::array<double, 3> observed;
 	std::array<double, 3> expected;
+#else
+	glm::vec3 observed;
+	glm::vec3 expected;
+#endif
 };
 
 #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
 // Only exists if fractional transforms are saved in the file (m_fractTransfData = true)
 struct FractionalTransform
 {
+#ifndef USE_GLM
 	std::array<double, 9> transfMatrix;
 	std::array<double, 3> translVector;
+#else
+	glm::mat3 transfMatrix;
+	glm::vec3 translVector;
+#endif
 };
 #endif
 
@@ -88,7 +105,6 @@ public:
 
 private:
 	void loadCIFFile(const std::string& filename);
-	//array_xyz applySymmetryXYZ(const array_xyz& fracts, const std::string& symmetry);
 	void getAtoms();
 	void getBonds();
 	void getPositions(gemmi::cif::Table& table, gemmi::cif::Column& compIds, gemmi::cif::Column& atomIds);
