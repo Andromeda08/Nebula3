@@ -164,7 +164,6 @@ namespace RHI
             if (featureLevel >= RHIFeatureLevel::Basic)
             {
                 extensions.push_back(std::make_unique<DeviceExtension>(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME));
-                extensions.push_back(std::make_unique<DeviceExtension>(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME));
                 extensions.push_back(std::make_unique<DeviceExtension>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
                 extensions.push_back(std::make_unique<VulkanCore11>());
                 extensions.push_back(std::make_unique<VulkanCore12>());
