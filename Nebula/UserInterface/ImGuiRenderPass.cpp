@@ -1,6 +1,7 @@
 #include "ImGuiRenderPass.hpp"
 
 #include <imgui.h>
+#include <imnodes.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
@@ -23,6 +24,8 @@ ImGuiRenderPass::ImGuiRenderPass(const ImGuiRenderPassCreateInfo& createInfo)
 ImGuiRenderPass::~ImGuiRenderPass()
 {
     mDevice->waitIdle();
+
+    ImNodes::DestroyContext();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -128,4 +131,7 @@ void ImGuiRenderPass::init_ImGui() const noexcept
 
     bResult = ImGui_ImplVulkan_Init(&initInfo);
     assert(bResult);
+
+    ImNodes::CreateContext();
+    ImNodes::StyleColorsDark();
 }

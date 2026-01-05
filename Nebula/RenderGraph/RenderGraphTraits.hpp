@@ -25,6 +25,7 @@ namespace rg
         X(AmbientOcclusionPass) \
         X(AntiAliasingPass) \
         X(CombinePass) \
+        X(Viz_ComputePrePass)
 
     #pragma region "NodeType : Enum, JSON Serialization, toString"
     enum class NodeType
@@ -101,6 +102,7 @@ namespace rg
         X(SceneData) \
         X(Buffer) \
         X(Image) \
+        X(Image3D) \
         X(TopLevelAS)
 
     #pragma region "ResourceType : Enum, JSON Serialization, toString"

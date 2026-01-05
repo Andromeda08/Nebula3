@@ -1,15 +1,11 @@
 #include "Core/App.hpp"
 #include "Core/Configuration.hpp"
-#include "Utils/CIFParser.hpp"
+// #include "Utils/CIFParser.hpp"
 
 UPtr<App> lApplication;
 
 int main()
 {
-    // 0.5 Test CIFparser integration
-    CIFParser cif("Resources/CIFFiles/IBP.cif");
-    //cif.printPositions();
-
     // 1. Load Nebula configuration
     auto* config = Configuration::getInstance();
 

@@ -16,6 +16,18 @@ namespace vk
     {
         extent.setWidth(json.at("extent").at(0)).setHeight(json.at("extent").at(1));
     }
+
+    void to_json(nlohmann::json& json, const Extent3D& extent)
+    {
+        json = nlohmann::json {
+            { "extent", std::array{extent.width, extent.height, extent.height} }
+        };
+    }
+
+    void from_json(const nlohmann::json& json, Extent3D& extent)
+    {
+        extent.setWidth(json.at("extent").at(0)).setHeight(json.at("extent").at(1)).setDepth(json.at("extent").at(2));
+    }
 }
 
 namespace rg
@@ -47,6 +59,21 @@ namespace rg
 
             json["resourceParams"] = imageInfo;
         }
+
+        if (auto* pImage3DInfo = std::get_if<Image3DInfo>(&dependencyInfo.resourceParams))
+        {
+            nlohmann::json imageInfo = {
+                { "sType", ImageInfo::sType },
+                { "imageUsage", pImage3DInfo->imageUsage }
+            };
+            if (pImage3DInfo->format != ImageInfo::sDefaultFormat)
+            {
+                imageInfo["format"] = pImage3DInfo->format;
+            }
+            imageInfo["extent"] = pImage3DInfo->extent;
+
+            json["resourceParams"] = imageInfo;
+        }
     }
 
     void from_json(const nlohmann::json& json, DependencyInfo& dependencyInfo)
@@ -73,6 +100,16 @@ namespace rg
                 }
 
                 dependencyInfo.resourceParams = imageInfo;
+            }
+            if (params.at("sType").get<std::string>() == std::string(Image3DInfo::sType))
+            {
+                Image3DInfo image3DInfo = {
+                    .imageUsage = params.at("imageUsage"),
+                    .format     = params.value("format", ImageInfo::sDefaultFormat),
+                    .extent     = params.at("extent"),
+                };
+
+                dependencyInfo.resourceParams = image3DInfo;
             }
         }
     }

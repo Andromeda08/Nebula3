@@ -13,6 +13,40 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     //     .rhi = createInfo.rhi,
     // });
 
+    /* CIF Loading */ {
+        mCIF = makeUnique<CIFParser>("Resources/CIFFiles/IBP.cif");
+        std::vector<glm::vec3> positions;
+        for (const auto& [compId, v2] : mCIF->positions) {
+            for (const auto& [atomId, v] : v2) {
+                for (const auto& e : v) {
+                    positions.push_back({ e.expected[0], e.expected[1], e.expected[2] });
+                }
+            }
+        }
+        /* Data Upload */ {
+            const auto positionsSize = positions.size() * sizeof(glm::vec3);
+            mMoleculePosBuffer = mRHI->createBuffer({
+                .size      = positionsSize,
+                .type      = RHI::BufferType::Storage,
+                .debugName = "Molecule Positions",
+            });
+
+            const auto staging = mRHI->createBuffer({
+                .size = positionsSize,
+                .type = RHI::BufferType::Staging,
+            });
+            staging->setData(positions.data(), positionsSize);
+            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+                const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
+                const auto info = vk::CopyBufferInfo2()
+                    .setSrcBuffer(staging->getHandle())
+                    .setDstBuffer(mMoleculePosBuffer->getHandle())
+                    .setRegions(copy);
+                commandList->getHandle().copyBuffer2(info);
+            });
+        }
+    }
+
     /* Cube Object & Vertex/Index Buffers */ {
         mCube = makeShared<Cube>(Cube::Params { 0.5f });
 

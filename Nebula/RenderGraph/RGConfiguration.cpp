@@ -70,6 +70,10 @@ namespace rg
             .cPin  = { 124, 136, 255 },
             .cLink = {  97,  95, 255 },
         };
+        styles[Image3D] = {
+            .cPin  = {  55,  42, 172 },
+            .cLink = {  55,  42, 172 },
+        };
         styles[SceneData] = {
             .cPin  = { 255, 186,   0 },
             .cLink = { 253, 154,   0 },
