@@ -4,7 +4,7 @@
 
 UserInterface::UserInterface(const UserInterfaceCreateInfo& createInfo)
 {
-    mRenderer = ImGuiRenderer::create({
+    mRenderer = ImGuiRenderPass::create({
         .fontFile = createInfo.fontFile,
         .window   = createInfo.window,
         .rhi      = createInfo.rhi,
@@ -21,7 +21,7 @@ void UserInterface::update() const
 
 void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
 {
-    mRenderer->render(pCommandList->getHandle(), frameData, [&]()
+    mRenderer->render(pCommandList, frameData, [&]()
     {
         for (const auto& component : mComponents)
         {

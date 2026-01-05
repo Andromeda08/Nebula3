@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IComponent.hpp"
-#include "ImGuiRenderer.hpp"
+#include "ImGuiRenderPass.hpp"
 #include "Core/Macro.hpp"
 
 struct UserInterfaceCreateInfo
@@ -32,6 +32,6 @@ public:
     static bool wantCaptureKeyboard() noexcept;
 
 private:
-    UPtr<ImGuiRenderer>           mRenderer;
+    UPtr<ImGuiRenderPass>         mRenderer;
     std::vector<UPtr<IComponent>> mComponents;
 };

@@ -24,7 +24,8 @@ set("IMGUI_FILES"
 )
 
 set(IMNODES_DIR External/imnodes)
-set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
+set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp
+    Nebula/UserInterface/ImGuiRenderPass.cpp)
 
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
@@ -84,8 +85,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Commands/CommandQueue.hpp
     Nebula/VulkanRHI/Commands/CommandQueue.cpp
     Nebula/VulkanRHI/Commands.hpp
-    Nebula/UserInterface/ImGuiRenderer.cpp
-    Nebula/UserInterface/ImGuiRenderer.hpp
     Nebula/UserInterface/UserInterface.cpp
     Nebula/UserInterface/UserInterface.hpp
     Nebula/UserInterface/IComponent.hpp
