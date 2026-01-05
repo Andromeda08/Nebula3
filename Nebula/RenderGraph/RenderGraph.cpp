@@ -3,6 +3,7 @@
 #include <print>
 
 #include "RenderPass/RenderPass.hpp"
+#include "RenderPass/Molecule/ComputePrePass.hpp"
 
 namespace rg
 {
@@ -25,6 +26,7 @@ namespace rg
             case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
             case AntiAliasingPass:      return AntiAliasingPass::getNodeInfo();
             case CombinePass:           return CombinePass::getNodeInfo();
+            case Viz_ComputePrePass:    return viz::ComputePrePass::getNodeInfo();
             default:                    throw std::runtime_error("NodeType not supported");
         }
     }
