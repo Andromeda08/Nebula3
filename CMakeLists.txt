@@ -24,8 +24,7 @@ set("IMGUI_FILES"
 )
 
 set(IMNODES_DIR External/imnodes)
-set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp
-    Nebula/UserInterface/ImGuiRenderPass.cpp)
+set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
@@ -162,6 +161,8 @@ add_executable(Nebula3
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
+    Nebula/UserInterface/ImGuiRenderPass.cpp
+    Nebula/VulkanRHI/Detail/BufferTraits.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

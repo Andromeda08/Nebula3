@@ -190,7 +190,8 @@ namespace RHI
     // Vulkan Device                            //
     // ======================================== //
     Device::Device(const DeviceCreateInfo& createInfo)
-    : mInstance(createInfo.instance)
+    : mRHIFeatureLevel(createInfo.featureLevel)
+    , mInstance(createInfo.instance)
     {
         const auto& config = Configuration::getConfig();
         mDebugFeatures  = config.rhi.debugFeatures;

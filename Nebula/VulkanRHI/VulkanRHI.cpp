@@ -24,10 +24,10 @@ namespace RHI
 
         if (config.rhi.debugFeatures)
         {
-            // mDebugContext = DebugContext::create({ mInstance });
+            mDebugContext = DebugContext::create({ mInstance });
         }
 
-        mDevice = Device::create({ mInstance->getHandle() });
+        mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
 
         mSwapchain = Swapchain::create({
