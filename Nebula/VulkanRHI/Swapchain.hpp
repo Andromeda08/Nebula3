@@ -8,6 +8,7 @@
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Detail/ImageTraits.hpp"
 
 namespace RHI
 {
@@ -45,11 +46,33 @@ namespace RHI
 
         void setScissorViewport(const vk::CommandBuffer& commandList) const;
 
-        vk::SwapchainKHR getHandle() const { return mSwapchain; }
+        /**
+         * Create an ImageMemoryBarrier to the dstState for the specified image.
+         * @param i Swapchain image index
+         * @param dstUsage
+         * @param update Update the internally tracked state
+         */
+        vk::ImageMemoryBarrier2 getBarrier(const uint32_t i, const ImageUsage& dstUsage, const bool update = true) noexcept
+        {
+            assert(i < mImages.size());
+            auto& imageState = mImageStates[i];
 
-        SPtr<Image>   getImage(size_t i) const;
-        vk::Image     getImageHandle(size_t i) const;
-        vk::ImageView getImageView(size_t i)   const;
+            const auto dstState = getImageState(dstUsage);
+            const auto barrier  = makeImageMemoryBarrier(mImageStates[i], dstState)
+                .setImage(mImages[i])
+                .setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+
+            if (update)
+            {
+                imageState = dstState;
+            }
+
+            return barrier;
+        }
+
+        vk::Image getImage(size_t i) const;
+
+        vk::ImageView getImageView(size_t i) const;
 
         const SwapchainProperties& getProperties() const noexcept
         {
@@ -61,26 +84,7 @@ namespace RHI
             return mImageCount;
         }
 
-        vk::ImageMemoryBarrier2 getBarrier(const uint32_t i, const ImageState& dstState) noexcept
-        {
-            assert(i < mImages.size());
-            auto& imageState = mImageStates[i];
-
-            const auto barrier = vk::ImageMemoryBarrier2()
-                .setImage(mImages[i])
-                .setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 })
-                .setOldLayout(imageState.layout)
-                .setSrcAccessMask(imageState.accessFlags)
-                .setSrcStageMask(imageState.stageFlags)
-                .setNewLayout(dstState.layout)
-                .setDstAccessMask(dstState.accessFlags)
-                .setDstStageMask(dstState.stageFlags);
-
-            // Update tracked state (this assumes all barriers from this function are executed...)
-            imageState = dstState;
-
-            return barrier;
-        }
+        vk::SwapchainKHR getHandle() const { return mSwapchain; }
 
     private:
         void initAndValidateProperties(const SwapchainCreateInfo& info);
@@ -98,7 +102,6 @@ namespace RHI
 
         PerFrameArray<vk::Image>        mImages;
         PerFrameArray<vk::ImageView>    mImageViews;
-        PerFrameArray<SPtr<Image>>      mWrappedImages;
         PerFrameArray<ImageState>       mImageStates;
 
         SPtr<IWindow>                   mWindow;

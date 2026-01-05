@@ -113,7 +113,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
         };
         const auto depthAttachment = RHI::Attachment {
-            .image = mDepthBuffer,
+            .image = mDepthBuffer->getImage(),
             .attachmentInfo = vk::RenderingAttachmentInfo()
                 .setClearValue(vk::ClearValue().setDepthStencil({1.0f, 0}))
                 .setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)

@@ -1,12 +1,25 @@
 #include "Image.hpp"
 
-#include "Swapchain.hpp"
-
 namespace RHI
 {
+    namespace detail
+    {
+        // Define and compute the immutable properties an image based on the given parameters.
+        [[nodiscard]] static ImageProperties makeImageProperties(const ImageCreateInfo& createInfo) noexcept
+        {
+            return {
+                .format      = createInfo.format,
+                .extent      = createInfo.extent,
+                .aspectFlags = getImageAspectFlags(createInfo.format),
+                .levelCount  = (createInfo.mipmapping) ? getMipLevels(createInfo.extent) : 1,
+                .sampleCount = createInfo.samples,
+            };
+        }
+    }
+
     Image::Image(const ImageCreateInfo& createInfo)
     : mDevice(createInfo.device)
-    , mProperties(makeProperties(createInfo))
+    , mProperties(detail::makeImageProperties(createInfo))
     , mDebugName(createInfo.debugName)
     {
         /**
@@ -51,7 +64,7 @@ namespace RHI
         const auto viewCreateInfo = vk::ImageViewCreateInfo()
             .setFormat(mProperties.format)
             .setImage(mImage)
-            .setSubresourceRange(mProperties.subresourceRange)
+            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, 1 })
             .setViewType(vk::ImageViewType::e2D);
 
         mImageView = mDevice->getHandle().createImageView(viewCreateInfo);
@@ -92,34 +105,8 @@ namespace RHI
         }
     }
 
-    Image::Image(const SwapchainImageWrapperCreateInfo& createInfo)
-    : mImage(createInfo.image)
-    , mImageView(createInfo.imageView)
-    , mState({})
-    , mDevice(createInfo.device)
-    , mProperties({
-        .format = createInfo.pSwapchain->getProperties().format,
-        .extent = createInfo.pSwapchain->getProperties().extent,
-        .sampleCount = vk::SampleCountFlagBits::e1,
-    })
-    , mDebugName(std::format("WrappedSwapchainImage[{}]", mSwapchainImageIndex))
-    , mIsSwapchainImage(true)
-    , mSwapchainImageIndex(createInfo.imageIndex)
-    {
-    }
-
-    SPtr<Image> Image::createSwapchainImageWrapper(const SwapchainImageWrapperCreateInfo& createInfo)
-    {
-        return std::make_shared<Image>(createInfo);
-    }
-
     Image::~Image()
     {
-        if (mIsSwapchainImage)
-        {
-            return;
-        }
-
         if (mSampler)
         {
             mDevice->getHandle().destroySampler(mSampler);
@@ -132,27 +119,11 @@ namespace RHI
 
     void Image::useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo)
     {
-        if (!mHasMemory && mProperties.isAliased)
+        if (!mHasMemory)
         {
             mAllocation = allocation;
             mAllocationInfo = allocationInfo;
             vmaBindImageMemory(mDevice->getAllocator(), mAllocation, mImage);
         }
-    }
-
-    ImageProperties Image::makeProperties(const ImageCreateInfo& imageInfo)
-    {
-        ImageProperties properties = {
-            .format = imageInfo.format,
-            .extent = imageInfo.extent,
-        };
-
-        if (isDepthFormat(imageInfo.format))
-        {
-            properties.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
-            properties.subresourceLayers.aspectMask = vk::ImageAspectFlagBits::eDepth;
-        }
-
-        return properties;
     }
 }

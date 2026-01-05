@@ -55,13 +55,7 @@ namespace RHI
         commandList.setViewport(0, 1, &mViewport);
     }
 
-    SPtr<Image> Swapchain::getImage(const size_t i) const
-    {
-        assert(i < mWrappedImages.size());
-        return mWrappedImages[i];
-    }
-
-    vk::Image Swapchain::getImageHandle(const size_t i) const
+    vk::Image Swapchain::getImage(const size_t i) const
     {
         assert(i < mImages.size());
         return mImages[i];
@@ -161,21 +155,13 @@ namespace RHI
             result = mDevice->getHandle().createImageView(&viewCreateInfo, nullptr, &mImageViews[i]);
             assert(result == vk::Result::eSuccess);
 
-            mWrappedImages[i] = Image::createSwapchainImageWrapper({
-                .image      = mImages[i],
-                .imageView  = mImageViews[i],
-                .imageIndex = static_cast<uint32_t>(i),
-                .device     = mDevice,
-                .pSwapchain = this
-            });
-
             mDevice->nameObject<vk::Image>({
-                .debugName = std::format("SCImage[{}]", i),
+                .debugName = std::format("SwapchainImage[{}]", i),
                 .handle    = mImages[i],
             });
 
             mDevice->nameObject<vk::ImageView>({
-                .debugName = std::format("SCImageView[{}]", i),
+                .debugName = std::format("SwapchainImage[{}]", i),
                 .handle    = mImageViews[i],
             });
         }

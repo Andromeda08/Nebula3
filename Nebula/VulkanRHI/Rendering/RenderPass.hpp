@@ -15,7 +15,7 @@ namespace RHI
 {
     struct Attachment
     {
-        SPtr<Image>                 image;
+        vk::Image                   image;
         vk::RenderingAttachmentInfo attachmentInfo;
     };
 

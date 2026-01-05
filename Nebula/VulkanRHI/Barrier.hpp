@@ -24,13 +24,15 @@ namespace RHI
     class Barrier
     {
     public:
+        Barrier& addBarrier(const vk::ImageMemoryBarrier2& imageBarrier);
+
         Barrier& addImageBarrier(const ImageBarrier& imageBarrier);
 
         Barrier& addBufferBarrier(const BufferBarrier& bufferBarrier);
 
-        void insert(const CommandList* pCommandList);
+        void insert(const CommandList* pCommandList) const;
 
-        void insert(const vk::CommandBuffer& commandBuffer);
+        void insert(const vk::CommandBuffer& commandBuffer) const;
 
     private:
         vk::DependencyInfo                      mDependencyInfo;

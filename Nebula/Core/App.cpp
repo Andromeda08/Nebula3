@@ -76,11 +76,11 @@ void App::run()
         commandList->begin();
         mScene->update(commandList, frameInfo, dt);
 
-        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
+        const vk::Image currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
             barrier.insert(commandList);
         }
 
@@ -94,7 +94,7 @@ void App::run()
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
              barrier.insert(commandList);
         }
 
@@ -102,7 +102,7 @@ void App::run()
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::PresentSrc));
              barrier.insert(commandList);
         }
 
@@ -149,8 +149,6 @@ void App::run_renderPathLoop()
 
         commandList->begin();
 
-        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex);
-
         mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
 
         // =====================================
@@ -159,40 +157,30 @@ void App::run_renderPathLoop()
         // pRenderPath->initialize(commandList);   // Runs once
         // pRenderPath->execute(commandList, frameData);
 
-        {
-            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
-                .layout      = vk::ImageLayout::eColorAttachmentOptimal,
-                .accessFlags = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
-                .stageFlags  = vk::PipelineStageFlagBits2::eAllCommands,
-            });
-            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
+        /* Acquired Swapchain Image | ColorAttachment */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
+            barrier.insert(commandList);
         }
         mScene->render(commandList, frameData);
-        {
-            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
-                .layout      = vk::ImageLayout::eColorAttachmentOptimal,
-                .accessFlags = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
-                .stageFlags  = vk::PipelineStageFlagBits2::eAllCommands,
-            });
-            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
-        }
 
         // =====================================
         // User Interface
         // =====================================
         commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("ImGui"));
-        mUserInterface->draw(commandList, frameData);
-        {
-            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
-                .layout      = vk::ImageLayout::ePresentSrcKHR,
-                .accessFlags = vk::AccessFlagBits2::eNone,
-                .stageFlags  = vk::PipelineStageFlagBits2::eNone,
-            });
-            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
-            commandList->getHandle().pipelineBarrier2(dependencyInfo);
+
+        /* Acquired Swapchain Image | ColorAttachment */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
+            barrier.insert(commandList);
         }
+        mUserInterface->draw(commandList, frameData);
+        /* Acquired Swapchain Image | PresentSrc */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::PresentSrc));
+            barrier.insert(commandList);
+        }
+
         commandList->getHandle().endDebugUtilsLabelEXT();
 
         commandList->end();

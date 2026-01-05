@@ -64,7 +64,7 @@ namespace RHI
             .setBufferOffset(0)
             .setBufferRowLength(0)
             .setBufferImageHeight(0)
-            .setImageSubresource(imageProperties.subresourceLayers)
+            .setImageSubresource({ copyInfo.pDstImage->getProperties().aspectFlags, 0, 0, 1})
             .setImageOffset({0, 0, 0})
             .setImageExtent(imageProperties.getExtent3D());
         const auto copyBufferToImageInfo = vk::CopyBufferToImageInfo2()

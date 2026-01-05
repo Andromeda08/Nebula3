@@ -4,20 +4,15 @@
 
 namespace RHI
 {
+    Barrier& Barrier::addBarrier(const vk::ImageMemoryBarrier2& imageBarrier)
+    {
+        mImageBarriers.push_back(imageBarrier);
+        return *this;
+    }
+
     Barrier& Barrier::addImageBarrier(const ImageBarrier& imageBarrier)
     {
-        const auto state    = imageBarrier.image->getState();
-        const auto newState = getImageStateForUsage(imageBarrier.dstUsage);
-
-        const auto barrier  = vk::ImageMemoryBarrier2()
-            .setOldLayout(state.layout)
-            .setSrcAccessMask(state.accessFlags)
-            .setSrcStageMask(state.stageFlags)
-            .setNewLayout(newState.layout)
-            .setDstAccessMask(newState.accessFlags)
-            .setDstStageMask(newState.stageFlags)
-            .setSubresourceRange(imageBarrier.image->getProperties().subresourceRange)
-            .setImage(imageBarrier.image->getImage());
+        const auto barrier = imageBarrier.image->getBarrier(imageBarrier.dstUsage);
 
         mImages.push_back(imageBarrier.image);
         mImageBarriers.push_back(barrier);
@@ -31,25 +26,15 @@ namespace RHI
         return *this;
     }
 
-    void Barrier::insert(const CommandList* pCommandList)
+    void Barrier::insert(const CommandList* pCommandList) const
     {
         insert(pCommandList->getHandle());
     }
 
-    void Barrier::insert(const vk::CommandBuffer& commandBuffer)
+    void Barrier::insert(const vk::CommandBuffer& commandBuffer) const
     {
         const auto dependencyInfo = vk::DependencyInfo()
-            .setImageMemoryBarrierCount(mImageBarriers.size())
-            .setPImageMemoryBarriers(mImageBarriers.data());
+            .setImageMemoryBarriers(mImageBarriers);
         commandBuffer.pipelineBarrier2(dependencyInfo);
-
-        for (const auto& [i, image] : std::views::enumerate(mImages))
-        {
-            image->updateState({
-                mImageBarriers[i].newLayout,
-                mImageBarriers[i].dstAccessMask,
-                mImageBarriers[i].dstStageMask,
-            });
-        }
     }
 }

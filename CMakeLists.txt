@@ -161,6 +161,7 @@ add_executable(Nebula3
     Nebula/Scene/Camera/OrbitCamera.hpp
     Nebula/Scene/Object.hpp
     Nebula/Scene/Camera/FlyingCamera.hpp
+    Nebula/VulkanRHI/Sync/ImageState.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
