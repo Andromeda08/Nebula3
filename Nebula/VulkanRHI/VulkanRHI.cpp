@@ -24,7 +24,7 @@ namespace RHI
 
         if (config.rhi.debugFeatures)
         {
-            mDebugContext = DebugContext::create({ mInstance });
+            // mDebugContext = DebugContext::create({ mInstance });
         }
 
         mDevice = Device::create({ mInstance->getHandle() });
@@ -116,6 +116,8 @@ namespace RHI
 
         const auto result = mDevice->getGraphicsQueue().queue.presentKHR(presentInfo);
         assert(result == vk::Result::eSuccess);
+
+        mDevice->getGraphicsQueue().queue.waitIdle();
 
         mFrameSync->advanceCurrentFrame();
     }

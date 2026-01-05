@@ -48,25 +48,6 @@ void ImGuiRenderer::render(
 
     commandBuffer.beginDebugUtilsLabelEXT(mDebugLabel);
 
-    /* Barrier -> ColorAttachmentOptimal */ {
-        const auto currentSwapchainImage = mRHI->getSwapchain()->getImage(frameData.acquiredIndex);
-        const auto barrier = vk::ImageMemoryBarrier2()
-            .setImage(currentSwapchainImage->getImage())
-            .setSubresourceRange(currentSwapchainImage->getProperties().subresourceRange)
-            .setOldLayout(currentSwapchainImage->getState().layout)
-            .setNewLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setSrcAccessMask(vk::AccessFlagBits2::eNone)
-            .setDstAccessMask(vk::AccessFlagBits2::eColorAttachmentWrite)
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput);
-
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setImageMemoryBarrierCount(1)
-            .setPImageMemoryBarriers(&barrier);
-
-        commandBuffer.pipelineBarrier2(dependencyInfo);
-    }
-
     commandBuffer.beginRenderPass(&mRenderPassBeginInfo, vk::SubpassContents::eInline);
     {
         ImGui_ImplVulkan_NewFrame();

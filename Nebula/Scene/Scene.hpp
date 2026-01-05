@@ -1,11 +1,13 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 
 #include "TextureManager.hpp"
 #include "Camera/ICamera.hpp"
+#include "Geometry/Geometry.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
@@ -40,6 +42,8 @@ public:
 
     void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
 
+    void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData);
+
 private:
     friend class SceneInfoComponent;
 
@@ -49,6 +53,14 @@ private:
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
     SPtr<RHI::Descriptor>               mSceneDescriptor;
 
-    std::string             mName;
-    UPtr<TextureManager>    mTextureManager;
+    // Test scene with single cube
+    SPtr<RHI::Image>                    mDepthBuffer;
+    SPtr<RHI::RenderPass>               mRenderPass;
+    SPtr<RHI::GraphicsPipeline>         mPipeline;
+    SPtr<Geometry>                      mCube;
+    SPtr<RHI::Buffer>                   mVertexBuffer;
+    SPtr<RHI::Buffer>                   mIndexBuffer;
+
+    std::string                         mName;
+    UPtr<TextureManager>                mTextureManager;
 };

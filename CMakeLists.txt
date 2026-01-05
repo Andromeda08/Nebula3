@@ -159,6 +159,8 @@ add_executable(Nebula3
     Nebula/Utils/CIFParser.cpp
     Nebula/Utils/CIFParser.hpp
     Nebula/Scene/Camera/OrbitCamera.hpp
+    Nebula/Scene/Object.hpp
+    Nebula/Scene/Camera/FlyingCamera.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

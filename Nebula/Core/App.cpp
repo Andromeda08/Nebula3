@@ -27,10 +27,10 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>();
 
-    mRenderGraphContext = rg::RenderGraphContext::create({
-        .rhi = mVulkanRHI,
-    });
-    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+    // mRenderGraphContext = rg::RenderGraphContext::create({
+    //     .rhi = mVulkanRHI,
+    // });
+    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
     mScene = Scene::create({
         .rhi  = mVulkanRHI,
@@ -132,10 +132,11 @@ void App::run_renderPathLoop()
     while (!mWindow->shouldClose())
     {
         const float dt = mDeltaTime.getDeltaTime();
-        auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
+        // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
         // Input
         mWindow->pollEvents();
+        mScene->handleInput(mWindow->getHandle());
 
         // Rendering
         const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
@@ -143,7 +144,7 @@ void App::run_renderPathLoop()
 
         // Updates
         mScene->update(commandList, frameData, dt);
-        pRenderPath->update(dt, frameData);
+        // pRenderPath->update(dt, frameData);
         mUserInterface->update();
 
         commandList->begin();
@@ -155,28 +156,44 @@ void App::run_renderPathLoop()
         // =====================================
         // RenderPath
         // =====================================
-        pRenderPath->initialize(commandList);   // Runs once
+        // pRenderPath->initialize(commandList);   // Runs once
+        // pRenderPath->execute(commandList, frameData);
 
-        pRenderPath->execute(commandList, frameData);
+        {
+            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
+                .layout      = vk::ImageLayout::eColorAttachmentOptimal,
+                .accessFlags = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
+                .stageFlags  = vk::PipelineStageFlagBits2::eAllCommands,
+            });
+            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
+            commandList->getHandle().pipelineBarrier2(dependencyInfo);
+        }
+        mScene->render(commandList, frameData);
+        {
+            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
+                .layout      = vk::ImageLayout::eColorAttachmentOptimal,
+                .accessFlags = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
+                .stageFlags  = vk::PipelineStageFlagBits2::eAllCommands,
+            });
+            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
+            commandList->getHandle().pipelineBarrier2(dependencyInfo);
+        }
 
         // =====================================
         // User Interface
         // =====================================
-        #pragma region
-        {
-            auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
-             barrier.insert(commandList);
-        }
-
+        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("ImGui"));
         mUserInterface->draw(commandList, frameData);
-
         {
-            auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
-             barrier.insert(commandList);
+            const auto barrier = mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, {
+                .layout      = vk::ImageLayout::ePresentSrcKHR,
+                .accessFlags = vk::AccessFlagBits2::eNone,
+                .stageFlags  = vk::PipelineStageFlagBits2::eNone,
+            });
+            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier);
+            commandList->getHandle().pipelineBarrier2(dependencyInfo);
         }
-        #pragma endregion
+        commandList->getHandle().endDebugUtilsLabelEXT();
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({
@@ -184,9 +201,9 @@ void App::run_renderPathLoop()
             .pCommandList = commandList,
         });
 
-        if (mRenderGraphContext->hasQueuedRenderPathChange())
-        {
-            mRenderGraphContext->changeToQueuedRenderPath();
-        }
+        // if (mRenderGraphContext->hasQueuedRenderPathChange())
+        // {
+        //     mRenderGraphContext->changeToQueuedRenderPath();
+        // }
     }
 }

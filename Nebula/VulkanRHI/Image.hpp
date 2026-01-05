@@ -25,14 +25,6 @@ namespace RHI
         }
     };
 
-    // Mutable state of a Vulkan Image
-    struct ImageState
-    {
-        vk::ImageLayout         layout      = vk::ImageLayout::eUndefined;
-        vk::AccessFlags2        accessFlags = vk::AccessFlagBits2::eNone;
-        vk::PipelineStageFlags2 stageFlags  = vk::PipelineStageFlagBits2::eNone;
-    };
-
     // =====================================
     // ImageUsage Enum and Utilities
     // =====================================
@@ -41,6 +33,7 @@ namespace RHI
     {
         Undefined,
         ColorAttachment,
+        DepthAttachment,
         Clear,
         General,
         ShaderReadOnly,
@@ -67,6 +60,14 @@ namespace RHI
                     .layout      = vk::ImageLayout::eColorAttachmentOptimal,
                     .accessFlags = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
                     .stageFlags  = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                };
+            }
+            case DepthAttachment: {
+                return {
+                    .layout      = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                    .accessFlags = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                    .stageFlags  = vk::PipelineStageFlagBits2::eColorAttachmentOutput | vk::PipelineStageFlagBits2::eEarlyFragmentTests
+                        | vk::PipelineStageFlagBits2::eLateFragmentTests,
                 };
             }
             case Clear:  {

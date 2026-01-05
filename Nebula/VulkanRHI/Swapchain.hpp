@@ -61,6 +61,27 @@ namespace RHI
             return mImageCount;
         }
 
+        vk::ImageMemoryBarrier2 getBarrier(const uint32_t i, const ImageState& dstState) noexcept
+        {
+            assert(i < mImages.size());
+            auto& imageState = mImageStates[i];
+
+            const auto barrier = vk::ImageMemoryBarrier2()
+                .setImage(mImages[i])
+                .setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 })
+                .setOldLayout(imageState.layout)
+                .setSrcAccessMask(imageState.accessFlags)
+                .setSrcStageMask(imageState.stageFlags)
+                .setNewLayout(dstState.layout)
+                .setDstAccessMask(dstState.accessFlags)
+                .setDstStageMask(dstState.stageFlags);
+
+            // Update tracked state (this assumes all barriers from this function are executed...)
+            imageState = dstState;
+
+            return barrier;
+        }
+
     private:
         void initAndValidateProperties(const SwapchainCreateInfo& info);
         void acquireImages();
@@ -78,6 +99,7 @@ namespace RHI
         PerFrameArray<vk::Image>        mImages;
         PerFrameArray<vk::ImageView>    mImageViews;
         PerFrameArray<SPtr<Image>>      mWrappedImages;
+        PerFrameArray<ImageState>       mImageStates;
 
         SPtr<IWindow>                   mWindow;
         SPtr<Instance>                  mInstance;

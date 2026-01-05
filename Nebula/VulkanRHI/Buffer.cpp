@@ -76,14 +76,14 @@ namespace RHI
         {
             case BufferType::Index:{
                 result |= eIndexBuffer
-                    | eStorageBuffer
-                    | eAccelerationStructureBuildInputReadOnlyKHR;
+                    | eStorageBuffer;
+                    // | eAccelerationStructureBuildInputReadOnlyKHR;
                 break;
             }
             case BufferType::Vertex:{
                 result |= eVertexBuffer
-                    | eStorageBuffer
-                    | eAccelerationStructureBuildInputReadOnlyKHR;
+                    | eStorageBuffer;
+                    // | eAccelerationStructureBuildInputReadOnlyKHR;
                 break;
             }
             case BufferType::Indirect:{
@@ -91,7 +91,7 @@ namespace RHI
                 break;
             }
             case BufferType::Storage: {
-                result |= eStorageBuffer | eAccelerationStructureBuildInputReadOnlyKHR;
+                result |= eStorageBuffer; // | eAccelerationStructureBuildInputReadOnlyKHR;
                 break;
             }
             case BufferType::Uniform: {

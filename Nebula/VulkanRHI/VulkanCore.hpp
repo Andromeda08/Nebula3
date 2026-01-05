@@ -37,6 +37,14 @@ namespace RHI
         QueueType       queueType;
     };
 
+    // Mutable state of a Vulkan Image
+    struct ImageState
+    {
+        vk::ImageLayout         layout      = vk::ImageLayout::eUndefined;
+        vk::AccessFlags2        accessFlags = vk::AccessFlagBits2::eNone;
+        vk::PipelineStageFlags2 stageFlags  = vk::PipelineStageFlagBits2::eNone;
+    };
+
     namespace Platform
     {
         [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept

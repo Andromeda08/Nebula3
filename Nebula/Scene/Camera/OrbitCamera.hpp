@@ -98,6 +98,14 @@ public:
         }
     }
 
+    void updatePosition() noexcept
+    {
+        mPosition = mTarget + mDistance * glm::vec3(
+            glm::cos(mPitch) * glm::cos(mYaw),
+            glm::sin(mPitch),
+            glm::cos(mPitch) * glm::sin(mYaw));
+    }
+
 private:
     static constexpr float sSensitivityRotate = 0.005f;
     void rotate(const float dPitch, const float dYaw) noexcept
@@ -116,14 +124,6 @@ private:
 
         mTarget += right * delta.x + up * delta.y;
         updatePosition();
-    }
-
-    void updatePosition() noexcept
-    {
-        mPosition = mTarget + mDistance * glm::vec3(
-            glm::cos(mPitch) * glm::cos(mYaw),
-            glm::sin(mPitch),
-            glm::cos(mPitch) * glm::sin(mYaw));
     }
 
     friend class OrbitCameraComponent;
