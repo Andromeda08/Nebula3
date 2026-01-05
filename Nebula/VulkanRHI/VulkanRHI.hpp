@@ -50,8 +50,8 @@ namespace RHI
 
         UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
 
-        Device* getDevice() const { return mDevice.get(); }
-        Instance* getInstance() const { return mInstance.get(); }
+        SPtr<Device> getDevice() const { return mDevice; }
+        SPtr<Instance> getInstance() const { return mInstance; }
 
         RHIFeatureLevel getFeatureLevel() const noexcept
         {
@@ -66,9 +66,7 @@ namespace RHI
         UPtr<DebugContext>  mDebugContext;
         SPtr<Device>        mDevice;
         UPtr<Swapchain>     mSwapchain;
-
         UPtr<CommandQueue>  mGraphicsQueue;
-
         UPtr<FrameSync>     mFrameSync;
     };
 }

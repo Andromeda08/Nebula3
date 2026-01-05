@@ -41,7 +41,7 @@ namespace RHI
             .device = mDevice,
         });
 
-        mFrameSync = std::make_unique<FrameSync>(mDevice.get());
+        mFrameSync = std::make_unique<FrameSync>(mDevice);
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
