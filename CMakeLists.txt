@@ -169,6 +169,7 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
     Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    Nebula/Scene/Molecule/CIFGeometry.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
