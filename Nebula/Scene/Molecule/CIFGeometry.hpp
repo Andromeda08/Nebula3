@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include "Math/Transform.hpp"
 
 namespace geo
 {
@@ -32,4 +33,12 @@ namespace geo
 
 	// From ECG solution
 	Data createCylinderData(uint32_t seg, float radius, float height);
+
+	struct CIFInstanceData {
+		Data sphere = createSphereData(.1f, 8, 8);
+		Data cylinder = createCylinderData(8, .05f, 1.f);
+
+		std::vector<glm::mat4> sphereTransforms;
+		std::vector<glm::mat4> cylinderTransforms;
+	};
 }

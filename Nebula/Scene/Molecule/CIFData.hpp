@@ -19,9 +19,10 @@ public:
 
 	CIFData(const CIFDataCreateInfo& createInfo);
 
-	std::vector<geo::Data> getSphereData() const noexcept { return mSpheres; }
-	std::vector<geo::Data> getCylinderData() const noexcept { return mCylinders; }
-	std::vector<glm::vec3> getAtomPositions() const noexcept { return mAtomPositions; }
+	const std::vector<geo::Data>&	getSphereData() const noexcept { return mSpheres; }
+	const std::vector<geo::Data>&	getCylinderData() const noexcept { return mCylinders; }
+	const std::vector<glm::vec3>&	getAtomPositions() const noexcept { return mAtomPositions; }
+	const geo::CIFInstanceData&		getCIFInstanceData() const noexcept { return mCID; }
 
 private:
 	CIFParser mCIF;
@@ -29,4 +30,6 @@ private:
 	std::vector<geo::Data> mSpheres;
 	std::vector<geo::Data> mCylinders;
 	std::vector<glm::vec3> mAtomPositions;
+
+	geo::CIFInstanceData mCID;
 };

@@ -4,8 +4,8 @@ CIFData::CIFData(const CIFDataCreateInfo& createInfo)
 : mCIF(createInfo.filename, createInfo.centerMolecule)
 {
     for (const auto& [k, v] : mCIF.positions) {
-        mSpheres.push_back(geo::createSphereData(.1f, 8, 8));
-        mSpheres.back().setPosition(v.observed);
+        mSpheres.push_back(mCID.sphere);
+        mCID.sphereTransforms.push_back(Transform().setTranslate(v.observed).getModel());
         mAtomPositions.push_back(v.observed);
     }
 
@@ -19,9 +19,8 @@ CIFData::CIFData(const CIFDataCreateInfo& createInfo)
             glm::vec3 atom1 = v.observed;
             glm::vec3 atom2 = a2it->second.observed;
             auto bt = geo::calcBondTransforms(atom1, atom2);
-            mCylinders.push_back(geo::createCylinderData(8, .05, bt.dist));
-            mCylinders.back().setRotation(bt.axis, bt.angle);
-            mCylinders.back().setPosition(bt.position);
+            mCylinders.push_back(mCID.cylinder);
+            mCID.cylinderTransforms.push_back(Transform().setAxisAngleRotation(bt.axis, bt.angle).setTranslate(bt.position).setScale(glm::vec3(1.f, bt.dist, 1.f)).getModel());
         }
     }
 }
