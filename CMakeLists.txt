@@ -154,6 +154,8 @@ add_executable(Nebula3
     Nebula/Scene/Geometry/Geometry.cpp
     Nebula/Scene/Types/CameraData.hpp
     Nebula/Scene/Camera/ICamera.hpp
+    Nebula/Scene/Molecule/CIFData.hpp
+    Nebula/Scene/Molecule/CIFData.cpp
     Nebula/Utils/CIFParser.cpp
     Nebula/Utils/CIFParser.hpp
     Nebula/Scene/Camera/OrbitCamera.hpp

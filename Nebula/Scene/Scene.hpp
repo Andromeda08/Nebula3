@@ -9,7 +9,7 @@
 #include "Camera/ICamera.hpp"
 #include "Geometry/Geometry.hpp"
 #include "UserInterface/UserInterface.hpp"
-#include "Utils/CIFParser.hpp"
+#include "Molecule/CIFData.hpp"
 #include "VulkanRHI/Frame.hpp"
 
 namespace RHI
@@ -48,7 +48,8 @@ public:
 private:
     friend class SceneInfoComponent;
 
-    UPtr<CIFParser>                     mCIF;
+    //UPtr<CIFParser>                     mCIF;
+    UPtr<CIFData>                       mCIFData;
     SPtr<RHI::Buffer>                   mMoleculePosBuffer;
 
     SPtr<RHI::VulkanRHI>                mRHI;
