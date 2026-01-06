@@ -16,12 +16,8 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     /* CIF Loading */ {
         mCIF = makeUnique<CIFParser>("Resources/CIFFiles/IBP.cif");
         std::vector<glm::vec3> positions;
-        for (const auto& [compId, v2] : mCIF->positions) {
-            for (const auto& [atomId, v] : v2) {
-                for (const auto& e : v) {
-                    positions.push_back({ e.expected[0], e.expected[1], e.expected[2] });
-                }
-            }
+        for (const auto& [k, v] : mCIF->positions) {
+            positions.push_back({ v.expected });
         }
         /* Data Upload */ {
             const auto positionsSize = positions.size() * sizeof(glm::vec3);
