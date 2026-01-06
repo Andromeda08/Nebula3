@@ -2,6 +2,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace geom
 {
@@ -21,6 +23,12 @@ namespace geom
 		void setPosition(const glm::vec3& pos) {
 			for (auto& e : vertices) {
 				e += pos;
+			}
+		}
+
+		void setRotation(const glm::vec3& axis, float angle) {
+			for (auto& e : vertices) {
+				e = glm::rotate(e, angle, axis);
 			}
 		}
 	};
