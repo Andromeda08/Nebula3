@@ -168,7 +168,7 @@ add_executable(Nebula3
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
-    #Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    Nebula/RenderPass/Molecule/ComputePrePass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
