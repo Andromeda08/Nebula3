@@ -5,11 +5,10 @@
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 
-#include "TextureManager.hpp"
 #include "Camera/ICamera.hpp"
 #include "Geometry/Geometry.hpp"
-#include "UserInterface/UserInterface.hpp"
 #include "Molecule/CIFData.hpp"
+#include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
 namespace RHI
@@ -68,5 +67,4 @@ private:
     SPtr<RHI::Buffer>                   mIndexBuffer;
 
     std::string                         mName;
-    UPtr<TextureManager>                mTextureManager;
 };

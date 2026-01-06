@@ -9,10 +9,6 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 : mRHI(createInfo.rhi)
 , mName(createInfo.name)
 {
-    // mTextureManager = TextureManager::create({
-    //     .rhi = createInfo.rhi,
-    // });
-
     /* CIF Loading */ {
         mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", false });
         std::vector<glm::vec3> positions = mCIFData->getAtomPositions();
@@ -108,10 +104,11 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
-            const auto descriptorWrite = RHI::DescriptorWrite()
-                .addSetIndex(i)
-                .writeUniformBuffer(0, { mCameraUB[i]->getHandle(), 0, sizeof(CameraData) });
-            mSceneDescriptor->write(std::move(descriptorWrite));
+            const auto bufferInfo = vk::DescriptorBufferInfo().setBuffer(mCameraUB[i]->getHandle()).setOffset(0).setRange(sizeof(CameraData));
+            const auto descriptorWrite = RHI::DescriptorWriteInfo()
+                .writeUniformBuffers(0, 1, &bufferInfo)
+                .setSetIndex(i);
+            mSceneDescriptor->write_old(descriptorWrite);
         }
     }
 

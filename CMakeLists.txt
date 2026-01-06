@@ -143,10 +143,8 @@ add_executable(Nebula3
     Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
     Nebula/Scene/Scene.hpp
-    Nebula/Scene/TextureManager.hpp
     Nebula/Scene/Types/LightParameters.hpp
     Nebula/Scene/SceneConfiguration.hpp
-    Nebula/Scene/TextureManager.cpp
     Nebula/Scene/Scene.cpp
     Nebula/Scene/Components/SceneInfoComponent.hpp
     Nebula/Scene/Components/SceneInfoComponent.cpp
