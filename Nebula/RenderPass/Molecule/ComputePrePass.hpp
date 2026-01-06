@@ -4,14 +4,23 @@
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
+#include <glm/glm.hpp>
+
 namespace viz
 {
+    struct PushConstants {
+        int numAtoms;
+        float radius;
+        float scale;
+    };
+
     class ComputePrePass final : public IPass
     {
     public:
         explicit ComputePrePass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Buffer>& positions)
         : mRHI(rhi)
         , mPositions(positions)
+        , mPushConstants(positions->getSize() / sizeof(glm::vec3), .1f, 1.f)
         {
             mImage3D = mRHI->createImage3D({
                 .extent     = { 100, 100, 100 },
@@ -19,16 +28,23 @@ namespace viz
                 .usageFlags = vk::ImageUsageFlagBits::eStorage,
                 .debugName = "MoleculeSDF"
             });
+
             mRHI->getGraphicsQueue()->immediate([&](const auto* commandList) -> void {
                const auto barrier = RHI::Barrier()
                     .addBarrier(mImage3D->getBarrier(RHI::ImageUsage::General));
                 barrier.insert(commandList);
             });
 
+            vk::PushConstantRange pcr;
+            pcr.offset = 0;
+            pcr.size = sizeof(PushConstants);
+            pcr.stageFlags = vk::ShaderStageFlagBits::eCompute;
+
             mDescriptor = mRHI->createDescriptor({
                 .bindings     = {
                     vk::DescriptorSetLayoutBinding().setBinding(0).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eStorageImage).setStageFlags(vk::ShaderStageFlagBits::eCompute),
                     vk::DescriptorSetLayoutBinding().setBinding(1).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eStorageBuffer).setStageFlags(vk::ShaderStageFlagBits::eCompute),
+                    //vk::DescriptorSetLayoutBinding().setBinding(2).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eUniformBuffer).setStageFlags(vk::ShaderStageFlagBits::eCompute),
                 },
                 .setCount     = 1,
                 .debugName    = "ComputePrePassDescriptor",
@@ -42,15 +58,19 @@ namespace viz
                 .writeStorageBuffers(1, 1, &bufferInfo);
             mDescriptor->write_old(write);
 
-            // mPipeline = mRHI->createComputePipeline(RHI::ComputePipelineCreateInfo()
-            //     .setComputeShader({ Configuration::getShaderFilePath("viz.comp.spv"), vk::ShaderStageFlagBits::eCompute, "main" })
-            //     .addDescriptorSetLayout(mDescriptor->getLayout())
-            //     .setDebugName("VizCompute"));
+             mPipeline = mRHI->createComputePipeline(RHI::ComputePipelineCreateInfo()
+                 .setComputeShader({ Configuration::getShaderFilePath("viz.comp.spv"), vk::ShaderStageFlagBits::eCompute, "main" })
+                 .setPushConstantRange(pcr)
+                 .addDescriptorSetLayout(mDescriptor->getLayout())
+                 .setDebugName("VizCompute"));
         }
 
         void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override
         {
             // TODO: exec. pipeline
+            mPipeline->bind(commandList->getHandle());
+            mPipeline->pushConstants(commandList->getHandle(), &mPushConstants);
+            mPipeline->dispatch(commandList->getHandle(), 4, 4, 4);
         }
 
         ~ComputePrePass() override = default;
@@ -62,5 +82,8 @@ namespace viz
 
         SPtr<RHI::Image3D>          mImage3D;
         SPtr<RHI::Buffer>           mPositions;
+        SPtr<RHI::Buffer>           mConfig;
+
+        PushConstants               mPushConstants;
     };
 }
