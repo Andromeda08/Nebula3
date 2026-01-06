@@ -1,5 +1,5 @@
-#include "Utils/CIFParser.hpp"
-#include "Utils/Geometry.hpp"
+#include "CIFParser.hpp"
+#include "CIFGeometry.hpp"
 
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
@@ -19,14 +19,14 @@ public:
 
 	CIFData(const CIFDataCreateInfo& createInfo);
 
-	std::vector<geom::Data> getSphereData() const noexcept { return mSpheres; }
-	std::vector<geom::Data> getCylinderData() const noexcept { return mCylinders; }
+	std::vector<geo::Data> getSphereData() const noexcept { return mSpheres; }
+	std::vector<geo::Data> getCylinderData() const noexcept { return mCylinders; }
 	std::vector<glm::vec3> getAtomPositions() const noexcept { return mAtomPositions; }
 
 private:
 	CIFParser mCIF;
 
-	std::vector<geom::Data> mSpheres;
-	std::vector<geom::Data> mCylinders;
+	std::vector<geo::Data> mSpheres;
+	std::vector<geo::Data> mCylinders;
 	std::vector<glm::vec3> mAtomPositions;
 };

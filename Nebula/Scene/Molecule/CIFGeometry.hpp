@@ -5,7 +5,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 
-namespace geom
+namespace geo
 {
 	struct BondTransform {
 		glm::vec3 position;

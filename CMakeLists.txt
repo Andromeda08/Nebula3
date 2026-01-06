@@ -156,8 +156,9 @@ add_executable(Nebula3
     Nebula/Scene/Camera/ICamera.hpp
     Nebula/Scene/Molecule/CIFData.hpp
     Nebula/Scene/Molecule/CIFData.cpp
-    Nebula/Utils/CIFParser.cpp
-    Nebula/Utils/CIFParser.hpp
+    Nebula/Scene/Molecule/CIFParser.cpp
+    Nebula/Scene/Molecule/CIFParser.hpp
+    Nebula/Scene/Molecule/CIFGeometry.hpp
     Nebula/Scene/Camera/OrbitCamera.hpp
     Nebula/Scene/Object.hpp
     Nebula/Scene/Camera/FlyingCamera.hpp
@@ -167,7 +168,7 @@ add_executable(Nebula3
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
-    Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    #Nebula/RenderPass/Molecule/ComputePrePass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
