@@ -29,9 +29,6 @@ namespace rg
             case NodeType::HelloTrianglePresent: {
                 return makeUnique<HelloTrianglePass>(mRHI);
             }
-            case  NodeType::Viz_ComputePrePass: {
-                return makeUnique<viz::ComputePrePass>(mRHI);
-            }
             default: {
                 throw std::runtime_error(std::format("[PassFactory] Error: NodeType {} is not implemented", toString(pNode->getNodeType())));
             }
