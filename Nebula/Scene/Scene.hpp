@@ -45,10 +45,11 @@ public:
 
     void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData);
 
+    SPtr<RHI::Buffer> getMoleculePositionBuffer() const noexcept { return mMoleculePosBuffer; }
+
 private:
     friend class SceneInfoComponent;
 
-    //UPtr<CIFParser>                     mCIF;
     UPtr<CIFData>                       mCIFData;
     SPtr<RHI::Buffer>                   mMoleculePosBuffer;
 

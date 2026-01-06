@@ -16,10 +16,6 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     /* CIF Loading */ {
         mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", false });
         std::vector<glm::vec3> positions = mCIFData->getAtomPositions();
-        /*mCIF = makeUnique<CIFParser>("Resources/CIFFiles/IBP.cif");
-        for (const auto& [k, v] : mCIF->positions) {
-            positions.push_back({ v.expected });
-        }*/
         /* Data Upload */ {
             const auto positionsSize = positions.size() * sizeof(glm::vec3);
             mMoleculePosBuffer = mRHI->createBuffer({
