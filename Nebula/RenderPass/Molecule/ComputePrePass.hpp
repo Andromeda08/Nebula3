@@ -34,11 +34,13 @@ namespace viz
                 .debugName    = "ComputePrePassDescriptor",
             });
 
-            const auto write = RHI::DescriptorWrite()
-                .addSetIndex(0)
-                .writeStorageImage(0, 0, { nullptr, mImage3D->getImageView(), vk::ImageLayout::eGeneral })
-                .writeStorageBuffer(1, { mPositions->getHandle(), 0, mPositions->getSize() });
-            mDescriptor->write(write);
+            const auto imageInfo = vk::DescriptorImageInfo { nullptr, mImage3D->getImageView(), vk::ImageLayout::eGeneral };
+            const auto bufferInfo = vk::DescriptorBufferInfo { mPositions->getHandle(), 0, mPositions->getSize() };
+            const auto write = RHI::DescriptorWriteInfo()
+                .setSetIndex(0)
+                .writeCombinedImageSamplers(0, 1, &imageInfo)
+                .writeStorageBuffers(1, 1, &bufferInfo);
+            mDescriptor->write_old(write);
 
             // mPipeline = mRHI->createComputePipeline(RHI::ComputePipelineCreateInfo()
             //     .setComputeShader({ Configuration::getShaderFilePath("viz.comp.spv"), vk::ShaderStageFlagBits::eCompute, "main" })
