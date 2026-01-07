@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 
 #include "Camera/FlyingCamera.hpp"
-#include "Camera/OrbitCamera.hpp"
+
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -149,6 +149,10 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         mFwdPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
 
+    /* CIF SDF Compute Pass */ {
+        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mAtomPositionsBuffer);
+    }
+
     /* CIF Structure Rendering Pipeline */ {
         RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
             .setPushConstantRange(vk::PushConstantRange().setOffset(0).setSize(sizeof(glm::vec4)).setStageFlags(vk::ShaderStageFlagBits::eFragment))
@@ -190,11 +194,22 @@ void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& fr
 
 void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
 {
-    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("Scene Render"));
+    auto sdfTexture = mComputePrePass->getSDFTexture3D();
 
-    constexpr glm::vec4 color = { 0.75f, 0.1f, 0.5f, 1.0f };
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Compute"));
+    /* SDF to Storage Image usage */ {
+        const auto barrier = RHI::Barrier()
+            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::StorageImage));
+        barrier.insert(commandList);
+    }
 
-    const auto colorAttachment = RHI::Attachment {
+    // SDF Compute Pass
+    mComputePrePass->execute(commandList);
+    commandList->getHandle().endDebugUtilsLabelEXT();
+
+    // Structure Pass
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("StructureRendering"));
+     auto colorAttachment = RHI::Attachment {
         .image = mRHI->getSwapchain()->getImage(0),
         .attachmentInfo = vk::RenderingAttachmentInfo()
             .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
@@ -223,6 +238,22 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
             commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
         }
     });
+    commandList->getHandle().endDebugUtilsLabelEXT();
+
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Render"));
+    /* SDF to (probably) ShaderReadOnly Image usage */ {
+        const auto barrier = RHI::Barrier()
+            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::ShaderReadOnly));
+        barrier.insert(commandList);
+    }
+
+    // SDF Render Pass
+    // ❗Don't clear previous render pass result
+    colorAttachment.attachmentInfo.setLoadOp(vk::AttachmentLoadOp::eLoad);
+    mRenderPass->setColorAttachment(0, colorAttachment);
+    // mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+        // TODO: SDF Render Pass commands
+    // });
 
     commandList->getHandle().endDebugUtilsLabelEXT();
 }

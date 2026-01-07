@@ -7,7 +7,7 @@ namespace RHI
     {
         mPushConstantRange = createInfo.pushConstantRange;
         mDevice = createInfo.device;
-        mPipelineType = PipelineType::Graphics;
+        mPipelineType = PipelineType::Compute;
         mBindPoint = PipelineUtils::pipelineTypeToBindPoint(mPipelineType);
 
         const auto layoutCreateInfo = vk::PipelineLayoutCreateInfo()

@@ -14,11 +14,11 @@ namespace viz
         float scale;
     };
 
-    class ComputePrePass final : public IPass
+    class ComputePrePass
     {
     public:
-        explicit ComputePrePass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Buffer>& positions)
-        : mRHI(rhi)
+        ComputePrePass(SPtr<RHI::VulkanRHI> rhi, const SPtr<RHI::Buffer>& positions)
+        : mRHI(std::move(rhi))
         , mPositions(positions)
         , mPushConstants(positions->getSize() / sizeof(glm::vec3), .1f, 1.f)
         {
@@ -44,7 +44,6 @@ namespace viz
                 .bindings     = {
                     vk::DescriptorSetLayoutBinding().setBinding(0).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eStorageImage).setStageFlags(vk::ShaderStageFlagBits::eCompute),
                     vk::DescriptorSetLayoutBinding().setBinding(1).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eStorageBuffer).setStageFlags(vk::ShaderStageFlagBits::eCompute),
-                    //vk::DescriptorSetLayoutBinding().setBinding(2).setDescriptorCount(1).setDescriptorType(vk::DescriptorType::eUniformBuffer).setStageFlags(vk::ShaderStageFlagBits::eCompute),
                 },
                 .setCount     = 1,
                 .debugName    = "ComputePrePassDescriptor",
@@ -54,7 +53,7 @@ namespace viz
             const auto bufferInfo = vk::DescriptorBufferInfo { mPositions->getHandle(), 0, mPositions->getSize() };
             const auto write = RHI::DescriptorWriteInfo()
                 .setSetIndex(0)
-                .writeCombinedImageSamplers(0, 1, &imageInfo)
+                .writeStorageImages(0, 1, &imageInfo)
                 .writeStorageBuffers(1, 1, &bufferInfo);
             mDescriptor->write_old(write);
 
@@ -65,15 +64,20 @@ namespace viz
                  .setDebugName("VizCompute"));
         }
 
-        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override
+        void execute(const RHI::CommandList* commandList) const
         {
-            // TODO: exec. pipeline
             mPipeline->bind(commandList->getHandle());
             mPipeline->pushConstants(commandList->getHandle(), &mPushConstants);
+            mPipeline->bindDescriptorSet(commandList->getHandle(), mDescriptor->getSet(0));
             mPipeline->dispatch(commandList->getHandle(), 4, 4, 4);
         }
 
-        ~ComputePrePass() override = default;
+        [[nodiscard]] SPtr<RHI::Image3D> getSDFTexture3D() const noexcept
+        {
+            return mImage3D;
+        }
+
+        ~ComputePrePass() = default;
 
     private:
         SPtr<RHI::VulkanRHI>        mRHI;

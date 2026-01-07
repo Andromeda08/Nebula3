@@ -8,6 +8,7 @@
 #include "Camera/ICamera.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Molecule/CIFData.hpp"
+#include "RenderPass/Molecule/ComputePrePass.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
@@ -44,19 +45,19 @@ public:
 
     void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData);
 
-    SPtr<RHI::Buffer> getMoleculePositionBuffer() const noexcept { return mMoleculePosBuffer; }
-
 private:
     friend class SceneInfoComponent;
 
     UPtr<CIFData>                       mCIFData;
-    SPtr<RHI::Buffer>                   mMoleculePosBuffer;
 
     SPtr<RHI::VulkanRHI>                mRHI;
 
     UPtr<ICamera>                       mCamera;
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
     SPtr<RHI::Descriptor>               mSceneDescriptor;
+
+    // Molecule: SDF
+    UPtr<viz::ComputePrePass>           mComputePrePass;
 
     // Molecule: Structure Rendering
     glm::vec4                           mStructureColor = glm::vec4(0.45f, 0.2f, 0.8f, 1.0f);
