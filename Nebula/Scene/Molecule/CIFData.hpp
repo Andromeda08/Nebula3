@@ -43,7 +43,7 @@ private:
 
 	// Atom Positions data for SDF
 	std::vector<glm::vec3>	mAtomPositions;
-	SPtr<RHI::Buffer>		mSDFAtomPositionsBuffer;
+	/*SPtr<RHI::Buffer>		mSDFAtomPositionsBuffer;*/
 
 	SPtr<RHI::VulkanRHI>	mRHI;
 };

@@ -19,10 +19,9 @@ namespace viz
     class ComputePrePass
     {
     public:
-        ComputePrePass(SPtr<RHI::VulkanRHI> rhi, const SPtr<RHI::Buffer>& positions, const std::vector<glm::vec3>& atomPositions)
+        ComputePrePass(SPtr<RHI::VulkanRHI> rhi, const std::vector<glm::vec3>& atomPositions)
         : mRHI(std::move(rhi))
-        , mPositions(positions)
-        , mTextureExtents(100, 100, 100)
+        , mTextureExtents(128, 128, 128)
         , mPC(glm::vec4(INT_MAX), glm::vec4(INT_MIN), atomPositions.size(), .1f, 1.f)
         {
             mImage3D = mRHI->createImage3D({
@@ -52,6 +51,43 @@ namespace viz
 
             mPC.bboxMin -= probeR;
             mPC.bboxMax += probeR;
+
+            // Normalize Pos
+            auto normalize = [](float v, float min, float max, float from, float to) {
+                return (to - from) * ((v - min) / (max - min)) + from;
+            };
+
+            std::vector<glm::vec3> normalizedAtomPositions;
+            normalizedAtomPositions.reserve(atomPositions.size());
+            for (const auto& p : atomPositions) {
+                normalizedAtomPositions.emplace_back(
+                    normalize(p.x, mPC.bboxMin.x, mPC.bboxMax.x, 0, mTextureExtents.width),
+                    normalize(p.y, mPC.bboxMin.y, mPC.bboxMax.y, 0, mTextureExtents.height),
+                    normalize(p.z, mPC.bboxMin.z, mPC.bboxMax.z, 0, mTextureExtents.depth)
+                );
+            }
+
+            auto positionsSize = normalizedAtomPositions.size() * sizeof(glm::vec3);
+            auto staging = mRHI->createBuffer({
+                .size = positionsSize,
+                .type = RHI::BufferType::Staging,
+                });
+            staging->setData(atomPositions.data(), positionsSize);
+
+            mPositions = mRHI->createBuffer({
+                .size = positionsSize,
+                .type = RHI::BufferType::Storage,
+                .debugName = "Molecule Positions",
+            });
+
+            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+                const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
+                const auto info = vk::CopyBufferInfo2()
+                    .setSrcBuffer(staging->getHandle())
+                    .setDstBuffer(mPositions->getHandle())
+                    .setRegions(copy);
+                commandList->getHandle().copyBuffer2(info);
+            });
 
             vk::PushConstantRange pcr;
             pcr.offset = 0;

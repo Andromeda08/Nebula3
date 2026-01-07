@@ -28,14 +28,14 @@ void main() {
     ivec3 gID = ivec3(gl_GlobalInvocationID.xyz);
 
     vec3 size = imageSize(uTexture);
+    if (gID.x >= size.x || gID.y >= size.y || gID.z >= size.z) return;
+
     vec3 uvw = (vec3(gID) + 0.5) / size;
     vec3 worldPos = mix(config.bboxMin.xyz, config.bboxMax.xyz, uvw);
-    if (gID.x >= size.x || gID.y >= size.y || gID.z >= size.z) return;
 
     float value = 1.0f;
     for (int i = 0; i < config.numAtoms; i++) {
-        vec3 pos = inputBuffer.atomPositions[i];
-        float dist = distance(worldPos, pos);
+        float dist = distance(worldPos, inputBuffer.atomPositions[i]);
         value = smin(value, dist - config.radius, config.scale);
     }
 

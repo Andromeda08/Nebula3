@@ -151,26 +151,26 @@ void CIFData::createRenderingResources() noexcept
     }
 
     /* Data Upload */ {
-        const auto positionsSize = mAtomPositions.size() * sizeof(glm::vec3);
-        mSDFAtomPositionsBuffer = mRHI->createBuffer({
-            .size      = positionsSize,
-            .type      = RHI::BufferType::Storage,
-            .debugName = "Molecule Positions",
-        });
+        //const auto positionsSize = mAtomPositions.size() * sizeof(glm::vec3);
+        ///*mSDFAtomPositionsBuffer = mRHI->createBuffer({
+        //    .size      = positionsSize,
+        //    .type      = RHI::BufferType::Storage,
+        //    .debugName = "Molecule Positions",
+        //});*/
 
-        const auto staging = mRHI->createBuffer({
-            .size = positionsSize,
-            .type = RHI::BufferType::Staging,
-        });
-        staging->setData(mAtomPositions.data(), positionsSize);
+        //const auto staging = mRHI->createBuffer({
+        //    .size = positionsSize,
+        //    .type = RHI::BufferType::Staging,
+        //});
+        //staging->setData(mAtomPositions.data(), positionsSize);
 
-        mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+        /*mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
             const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
             const auto info = vk::CopyBufferInfo2()
                 .setSrcBuffer(staging->getHandle())
                 .setDstBuffer(mSDFAtomPositionsBuffer->getHandle())
                 .setRegions(copy);
             commandList->getHandle().copyBuffer2(info);
-        });
+        });*/
     }
 }

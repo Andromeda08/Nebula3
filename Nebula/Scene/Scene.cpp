@@ -11,7 +11,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 , mPCSDF()
 {
     /* CIF Loading */ {
-        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/5XUY.cif", true, mRHI });
+        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", true, mRHI });
     }
 
     /* (Flying) Camera */ {
@@ -110,7 +110,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     }
 
     /* CIF SDF Compute Pass */ {
-        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mSDFAtomPositionsBuffer, mCIFData->getAtomPositions());
+        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->getAtomPositions());
         mPCSDF.bboxMin = mComputePrePass->getBBoxMin();
         mPCSDF.bboxMax = mComputePrePass->getBBoxMax();
         mPCSDF.voxelSize = glm::length(glm::vec3(mPCSDF.bboxMax) - glm::vec3(mPCSDF.bboxMin)) / mComputePrePass->getTextureExtents().width;
@@ -172,7 +172,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .debugName = "SDFDescriptor",
             });
 
-        const auto imageInfo = vk::DescriptorImageInfo{ mSDFSampler, mComputePrePass->getSDFTexture3D()->getImageView(), vk::ImageLayout::eGeneral };
+        const auto imageInfo = vk::DescriptorImageInfo{ mSDFSampler, mComputePrePass->getSDFTexture3D()->getImageView(), vk::ImageLayout::eShaderReadOnlyOptimal };
         const auto write = RHI::DescriptorWriteInfo()
             .setSetIndex(0)
             .writeCombinedImageSamplers(0, 1, &imageInfo);

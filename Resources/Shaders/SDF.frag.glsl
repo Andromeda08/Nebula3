@@ -74,7 +74,7 @@ vec4 rayMarch(vec3 ro, vec3 rd)
     float t = max(tEnter, 0.0);
 
     const int STEPS = 512;
-    const float VOXEL_SIZE = 0.4;
+    const float VOXEL_SIZE = config.voxelSize;
 
     for (int i = 0; i < STEPS && t < tExit; ++i)
     {
@@ -103,6 +103,6 @@ void main()
 
     vec4 rayMarchSample = rayMarch(ro, rd);
 
-    outColor = vec4(vec3(rayMarchSample), 0.2);
+    outColor = vec4(vec3(rayMarchSample), 0.1);
     //outColor = vec4(abs(rd), 1.0);
 }
