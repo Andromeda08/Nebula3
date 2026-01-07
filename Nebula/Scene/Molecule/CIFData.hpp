@@ -1,35 +1,49 @@
-#include "CIFParser.hpp"
-#include "CIFGeometry.hpp"
-
-#include "Core/Macro.hpp"
-#include "Core/Types.hpp"
+#pragma once
 
 #include <string>
 #include <vector>
+#include "CIFGeometry.hpp"
+#include "CIFParser.hpp"
+#include "Core/Macro.hpp"
+#include "Core/Types.hpp"
+#include "VulkanRHI/VulkanRHI.hpp"
 
 struct CIFDataCreateInfo {
-	std::string filename;
-	bool centerMolecule;
+	std::string			 filename;
+	bool				 centerMolecule;
+	SPtr<RHI::VulkanRHI> rhi;
 };
 
 class CIFData {
 public:
-	//nbl_DISABLE_COPY(CIFData);
-	//nbl_CTOR(CIFData);
+	explicit CIFData(const CIFDataCreateInfo& createInfo);
 
-	CIFData(const CIFDataCreateInfo& createInfo);
-
-	const std::vector<geo::Data>&	getSphereData() const noexcept { return mSpheres; }
-	const std::vector<geo::Data>&	getCylinderData() const noexcept { return mCylinders; }
-	const std::vector<glm::vec3>&	getAtomPositions() const noexcept { return mAtomPositions; }
-	const geo::CIFInstanceData&		getCIFInstanceData() const noexcept { return mCID; }
+	const std::vector<glm::vec3>& getAtomPositions() const noexcept { return mAtomPositions; }
+	const geo::CIFInstanceData&	getCIFInstanceData() const noexcept { return mCID; }
 
 private:
-	CIFParser mCIF;
+	friend class Scene;
 
-	std::vector<geo::Data> mSpheres;
-	std::vector<geo::Data> mCylinders;
-	std::vector<glm::vec3> mAtomPositions;
+	void createRenderingResources() noexcept;
 
-	geo::CIFInstanceData mCID;
+	CIFParser				mCIF;
+	geo::CIFInstanceData	mCID;
+
+	// Spheres for Structure Rendering
+	geo::Data				mSphereData;
+	SPtr<RHI::Buffer>		mSphereVertexBuffer;
+	SPtr<RHI::Buffer>		mSphereIndexBuffer;
+	SPtr<RHI::Buffer>		mSphereInstanceBuffer;
+
+	// Cylinders for Structure Rendering
+	geo::Data				mCylinderData;
+	SPtr<RHI::Buffer>		mCylinderVertexBuffer;
+	SPtr<RHI::Buffer>		mCylinderIndexBuffer;
+	SPtr<RHI::Buffer>		mCylinderInstanceBuffer;
+
+	// Atom Positions data for SDF
+	std::vector<glm::vec3>	mAtomPositions;
+	SPtr<RHI::Buffer>		mAtomPositionsBuffer;
+
+	SPtr<RHI::VulkanRHI>	mRHI;
 };
