@@ -25,7 +25,7 @@ namespace viz
             mImage3D = mRHI->createImage3D({
                 .extent     = { 100, 100, 100 },
                 .format     = vk::Format::eR32G32B32A32Sfloat,
-                .usageFlags = vk::ImageUsageFlagBits::eStorage,
+                .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
                 .debugName = "MoleculeSDF"
             });
 
