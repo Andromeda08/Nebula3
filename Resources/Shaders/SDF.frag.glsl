@@ -25,6 +25,8 @@ layout (set = 0, binding = 1) uniform sampler3D SDFTexture;
 
 void main()
 {
-    //outColor = vec4(vec2(frUV), 0.f, 1.f);
-    outColor = vec4(inUV.rg, 0.0, 1.0);
+    //vec4 ro = cameraData.position;
+
+    //vec3 rd = (cameraData.projInverse * vec4(inUV * 2 - 1, 0, 1)).xyz;
+    outColor = vec4(inUV.rg, 0.0, 0.5);
 }
