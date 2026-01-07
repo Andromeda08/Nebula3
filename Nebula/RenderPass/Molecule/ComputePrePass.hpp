@@ -39,6 +39,7 @@ namespace viz
             });
 
             // Calculate molecule bounding box
+            float probeR = 1.5f;
             for (const auto& p : atomPositions) {
                 if (p.x < mPC.bboxMin.x) mPC.bboxMin.x = p.x;
                 if (p.y < mPC.bboxMin.y) mPC.bboxMin.y = p.y;
@@ -48,6 +49,9 @@ namespace viz
                 if (p.y > mPC.bboxMax.y) mPC.bboxMax.y = p.y;
                 if (p.z > mPC.bboxMax.z) mPC.bboxMax.z = p.z;
             }
+
+            mPC.bboxMin *= probeR;
+            mPC.bboxMax *= probeR;
 
             vk::PushConstantRange pcr;
             pcr.offset = 0;

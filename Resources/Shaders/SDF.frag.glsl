@@ -21,7 +21,7 @@ layout (set = 0, binding = 0) uniform CameraData {
     float _p0, _p1, _p3;
 } cameraData;
 
-layout (set = 0, binding = 1) uniform sampler3D SDFTexture;
+layout (set = 1, binding = 0) uniform sampler3D SDFTexture;
 
 float distanceFromSphere(in vec3 p, in vec3 c, float r)
 {
@@ -97,6 +97,6 @@ void main()
 
     vec4 rayMarchSample = rayMarch(ro.xyz, rd);
 
-    //outColor = vec4(vec3(rayMarchSample), 0.3);
-    outColor = texture(SDFTexture, inUV * 100.0)
+    outColor = vec4(vec3(rayMarchSample), 0.2);
+    //outColor = texture(SDFTexture, vec3(inUV, 1.0));
 }
