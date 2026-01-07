@@ -16,6 +16,7 @@ CIFData::CIFData(const CIFDataCreateInfo& createInfo)
     }
 
     for (const auto& [k, v] : mCIF.positions) {
+        if (mCIF.bonds.find(k.compId) == mCIF.bonds.end()) continue;
         auto atoms1 = mCIF.bonds.at(k.compId);
         if (atoms1.find(k.atomId) == atoms1.end()) continue;
         for (const auto& e : atoms1.at(k.atomId)) {
