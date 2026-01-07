@@ -58,13 +58,15 @@ private:
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
     SPtr<RHI::Descriptor>               mSceneDescriptor;
 
-    // Test scene with single cube
+    // Molecule: Structure Rendering
     SPtr<RHI::Image>                    mDepthBuffer;
     SPtr<RHI::RenderPass>               mRenderPass;
-    SPtr<RHI::GraphicsPipeline>         mPipeline;
+    SPtr<RHI::GraphicsPipeline>         mStructurePipeline;
+
     SPtr<Geometry>                      mCube;
     SPtr<RHI::Buffer>                   mVertexBuffer;
     SPtr<RHI::Buffer>                   mIndexBuffer;
+    SPtr<RHI::GraphicsPipeline>         mFwdPipeline;
 
     std::string                         mName;
 };

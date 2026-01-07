@@ -10,30 +10,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 , mName(createInfo.name)
 {
     /* CIF Loading */ {
-        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", false });
-        std::vector<glm::vec3> positions = mCIFData->getAtomPositions();
-        /* Data Upload */ {
-            const auto positionsSize = positions.size() * sizeof(glm::vec3);
-            mMoleculePosBuffer = mRHI->createBuffer({
-                .size      = positionsSize,
-                .type      = RHI::BufferType::Storage,
-                .debugName = "Molecule Positions",
-            });
-
-            const auto staging = mRHI->createBuffer({
-                .size = positionsSize,
-                .type = RHI::BufferType::Staging,
-            });
-            staging->setData(positions.data(), positionsSize);
-            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
-                const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
-                const auto info = vk::CopyBufferInfo2()
-                    .setSrcBuffer(staging->getHandle())
-                    .setDstBuffer(mMoleculePosBuffer->getHandle())
-                    .setRegions(copy);
-                commandList->getHandle().copyBuffer2(info);
-            });
-        }
+        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", true, mRHI });
     }
 
     /* Cube Object & Vertex/Index Buffers */ {
@@ -156,8 +133,12 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .setPushConstantRange(vk::PushConstantRange().setOffset(0).setSize(sizeof(glm::vec4)).setStageFlags(vk::ShaderStageFlagBits::eFragment))
             .addDescriptorSetLayout(mSceneDescriptor->getLayout())
             .setStateInfo(RHI::GraphicsPipelineStateInfo()
-                .addAttributeDescriptions<Vertex>()
-                .addBindingDescriptions<Vertex>()
+                .configure([](auto& stateInfo) {
+                    stateInfo.attributeDescriptions = {{ 0, 0, vk::Format::eR32G32B32Sfloat, 0 }};
+                    stateInfo.bindingDescriptions = {{ 0, sizeof(glm::vec3), vk::VertexInputRate::eVertex }};
+            })
+                // .addAttributeDescriptions<Vertex>()
+                // .addBindingDescriptions<Vertex>()
                 .addAttachmentState())
             .addShader({ "Resources/Shaders/bin/TestFwd.vert.spv", vk::ShaderStageFlagBits::eVertex })
             .addShader({ "Resources/Shaders/bin/TestFwd.frag.spv", vk::ShaderStageFlagBits::eFragment })
@@ -165,7 +146,35 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
             .setDebugName("TestPipeline");
 
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mFwdPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+    }
+
+    /* CIF Structure Rendering Pipeline */ {
+        RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
+            .setPushConstantRange(vk::PushConstantRange().setOffset(0).setSize(sizeof(glm::vec4)).setStageFlags(vk::ShaderStageFlagBits::eFragment))
+            .addDescriptorSetLayout(mSceneDescriptor->getLayout())
+            .setStateInfo(RHI::GraphicsPipelineStateInfo()
+                .configure([](auto& stateInfo) {
+                    stateInfo.attributeDescriptions = {
+                        { 0, 0, vk::Format::eR32G32B32Sfloat, 0 },
+                        { 1, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 0 },
+                        { 2, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 1 },
+                        { 3, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 2 },
+                        { 4, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 3 },
+                    };
+                    stateInfo.bindingDescriptions = {
+                        { 0, sizeof(glm::vec3), vk::VertexInputRate::eVertex },
+                        { 1, sizeof(glm::mat4), vk::VertexInputRate::eInstance },
+                    };
+                })
+                .addAttachmentState())
+            .addShader({ "Resources/Shaders/bin/Structure.vert.spv", vk::ShaderStageFlagBits::eVertex })
+            .addShader({ "Resources/Shaders/bin/Structure.frag.spv", vk::ShaderStageFlagBits::eFragment })
+            .addColorAttachmentFormat(mRHI->getSwapchain()->getProperties().format)
+            .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
+            .setDebugName("StructurePipeline");
+
+        mStructurePipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
 }
 
@@ -196,14 +205,23 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
     };
     mRenderPass->setColorAttachment(0, colorAttachment);
     mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSet(commandBuffer, mSceneDescriptor->getSet(frameData.currentFrame));
-        mPipeline->pushConstants(commandBuffer, &color);
+        mStructurePipeline->bind(commandBuffer);
+        mStructurePipeline->bindDescriptorSet(commandBuffer, mSceneDescriptor->getSet(frameData.currentFrame));
+        mStructurePipeline->pushConstants(commandBuffer, &color);
 
-        static constexpr vk::DeviceSize offsets[1] = { 0 };
-        commandBuffer.bindVertexBuffers(0, 1, &mVertexBuffer->getHandle(), offsets);
-        commandBuffer.bindIndexBuffer(mIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-        commandBuffer.drawIndexed(mCube->indexCount(), 1, 0, 0, 0);
+        static constexpr vk::DeviceSize offsets[2] = { 0, 0 };
+        /* Spheres */ {
+            const std::array vertexBuffers { mCIFData->mSphereVertexBuffer->getHandle(), mCIFData->mSphereInstanceBuffer->getHandle() };
+            commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
+            commandBuffer.bindIndexBuffer(mCIFData->mSphereIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+            commandBuffer.drawIndexed(mCIFData->mCID.sphere.indices.size(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
+        }
+        /* Cylinders */ {
+            const std::array vertexBuffers { mCIFData->mCylinderVertexBuffer->getHandle(), mCIFData->mCylinderInstanceBuffer->getHandle() };
+            commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
+            commandBuffer.bindIndexBuffer(mCIFData->mCylinderIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+            commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
+        }
     });
 
     commandList->getHandle().endDebugUtilsLabelEXT();

@@ -3,7 +3,6 @@
 // Input Attributes
 // ========================================
 layout (location = 0) in vec4 inWorldPosition;
-// layout (location = 1) in vec4 inWorldNormal;
 
 // Bound Resources
 // ========================================
