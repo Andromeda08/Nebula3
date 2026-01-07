@@ -194,14 +194,22 @@ void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& fr
 
 void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
 {
-    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("Scene Render"));
+    auto sdfTexture = mComputePrePass->getSDFTexture3D();
 
-    // SDF Pass
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Compute"));
+    /* SDF to Storage Image usage */ {
+        const auto barrier = RHI::Barrier()
+            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::StorageImage));
+        barrier.insert(commandList);
+    }
+
+    // SDF Compute Pass
     mComputePrePass->execute(commandList);
+    commandList->getHandle().endDebugUtilsLabelEXT();
 
     // Structure Pass
-
-    const auto colorAttachment = RHI::Attachment {
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("StructureRendering"));
+     auto colorAttachment = RHI::Attachment {
         .image = mRHI->getSwapchain()->getImage(0),
         .attachmentInfo = vk::RenderingAttachmentInfo()
             .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
@@ -230,6 +238,22 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
             commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
         }
     });
+    commandList->getHandle().endDebugUtilsLabelEXT();
+
+    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Render"));
+    /* SDF to (probably) ShaderReadOnly Image usage */ {
+        const auto barrier = RHI::Barrier()
+            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::ShaderReadOnly));
+        barrier.insert(commandList);
+    }
+
+    // SDF Render Pass
+    // ❗Don't clear previous render pass result
+    colorAttachment.attachmentInfo.setLoadOp(vk::AttachmentLoadOp::eLoad);
+    mRenderPass->setColorAttachment(0, colorAttachment);
+    // mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+        // TODO: SDF Render Pass commands
+    // });
 
     commandList->getHandle().endDebugUtilsLabelEXT();
 }

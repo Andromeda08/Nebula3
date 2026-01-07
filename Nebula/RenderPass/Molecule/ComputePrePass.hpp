@@ -72,6 +72,11 @@ namespace viz
             mPipeline->dispatch(commandList->getHandle(), 4, 4, 4);
         }
 
+        [[nodiscard]] SPtr<RHI::Image3D> getSDFTexture3D() const noexcept
+        {
+            return mImage3D;
+        }
+
         ~ComputePrePass() = default;
 
     private:
