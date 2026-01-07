@@ -23,6 +23,12 @@ layout (set = 0, binding = 0) uniform CameraData {
 
 layout (set = 1, binding = 0) uniform sampler3D SDFTexture;
 
+layout (push_constant) uniform Config {
+    vec4 bboxMin;
+    vec4 bboxMax;
+    float voxelSize;
+} config;
+
 float distanceFromSphere(in vec3 p, in vec3 c, float r)
 {
     return length(p - c) - r;
@@ -34,69 +40,69 @@ float normLinear01(float v, float min, float max) {
 
 float sampleSDF(in vec3 p) 
 {
-    const int W = 100;
-    const int H = 100;
-    const int D = 100;
+    vec3 uvw = (p - config.bboxMin.xyz) / (config.bboxMax.xyz - config.bboxMin.xyz);
 
-    // Position in the texture dimensions
-    if (p.x <= W/2 && p.x >= -W/2 &&
-        p.y <= H/2 && p.y >= -H/2 &&
-        p.z <= D/2 && p.z >= -D/2) 
+    if (any(lessThan(uvw, vec3(0.0))) ||
+        any(greaterThan(uvw, vec3(1.0))))
     {
-        vec3 samplePos = vec3(
-            normLinear01(p.x, -W/2, W/2),
-            normLinear01(p.y, -H/2, H/2),
-            normLinear01(p.z, -D/2, D/2)
-        );
-        return texture(SDFTexture, samplePos).r;
+        // Outside of texture
+        return 1.0;
     }
-    // Position not in the texture dimensions
-    // -> Return distance
-    else 
-    {
-        float rSphereApprox = sqrt(pow(W, 2) + pow(H, 2) + pow(D, 2));
-        float d = distanceFromSphere(p, vec3(0.0), rSphereApprox);
-        return d;
-    }
+
+    return texture(SDFTexture, uvw).r;
+}
+
+bool intersectAABB(vec3 ro, vec3 rd, out float tEnter, out float tExit)
+{
+    vec3 invD = 1.0 / rd;
+    vec3 t0 = (config.bboxMin.xyz - ro) * invD;
+    vec3 t1 = (config.bboxMax.xyz - ro) * invD;
+
+    vec3 tmin = min(t0, t1);
+    vec3 tmax = max(t0, t1);
+
+    tEnter = max(max(tmin.x, tmin.y), tmin.z);
+    tExit = min(min(tmax.x, tmax.y), tmax.z);
+
+    return tExit >= max(tEnter, 0.0);
 }
 
 vec4 rayMarch(vec3 ro, vec3 rd)
 {
-    float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 512;
-    const float MINIMUM_HIT_DISTANCE = 0.01;
-    const float MAXIMUM_TRACE_DISTANCE = 1000.0;
+    float tEnter, tExit;
+    if (!intersectAABB(ro, rd, tEnter, tExit)) return vec4(0);
+    float t = max(tEnter, 0.0);
 
-    for (int i = 0; i < NUMBER_OF_STEPS; ++i)
+    const int STEPS = 512;
+    const float VOXEL_SIZE = 0.4;
+
+    for (int i = 0; i < STEPS && t < tExit; ++i)
     {
-        vec3 current_position = ro + total_distance_traveled * rd;
+        vec3 p = ro + t * rd;
+        float d = sampleSDF(p);
 
-        float distance_to_closest = sampleSDF(current_position);
+        if (d < VOXEL_SIZE) 
+            return vec4(1.0, 0.0, 0.0, t);
 
-        if (distance_to_closest < MINIMUM_HIT_DISTANCE) 
-        {
-            return vec4(1.0, 0.0, 0.0, total_distance_traveled);
-        }
-
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE)
-        {
-            break;
-        }
-        total_distance_traveled += distance_to_closest;
+        t += max(d, VOXEL_SIZE);
     }
-    return vec4(vec3(0.0), 1.0);
+
+    return vec4(0.0);
 }
 
 void main()
 {
-    vec4 ro = cameraData.position;
+    vec2 ndc = inUV * 2.0 - 1.0;
 
-    vec3 rd = (cameraData.projInverse * vec4(inUV /** 2 - 1*/, 0, 1)).xyz;
-    rd = (cameraData.viewInverse * vec4(rd, 0)).xyz;
-    rd = normalize(rd);
+    vec4 rc = vec4(ndc, -1.0, 1.0);
+    vec4 rv = cameraData.projInverse * rc;
+    rv = vec4(rv.xyz / rv.w, 0.0);
 
-    vec4 rayMarchSample = rayMarch(ro.xyz, rd);
+    vec3 rd = normalize((cameraData.viewInverse * rv).xyz);
+    vec3 ro = cameraData.position.xyz;
+
+    vec4 rayMarchSample = rayMarch(ro, rd);
 
     outColor = vec4(vec3(rayMarchSample), 0.2);
-    //outColor = texture(SDFTexture, vec3(inUV, 1.0));
+    //outColor = vec4(abs(rd), 1.0);
 }

@@ -39,7 +39,7 @@ namespace viz
             });
 
             // Calculate molecule bounding box
-            float probeR = 1.5f;
+            float probeR = 3.f;
             for (const auto& p : atomPositions) {
                 if (p.x < mPC.bboxMin.x) mPC.bboxMin.x = p.x;
                 if (p.y < mPC.bboxMin.y) mPC.bboxMin.y = p.y;
@@ -50,8 +50,8 @@ namespace viz
                 if (p.z > mPC.bboxMax.z) mPC.bboxMax.z = p.z;
             }
 
-            mPC.bboxMin *= probeR;
-            mPC.bboxMax *= probeR;
+            mPC.bboxMin -= probeR;
+            mPC.bboxMax += probeR;
 
             vk::PushConstantRange pcr;
             pcr.offset = 0;
@@ -96,6 +96,10 @@ namespace viz
         }
 
         ~ComputePrePass() = default;
+
+        glm::vec4 getBBoxMin() const noexcept { return mPC.bboxMin; }
+        glm::vec4 getBBoxMax() const noexcept { return mPC.bboxMax; }
+        vk::Extent3D getTextureExtents() const noexcept { return mTextureExtents; }
 
     private:
         SPtr<RHI::VulkanRHI>        mRHI;

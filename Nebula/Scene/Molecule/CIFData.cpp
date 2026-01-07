@@ -164,10 +164,6 @@ void CIFData::createRenderingResources() noexcept
         });
         staging->setData(mAtomPositions.data(), positionsSize);
 
-        for (auto& pos : mAtomPositions) {
-            
-        }
-
         mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
             const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
             const auto info = vk::CopyBufferInfo2()

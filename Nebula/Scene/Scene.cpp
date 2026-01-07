@@ -8,9 +8,10 @@
 Scene::Scene(const SceneCreateInfo& createInfo)
 : mRHI(createInfo.rhi)
 , mName(createInfo.name)
+, mPCSDF()
 {
     /* CIF Loading */ {
-        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", true, mRHI });
+        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/5XUY.cif", true, mRHI });
     }
 
     /* (Flying) Camera */ {
@@ -110,6 +111,9 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
     /* CIF SDF Compute Pass */ {
         mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mSDFAtomPositionsBuffer, mCIFData->getAtomPositions());
+        mPCSDF.bboxMin = mComputePrePass->getBBoxMin();
+        mPCSDF.bboxMax = mComputePrePass->getBBoxMax();
+        mPCSDF.voxelSize = glm::length(glm::vec3(mPCSDF.bboxMax) - glm::vec3(mPCSDF.bboxMin)) / mComputePrePass->getTextureExtents().width;
     }
 
     /* CIF Structure Rendering Pipeline */ {
@@ -142,8 +146,8 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
     /* SDF Descriptor Set */ {
         constexpr auto samplerCreateInfo = vk::SamplerCreateInfo()
-            .setMagFilter(vk::Filter::eNearest)
-            .setMinFilter(vk::Filter::eNearest)
+            .setMagFilter(vk::Filter::eLinear)
+            .setMinFilter(vk::Filter::eLinear)
             .setAddressModeU(vk::SamplerAddressMode::eRepeat)
             .setAddressModeV(vk::SamplerAddressMode::eRepeat)
             .setAddressModeW(vk::SamplerAddressMode::eRepeat)
@@ -153,7 +157,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
             .setUnnormalizedCoordinates(false)
             .setCompareEnable(false)
             .setCompareOp(vk::CompareOp::eAlways)
-            .setMipmapMode(vk::SamplerMipmapMode::eNearest)
+            .setMipmapMode(vk::SamplerMipmapMode::eLinear)
             .setMipLodBias(0.0f)
             .setMinLod(0.0f)
             .setMaxLod(0.0f);
@@ -176,6 +180,11 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     }
 
     /* CIF SDF Rendering Pipeline */ {
+        vk::PushConstantRange pcr;
+        pcr.offset = 0;
+        pcr.size = sizeof(PCSDF);
+        pcr.stageFlags = vk::ShaderStageFlagBits::eFragment;
+
         const auto colorAttachment = RHI::Attachment {
             .image = mRHI->getSwapchain()->getImage(0),
             .attachmentInfo = vk::RenderingAttachmentInfo()
@@ -202,6 +211,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
                     .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)))
             .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
             .addShader({ "Resources/Shaders/bin/SDF.frag.spv", vk::ShaderStageFlagBits::eFragment })
+            .setPushConstantRange(pcr)
             .addColorAttachmentFormat(mRHI->getSwapchain()->getProperties().format)
             .setDebugName("SDFPipeline");
 
@@ -289,6 +299,7 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
     mSDFRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         // TODO: SDF Render Pass commands
         mSDFPipeline->bind(commandBuffer);
+        mSDFPipeline->pushConstants(commandBuffer, &mPCSDF);
         mSDFPipeline->bindDescriptorSets(commandBuffer, { mSceneDescriptor->getSet(frameData.currentFrame), mSDFDescriptor->getSet(0) });
         commandBuffer.draw(3, 1, 0, 0);
      });

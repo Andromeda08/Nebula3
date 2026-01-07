@@ -33,7 +33,7 @@ void main() {
     if (gID.x >= size.x || gID.y >= size.y || gID.z >= size.z) return;
 
     float value = 1.0f;
-    for (int i = 0; i <= config.numAtoms; i++) {
+    for (int i = 0; i < config.numAtoms; i++) {
         vec3 pos = inputBuffer.atomPositions[i];
         float dist = distance(worldPos, pos);
         value = smin(value, dist - config.radius, config.scale);

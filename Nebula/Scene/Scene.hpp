@@ -27,6 +27,12 @@ struct SceneCreateInfo
     std::string          name;
 };
 
+struct PCSDF {
+    glm::vec4 bboxMin;
+    glm::vec4 bboxMax;
+    float voxelSize;
+};
+
 class Scene
 {
 public:
@@ -70,6 +76,7 @@ private:
     SPtr<RHI::GraphicsPipeline>         mSDFPipeline;
     SPtr<RHI::RenderPass>               mSDFRenderPass;
     vk::Sampler                         mSDFSampler;
+    PCSDF                               mPCSDF;
 
     SPtr<Geometry>                      mCube;
     SPtr<RHI::Buffer>                   mVertexBuffer;
