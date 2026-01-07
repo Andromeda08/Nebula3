@@ -1,5 +1,7 @@
 #include "CIFGeometry.hpp"
 
+#include <numbers>
+
 namespace geo
 {
     void Data::setPosition(const glm::vec3& pos)
@@ -32,6 +34,77 @@ namespace geo
         bt.position = (atom1 + atom2) / 2.f;
 
         return bt;
+    }
+
+    std::vector<glm::vec3> generateSphereVertices(const int32_t stackCount, const int32_t sectorCount, const float radius)
+    {
+        std::vector<glm::vec3> vertices, normals;
+        std::vector<glm::vec2> uvs;
+
+        float sector_step = 2.0f * std::numbers::pi_v<float> / (float) sectorCount;
+        float stack_step  = std::numbers::pi_v<float> / (float) stackCount;
+        float sector_angle, stack_angle;
+
+        float r_inv = 1.0f / radius;
+
+        for (int32_t i = 0; i <= stackCount; i++)
+        {
+            float x, y, z, xy;
+            stack_angle = std::numbers::pi_v<float> / 2 - (float) i * stack_step;
+            xy = radius * cosf(stack_angle);
+            z = radius * sinf(stack_angle);
+
+            for (int32_t j = 0; j <= sectorCount; j++)
+            {
+                sector_angle = (float) j * sector_step;
+
+                x = xy * cosf(sector_angle);
+                y = xy * sinf(sector_angle);
+
+                vertices.emplace_back(x, y, z);
+                normals.emplace_back(x * r_inv, y * r_inv, z * r_inv);
+                uvs.emplace_back((float) j / (float) sectorCount, (float) i / (float) stackCount);
+            }
+        }
+        return vertices;
+    }
+
+    std::vector<uint32_t> generateSphereIndices(const int32_t stackCount, const int32_t sectorCount)
+    {
+        std::vector<uint32_t> indices;
+        uint32_t k1, k2;
+
+        for (int32_t i = 0; i < stackCount; i++)
+        {
+            k1 = i * (sectorCount + 1);
+            k2 = k1 + sectorCount + 1;
+
+            for (int32_t j = 0; j < sectorCount; j++, k1++, k2++)
+            {
+                if (i != 0)
+                {
+                    indices.push_back(k1);
+                    indices.push_back(k2);
+                    indices.push_back(k1 + 1);
+                }
+                if (i != (stackCount - 1))
+                {
+                    indices.push_back(k1 + 1);
+                    indices.push_back(k2);
+                    indices.push_back(k2 + 1);
+                }
+            }
+        }
+        return indices;
+    }
+
+    Data createSphereData2(const float r, const int32_t lat, const int32_t lng)
+    {
+        return {
+            .vertices = generateSphereVertices(lat, lng, r),
+            .normals = {},
+            .indices = generateSphereIndices(lat, lng)
+        };
     }
 
     Data createSphereData(float radius, uint32_t latSeg, uint32_t lngSeg)

@@ -31,11 +31,13 @@ namespace geo
 	// From ECG solution
 	Data createSphereData(float radius, uint32_t latSeg, uint32_t lngSeg);
 
+	Data createSphereData2(float r, int32_t lat, int32_t lng);
+
 	// From ECG solution
 	Data createCylinderData(uint32_t seg, float radius, float height);
 
 	struct CIFInstanceData {
-		Data sphere = createSphereData(.1f, 8, 8);
+		Data sphere = createSphereData2(1.0f, 20, 20);
 		Data cylinder = createCylinderData(8, .05f, 1.f);
 
 		std::vector<glm::mat4> sphereTransforms;
