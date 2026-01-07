@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 
 #include "Camera/FlyingCamera.hpp"
-#include "Camera/OrbitCamera.hpp"
+
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -149,6 +149,10 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         mFwdPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
 
+    /* CIF SDF Compute Pass */ {
+        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mAtomPositionsBuffer);
+    }
+
     /* CIF Structure Rendering Pipeline */ {
         RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
             .setPushConstantRange(vk::PushConstantRange().setOffset(0).setSize(sizeof(glm::vec4)).setStageFlags(vk::ShaderStageFlagBits::eFragment))
@@ -192,7 +196,10 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
 {
     commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("Scene Render"));
 
-    constexpr glm::vec4 color = { 0.75f, 0.1f, 0.5f, 1.0f };
+    // SDF Pass
+    mComputePrePass->execute(commandList);
+
+    // Structure Pass
 
     const auto colorAttachment = RHI::Attachment {
         .image = mRHI->getSwapchain()->getImage(0),
