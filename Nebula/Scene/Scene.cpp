@@ -176,15 +176,30 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     }
 
     /* CIF SDF Rendering Pipeline */ {
+        const auto colorAttachment = RHI::Attachment {
+            .image = mRHI->getSwapchain()->getImage(0),
+            .attachmentInfo = vk::RenderingAttachmentInfo()
+                .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+                .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                .setImageView(mRHI->getSwapchain()->getImageView(0))
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
+                .setStoreOp(vk::AttachmentStoreOp::eStore)
+        };
+        mSDFRenderPass = mRHI->createRenderPass({
+            .renderArea       = mRHI->getSwapchain()->getProperties().area,
+            .colorAttachments = { colorAttachment },
+            .label            = "SDFRenderPass",
+        });
+
         RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
             .addDescriptorSetLayout(mSceneDescriptor->getLayout())
             .addDescriptorSetLayout(mSDFDescriptor->getLayout())
             .setStateInfo(RHI::GraphicsPipelineStateInfo()
+                .setCullMode(vk::CullModeFlagBits::eNone)
                 .addAttachmentState())
             .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
             .addShader({ "Resources/Shaders/bin/SDF.frag.spv", vk::ShaderStageFlagBits::eFragment })
             .addColorAttachmentFormat(mRHI->getSwapchain()->getProperties().format)
-            .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
             .setDebugName("SDFPipeline");
 
         mSDFPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
@@ -198,10 +213,7 @@ void Scene::registerUIComponents(UserInterface* pUserInterface) const
 void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
 {
     const auto cameraData = mCamera->getCameraData();
-    /*mCIFUniforms->projInv = cameraData.projInverse;
-    mCIFUniforms->viewInv = cameraData.viewInverse;*/
     mCameraUB[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
-    /*mRayMarchingUB->setData(&mCIFUniforms, sizeof(CIFRayMarchingUniforms));*/
 }
 
 void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
@@ -222,7 +234,7 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
     // Structure Pass
     commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("StructureRendering"));
      auto colorAttachment = RHI::Attachment {
-        .image = mRHI->getSwapchain()->getImage(0),
+        .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
         .attachmentInfo = vk::RenderingAttachmentInfo()
             .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
             .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
@@ -261,9 +273,17 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
 
     // SDF Render Pass
     // ❗Don't clear previous render pass result
-    //colorAttachment.attachmentInfo.setLoadOp(vk::AttachmentLoadOp::eLoad);
-    mRenderPass->setColorAttachment(0, colorAttachment);
-    mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+    auto sdfColorAttachment = RHI::Attachment {
+        .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
+        .attachmentInfo = vk::RenderingAttachmentInfo()
+            .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+            .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
+            .setLoadOp(vk::AttachmentLoadOp::eLoad)
+            .setStoreOp(vk::AttachmentStoreOp::eStore)
+    };
+    mSDFRenderPass->setColorAttachment(0, sdfColorAttachment);
+    mSDFRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         // TODO: SDF Render Pass commands
         mSDFPipeline->bind(commandBuffer);
         mSDFPipeline->bindDescriptorSets(commandBuffer, { mSceneDescriptor->getSet(frameData.currentFrame), mSDFDescriptor->getSet(0) });

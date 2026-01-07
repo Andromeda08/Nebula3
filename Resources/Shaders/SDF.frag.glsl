@@ -2,7 +2,7 @@
 
 // Input Attributes
 // ========================================
-layout (location = 0) in vec2 frUV;
+layout (location = 0) in vec2 inUV;
 
 // Output Attributes
 // ========================================
@@ -26,5 +26,5 @@ layout (set = 0, binding = 1) uniform sampler3D SDFTexture;
 void main()
 {
     //outColor = vec4(vec2(frUV), 0.f, 1.f);
-    outColor = vec4(1.f, 0.f, 0.f, 1.f);
+    outColor = vec4(inUV.rg, 0.0, 1.0);
 }

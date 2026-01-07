@@ -68,6 +68,7 @@ private:
 
     // Molecule: SDF Rendering
     SPtr<RHI::GraphicsPipeline>         mSDFPipeline;
+    SPtr<RHI::RenderPass>               mSDFRenderPass;
     vk::Sampler                         mSDFSampler;
 
     SPtr<Geometry>                      mCube;
