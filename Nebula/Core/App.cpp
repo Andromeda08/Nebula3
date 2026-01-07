@@ -27,10 +27,10 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>();
 
-    mRenderGraphContext = rg::RenderGraphContext::create({
-        .rhi = mVulkanRHI,
-    });
-    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+    // mRenderGraphContext = rg::RenderGraphContext::create({
+    //     .rhi = mVulkanRHI,
+    // });
+    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
     mScene = Scene::create({
         .rhi  = mVulkanRHI,
@@ -136,7 +136,7 @@ void App::run_renderPathLoop()
 
         // Input
         mWindow->pollEvents();
-        // mScene->handleInput(mWindow->getHandle());
+        mScene->handleInput(mWindow->getHandle());
 
         // Rendering
         const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
