@@ -30,6 +30,11 @@ void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameD
     });
 }
 
+bool UserInterface::wantCaptureInput() noexcept
+{
+    return wantCaptureMouse() || wantCaptureKeyboard();
+}
+
 bool UserInterface::wantCaptureMouse() noexcept
 {
     const ImGuiIO& io = ImGui::GetIO();

@@ -59,6 +59,7 @@ private:
     SPtr<RHI::Descriptor>               mSceneDescriptor;
 
     // Molecule: Structure Rendering
+    glm::vec4                           mStructureColor = glm::vec4(0.45f, 0.2f, 0.8f, 1.0f);
     SPtr<RHI::Image>                    mDepthBuffer;
     SPtr<RHI::RenderPass>               mRenderPass;
     SPtr<RHI::GraphicsPipeline>         mStructurePipeline;

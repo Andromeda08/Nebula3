@@ -27,6 +27,8 @@ public:
 
     void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 
+    static bool wantCaptureInput() noexcept;
+
     static bool wantCaptureMouse() noexcept;
 
     static bool wantCaptureKeyboard() noexcept;

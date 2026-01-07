@@ -207,7 +207,7 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
     mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mStructurePipeline->bind(commandBuffer);
         mStructurePipeline->bindDescriptorSet(commandBuffer, mSceneDescriptor->getSet(frameData.currentFrame));
-        mStructurePipeline->pushConstants(commandBuffer, &color);
+        mStructurePipeline->pushConstants(commandBuffer, &mStructureColor);
 
         static constexpr vk::DeviceSize offsets[2] = { 0, 0 };
         /* Spheres */ {

@@ -136,7 +136,10 @@ void App::run_renderPathLoop()
 
         // Input
         mWindow->pollEvents();
-        mScene->handleInput(mWindow->getHandle());
+        if (!mUserInterface->wantCaptureInput())
+        {
+            mScene->handleInput(mWindow->getHandle());
+        }
 
         // Rendering
         const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
