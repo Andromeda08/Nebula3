@@ -13,51 +13,10 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", true, mRHI });
     }
 
-    /* Cube Object & Vertex/Index Buffers */ {
-        mCube = makeShared<Cube>(Cube::Params { 0.5f });
-
-        const auto vertexSize = mCube->vertexCount() * sizeof(Vertex);
-        mVertexBuffer = mRHI->createBuffer({
-            .size      = vertexSize,
-            .type      = RHI::BufferType::Vertex,
-            .debugName = "Cube-VertexBuffer",
-        });
-
-        const auto indexSize = mCube->indexCount() * sizeof(uint32_t);
-        mIndexBuffer = mRHI->createBuffer({
-            .size      = indexSize,
-            .type      = RHI::BufferType::Index,
-            .debugName = "Cube-IndexBuffer",
-        });
-
-        const auto stagingBuffer = mRHI->createBuffer({
-            .size      = vertexSize + indexSize,
-            .type      = RHI::BufferType::Staging,
-            .debugName = "Cube-Staging",
-        });
-        stagingBuffer->setData(mCube->getVertices().data(), vertexSize, 0);
-        stagingBuffer->setData(mCube->getIndices().data(), indexSize, vertexSize);
-
-        mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
-            const auto vertexRegion = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(vertexSize);
-            const auto vertexCopy = vk::CopyBufferInfo2()
-                .setSrcBuffer(stagingBuffer->getHandle())
-                .setDstBuffer(mVertexBuffer->getHandle())
-                .setRegions(vertexRegion);
-            commandList->getHandle().copyBuffer2(vertexCopy);
-
-            const auto indexRegion = vk::BufferCopy2().setSrcOffset(vertexSize).setDstOffset(0).setSize(indexSize);
-            const auto indexCopy = vk::CopyBufferInfo2()
-                .setSrcBuffer(stagingBuffer->getHandle())
-                .setDstBuffer(mIndexBuffer->getHandle())
-                .setRegions(indexRegion);
-            commandList->getHandle().copyBuffer2(indexCopy);
-        });
-    }
-
     /* (Flying) Camera */ {
         const auto e = mRHI->getSwapchain()->getProperties().extent;
         mCamera = makeUnique<FlyingCamera>(glm::ivec2(e.width, e.height), glm::vec3(0.0f, 0.0f, 5.0f));
+        //mCIFUniforms = makeUnique<CIFRayMarchingUniforms>();
         const auto cameraData = mCamera->getCameraData();
         for (auto& cameraUb : mCameraUB)
         {
@@ -93,7 +52,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         mDepthBuffer = mRHI->createImage({
             .extent        = mRHI->getSwapchain()->getProperties().extent,
             .format        = vk::Format::eD32Sfloat,
-            .usageFlags    = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+            .usageFlags    = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
             .createSampler = false,
             .debugName     = "DepthBuffer"
         });
@@ -180,6 +139,56 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
         mStructurePipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
+
+    /* SDF Descriptor Set */ {
+        constexpr auto samplerCreateInfo = vk::SamplerCreateInfo()
+            .setMagFilter(vk::Filter::eNearest)
+            .setMinFilter(vk::Filter::eNearest)
+            .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+            .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+            .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+            .setAnisotropyEnable(true)
+            .setMaxAnisotropy(1.0)
+            .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+            .setUnnormalizedCoordinates(false)
+            .setCompareEnable(false)
+            .setCompareOp(vk::CompareOp::eAlways)
+            .setMipmapMode(vk::SamplerMipmapMode::eNearest)
+            .setMipLodBias(0.0f)
+            .setMinLod(0.0f)
+            .setMaxLod(0.0f);
+
+        mSDFSampler = mRHI->getDevice()->getHandle().createSampler(samplerCreateInfo);
+
+        mSDFDescriptor = mRHI->createDescriptor({
+            .bindings = {
+                vk::DescriptorSetLayoutBinding { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment },
+            },
+            .setCount = 1,
+            .debugName = "SDFDescriptor",
+            });
+
+        const auto imageInfo = vk::DescriptorImageInfo{ mSDFSampler, mComputePrePass->getSDFTexture3D()->getImageView(), vk::ImageLayout::eGeneral };
+        const auto write = RHI::DescriptorWriteInfo()
+            .setSetIndex(0)
+            .writeCombinedImageSamplers(0, 1, &imageInfo);
+        mSDFDescriptor->write_old(write);
+    }
+
+    /* CIF SDF Rendering Pipeline */ {
+        RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
+            .addDescriptorSetLayout(mSceneDescriptor->getLayout())
+            .addDescriptorSetLayout(mSDFDescriptor->getLayout())
+            .setStateInfo(RHI::GraphicsPipelineStateInfo()
+                .addAttachmentState())
+            .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
+            .addShader({ "Resources/Shaders/bin/SDF.frag.spv", vk::ShaderStageFlagBits::eFragment })
+            .addColorAttachmentFormat(mRHI->getSwapchain()->getProperties().format)
+            .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
+            .setDebugName("SDFPipeline");
+
+        mSDFPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+    }
 }
 
 void Scene::registerUIComponents(UserInterface* pUserInterface) const
@@ -189,7 +198,10 @@ void Scene::registerUIComponents(UserInterface* pUserInterface) const
 void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
 {
     const auto cameraData = mCamera->getCameraData();
+    /*mCIFUniforms->projInv = cameraData.projInverse;
+    mCIFUniforms->viewInv = cameraData.viewInverse;*/
     mCameraUB[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
+    /*mRayMarchingUB->setData(&mCIFUniforms, sizeof(CIFRayMarchingUniforms));*/
 }
 
 void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
@@ -249,11 +261,14 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
 
     // SDF Render Pass
     // ❗Don't clear previous render pass result
-    colorAttachment.attachmentInfo.setLoadOp(vk::AttachmentLoadOp::eLoad);
+    //colorAttachment.attachmentInfo.setLoadOp(vk::AttachmentLoadOp::eLoad);
     mRenderPass->setColorAttachment(0, colorAttachment);
-    // mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+    mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         // TODO: SDF Render Pass commands
-    // });
+        mSDFPipeline->bind(commandBuffer);
+        mSDFPipeline->bindDescriptorSets(commandBuffer, { mSceneDescriptor->getSet(frameData.currentFrame), mSDFDescriptor->getSet(0) });
+        commandBuffer.draw(3, 1, 0, 0);
+     });
 
     commandList->getHandle().endDebugUtilsLabelEXT();
 }

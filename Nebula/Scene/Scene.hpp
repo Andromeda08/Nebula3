@@ -58,12 +58,17 @@ private:
 
     // Molecule: SDF
     UPtr<viz::ComputePrePass>           mComputePrePass;
+    SPtr<RHI::Descriptor>               mSDFDescriptor;
 
     // Molecule: Structure Rendering
     glm::vec4                           mStructureColor = glm::vec4(0.45f, 0.2f, 0.8f, 1.0f);
     SPtr<RHI::Image>                    mDepthBuffer;
     SPtr<RHI::RenderPass>               mRenderPass;
     SPtr<RHI::GraphicsPipeline>         mStructurePipeline;
+
+    // Molecule: SDF Rendering
+    SPtr<RHI::GraphicsPipeline>         mSDFPipeline;
+    vk::Sampler                         mSDFSampler;
 
     SPtr<Geometry>                      mCube;
     SPtr<RHI::Buffer>                   mVertexBuffer;
