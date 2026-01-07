@@ -8,6 +8,8 @@ layout (set = 0, binding = 1) readonly buffer InputBuffer {
 
 
 layout (push_constant) uniform Config {
+    vec4 bboxMin;
+    vec4 bboxMax;
     int numAtoms;
     float radius;
     float scale;
@@ -26,14 +28,17 @@ void main() {
     ivec3 gID = ivec3(gl_GlobalInvocationID.xyz);
 
     vec3 size = imageSize(uTexture);
+    vec3 uvw = (vec3(gID) + 0.5) / size;
+    vec3 worldPos = mix(config.bboxMin.xyz, config.bboxMax.xyz, uvw);
     if (gID.x >= size.x || gID.y >= size.y || gID.z >= size.z) return;
 
     float value = 1.0f;
     for (int i = 0; i <= config.numAtoms; i++) {
         vec3 pos = inputBuffer.atomPositions[i];
-        float dist = distance(vec3(gID), pos);
+        float dist = distance(worldPos, pos);
         value = smin(value, dist - config.radius, config.scale);
     }
 
     imageStore(uTexture, gID, vec4(vec3(value), 1.0));
+    //imageStore(uTexture, gID, vec4(worldPos * config.scale, 1.0));
 }

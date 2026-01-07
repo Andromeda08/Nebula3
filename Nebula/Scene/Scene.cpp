@@ -109,7 +109,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     }
 
     /* CIF SDF Compute Pass */ {
-        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mAtomPositionsBuffer);
+        mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->mSDFAtomPositionsBuffer, mCIFData->getAtomPositions());
     }
 
     /* CIF Structure Rendering Pipeline */ {

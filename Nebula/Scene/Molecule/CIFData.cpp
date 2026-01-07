@@ -152,7 +152,7 @@ void CIFData::createRenderingResources() noexcept
 
     /* Data Upload */ {
         const auto positionsSize = mAtomPositions.size() * sizeof(glm::vec3);
-        mAtomPositionsBuffer = mRHI->createBuffer({
+        mSDFAtomPositionsBuffer = mRHI->createBuffer({
             .size      = positionsSize,
             .type      = RHI::BufferType::Storage,
             .debugName = "Molecule Positions",
@@ -163,11 +163,16 @@ void CIFData::createRenderingResources() noexcept
             .type = RHI::BufferType::Staging,
         });
         staging->setData(mAtomPositions.data(), positionsSize);
+
+        for (auto& pos : mAtomPositions) {
+            
+        }
+
         mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
             const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
             const auto info = vk::CopyBufferInfo2()
                 .setSrcBuffer(staging->getHandle())
-                .setDstBuffer(mAtomPositionsBuffer->getHandle())
+                .setDstBuffer(mSDFAtomPositionsBuffer->getHandle())
                 .setRegions(copy);
             commandList->getHandle().copyBuffer2(info);
         });
