@@ -2,12 +2,14 @@
 
 #include <glm/glm.hpp>
 
+#include "RenderGraph/Node.hpp"
+#include "RenderPass/IPass.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace Molecule
 {
-    class SDFComputePass
+    class SDFComputePass : public IPass
     {
     public:
         struct PushConstants
@@ -21,16 +23,18 @@ namespace Molecule
 
         SDFComputePass(SPtr<RHI::VulkanRHI> rhi, const std::vector<glm::vec3>& atomPositions);
 
-        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
+        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override;
 
         [[nodiscard]] SPtr<RHI::Texture> getSDFTexture3D() const noexcept;
 
-        ~SDFComputePass() = default;
+        ~SDFComputePass() override = default;
 
         const PushConstants& getPushConstants() const noexcept
         {
             return mPushConstants;
         }
+
+        static rg::NodeCreateInfo getNodeInfo() noexcept;
 
     private:
         friend class MoleculeRenderingUI;

@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "RenderGraph/Node.hpp"
+#include "RenderPass/IPass.hpp"
 #include "Scene/Molecule/CIFData.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
@@ -13,12 +15,16 @@ namespace Molecule
         glm::vec4 structureColor = { 0.45f, 0.2f, 0.8f, 1.0f };
     };
 
-    class StructurePass
+    class StructurePass : public IPass
     {
     public:
+        ~StructurePass() override = default;
+
         StructurePass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, CIFData* pCIFData);
 
-        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
+        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override;
+
+        static rg::NodeCreateInfo getNodeInfo() noexcept;
 
     private:
         friend class MoleculeRenderingUI;

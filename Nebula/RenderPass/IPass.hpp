@@ -15,6 +15,11 @@ namespace res
     static constexpr auto rNormalBuffer = "Normal Buffer";
     static constexpr auto rAlbedoBuffer = "Albedo Buffer";
     static constexpr auto rDepthBuffer = "Depth Buffer";
+
+    // Molecule Rendering
+    static constexpr auto rSDFTexture = "SDF Texture";
+    static constexpr auto rStructureRender = "Structure Render";
+    static constexpr auto rFinalRender = "Final Render";
 }
 
 class IPass

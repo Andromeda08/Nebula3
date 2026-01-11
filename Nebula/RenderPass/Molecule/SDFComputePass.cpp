@@ -109,7 +109,7 @@ namespace Molecule
         mPipeline = mRHI->createComputePipeline(pipelineInfo);
     }
 
-    void SDFComputePass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const
+    void SDFComputePass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
     {
         commandList->beginLabel("SDFComputePass");
 
@@ -128,5 +128,32 @@ namespace Molecule
     SPtr<RHI::Texture> SDFComputePass::getSDFTexture3D() const noexcept
     {
         return mImage3D;
+    }
+
+    rg::NodeCreateInfo SDFComputePass::getNodeInfo() noexcept
+    {
+        using namespace rg;
+        return {
+            .nodeType     = NodeType::MolSDFComputePass,
+            .displayName  = "SDF Compute Pass",
+            .subTitle     = "Molecule Rendering",
+            .dependencies = {
+                DependencyInfo {
+                    .name           = res::rScene,
+                    .dependencyType = DependencyType::Read,
+                    .resourceType   = ResourceType::SceneData,
+                },
+                DependencyInfo {
+                    .name           = res::rSDFTexture,
+                    .dependencyType = DependencyType::Write,
+                    .resourceType   = ResourceType::Texture3D,
+                    .resourceParams = ImageInfo {
+                        .imageUsage = RHI::ImageUsage::StorageImage,
+                        .format     = vk::Format::eR32G32B32A32Sfloat,
+                        .extent     = vk::Extent3D { 128, 128, 128 },
+                    }
+                },
+            },
+        };
     }
 }

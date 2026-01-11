@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "RenderGraph/Node.hpp"
+#include "RenderPass/IPass.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -19,17 +21,21 @@ namespace Molecule
         int rayMarchingSteps;
     };
 
-    class SDFRaymarchPass
+    class SDFRaymarchPass : public IPass
     {
     public:
+        ~SDFRaymarchPass() override = default;
+
         SDFRaymarchPass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, const SPtr<RHI::Texture>& sdfTexture);
 
-        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
+        void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) override;
 
         void setParams(const SDFRaymarchParams& params) noexcept
         {
             mParams = params;
         }
+
+        static rg::NodeCreateInfo getNodeInfo() noexcept;
 
     private:
         friend class MoleculeRenderingUI;

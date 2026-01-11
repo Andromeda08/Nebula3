@@ -4,6 +4,8 @@
 
 #include "RenderPass/RenderPass.hpp"
 #include "RenderPass/Molecule/SDFComputePass.hpp"
+#include "RenderPass/Molecule/SDFRaymarchPass.hpp"
+#include "RenderPass/Molecule/StructurePass.hpp"
 
 namespace rg
 {
@@ -26,6 +28,9 @@ namespace rg
             case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
             case AntiAliasingPass:      return AntiAliasingPass::getNodeInfo();
             case CombinePass:           return CombinePass::getNodeInfo();
+            case MolSDFComputePass:     return Molecule::SDFComputePass::getNodeInfo();
+            case MolStructurePass:      return Molecule::StructurePass::getNodeInfo();
+            case MolSDFRaymarchPass:    return Molecule::SDFRaymarchPass::getNodeInfo();
             default:                    throw std::runtime_error("NodeType not supported");
         }
     }

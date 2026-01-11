@@ -75,7 +75,7 @@ namespace Molecule
         mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
 
-    void StructurePass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const
+    void StructurePass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
     {
         commandList->beginLabel("Molecule::StructurePass");
 
@@ -110,5 +110,31 @@ namespace Molecule
         });
 
         commandList->endLabel();
+    }
+
+    rg::NodeCreateInfo StructurePass::getNodeInfo() noexcept
+    {
+        using namespace rg;
+        return {
+            .nodeType     = NodeType::MolStructurePass,
+            .displayName  = "Structure Pass",
+            .subTitle     = "Molecule Rendering",
+            .dependencies = {
+                DependencyInfo {
+                    .name           = res::rScene,
+                    .dependencyType = DependencyType::Read,
+                    .resourceType   = ResourceType::SceneData,
+                },
+                DependencyInfo {
+                    .name           = res::rStructureRender,
+                    .dependencyType = DependencyType::Write,
+                    .resourceType   = ResourceType::Texture2D,
+                    .resourceParams = ImageInfo {
+                        .imageUsage = RHI::ImageUsage::ColorAttachment,
+                        .format     = vk::Format::eR32G32B32A32Sfloat,
+                    }
+                },
+            },
+        };
     }
 }

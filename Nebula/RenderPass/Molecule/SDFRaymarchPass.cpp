@@ -58,7 +58,7 @@ namespace Molecule
         mPipeline = mRHI->createGraphicsPipeline(pipelineInfo);
     }
 
-    void SDFRaymarchPass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const
+    void SDFRaymarchPass::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
     {
         commandList->beginLabel("SDFRaymarchPass");
 
@@ -86,6 +86,51 @@ namespace Molecule
         });
 
         commandList->endLabel();
+    }
+
+    rg::NodeCreateInfo SDFRaymarchPass::getNodeInfo() noexcept
+    {
+        using namespace rg;
+        return {
+            .nodeType     = NodeType::MolSDFRaymarchPass,
+            .displayName  = "SDF Raymarch Pass",
+            .subTitle     = "Molecule Rendering",
+            .dependencies = {
+                DependencyInfo {
+                    .name           = res::rScene,
+                    .dependencyType = DependencyType::Read,
+                    .resourceType   = ResourceType::SceneData,
+                },
+                DependencyInfo {
+                    .name           = res::rSDFTexture,
+                    .dependencyType = DependencyType::Read,
+                    .resourceType   = ResourceType::Texture3D,
+                    .resourceParams = ImageInfo {
+                        .imageUsage = RHI::ImageUsage::ShaderReadOnly,
+                        .format     = vk::Format::eR32G32B32A32Sfloat,
+                        .extent     = vk::Extent3D { 128, 128, 128 },
+                    }
+                },
+                DependencyInfo {
+                    .name           = res::rStructureRender,
+                    .dependencyType = DependencyType::Read,
+                    .resourceType   = ResourceType::Texture2D,
+                    .resourceParams = ImageInfo {
+                        .imageUsage = RHI::ImageUsage::ColorAttachment,
+                        .format     = vk::Format::eR32G32B32A32Sfloat,
+                    }
+                },
+                DependencyInfo {
+                    .name           = res::rFinalRender,
+                    .dependencyType = DependencyType::Write,
+                    .resourceType   = ResourceType::Texture2D,
+                    .resourceParams = ImageInfo {
+                        .imageUsage = RHI::ImageUsage::ColorAttachment,
+                        .format     = vk::Format::eR32G32B32A32Sfloat,
+                    }
+                },
+            },
+        };
     }
 
     void SDFRaymarchPass::createSampler()
