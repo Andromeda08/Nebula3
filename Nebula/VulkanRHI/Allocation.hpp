@@ -1,38 +1,31 @@
 #pragma once
 
 #include <vk_mem_alloc.h>
-#include "Device.hpp"
 
 namespace RHI
 {
+    class Device;
+
     class Allocation
     {
     public:
-        Allocation(const VmaAllocation alloc, const VmaAllocationInfo& allocationInfo, const SPtr<Device>& device)
-        : mAllocation(alloc)
-        , mAllocationInfo(allocationInfo)
-        , mDevice(device)
-        {
-        }
+        explicit Allocation(const VmaAllocator& allocator);
 
-        VmaAllocation getAllocation() const
-        {
-            return mAllocation;
-        }
+        void mapMemory(void* pData) const noexcept;
 
-        const VmaAllocationInfo& getAllocationInfo() const
-        {
-            return mAllocationInfo;
-        }
+        void unmapMemory() const noexcept;
 
-        void free() const
-        {
-            vmaFreeMemory(mDevice->getAllocator(), mAllocation);
-        }
+        VmaAllocation getAllocation() const;
+
+        const VmaAllocationInfo& getAllocationInfo() const;
+
+        void free() const;
 
     private:
-        VmaAllocation       mAllocation;
-        VmaAllocationInfo   mAllocationInfo;
-        SPtr<Device>        mDevice;
+        friend class Device;
+
+        VmaAllocator      mAllocator      = nullptr;
+        VmaAllocation     mAllocation     = nullptr;
+        VmaAllocationInfo mAllocationInfo = {};
     };
 }
