@@ -4,9 +4,13 @@
 #include <vector>
 #include "CIFGeometry.hpp"
 #include "CIFParser.hpp"
-#include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
+
+namespace Molecule
+{
+	class StructurePass;
+}
 
 struct MoleculeInfo {
 	size_t atoms;
@@ -29,7 +33,7 @@ public:
 	const MoleculeInfo& getInfo() const noexcept { return mInfo; }
 
 private:
-	friend class Scene;
+	friend class Molecule::StructurePass;
 
 	void createRenderingResources() noexcept;
 

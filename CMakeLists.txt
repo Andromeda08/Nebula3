@@ -165,7 +165,7 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Image3D.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
-    Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    Nebula/RenderPass/Molecule/SDFComputePass.hpp
     Nebula/Scene/Molecule/CIFGeometry.cpp
     Nebula/VulkanRHI/Image3D.cpp
     Nebula/VulkanRHI/Detail/Resource.hpp
@@ -175,6 +175,14 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
     Nebula/Scene/TextureManager.hpp
     Nebula/Scene/TextureManager.cpp
+    Nebula/RenderPass/Molecule/SDFComputePass.cpp
+    Nebula/RenderPass/Molecule/StructurePass.hpp
+    Nebula/RenderPass/Molecule/StructurePass.cpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.hpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.cpp
+    Nebula/Scene/Components/MoleculeRenderingUI.hpp
+    Nebula/Scene/Components/MoleculeRenderingUI.cpp
+    Nebula/Scene/Molecule/RenderingOptions.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

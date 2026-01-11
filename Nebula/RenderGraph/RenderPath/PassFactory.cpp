@@ -8,7 +8,7 @@
 #include "VulkanRHI/VulkanRHI.hpp"
 
 #include "RenderPass/HelloTrianglePass.hpp"
-#include "RenderPass/Molecule/ComputePrePass.hpp"
+#include "RenderPass/Molecule/SDFComputePass.hpp"
 #include "RenderPass/Special/ScenePass.hpp"
 
 namespace rg
