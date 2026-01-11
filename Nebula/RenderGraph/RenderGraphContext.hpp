@@ -10,6 +10,7 @@
 #include "RenderGraphTraits.hpp"
 #include "Builder/RenderGraphBuilder.hpp"
 #include "RenderPath/RenderPath.hpp"
+#include "Scene/Scene.hpp"
 
 namespace rg
 {
@@ -30,6 +31,11 @@ namespace rg
         nbl_CTOR_SHARED(RenderGraphContext);
 
         const std::set<NodeType>& getEnabledNodes() const noexcept;
+
+        [[nodiscard]] Scene* getActiveScene() const noexcept
+        {
+            return mActiveScene;
+        }
 
         // =====================================
         // RenderGraph : Graph Management
@@ -69,6 +75,8 @@ namespace rg
 
     private:
         void createInitialRenderPath();
+
+        Scene*                          mActiveScene = nullptr;
 
         // Configuration
         std::set<NodeType>              mEnabledNodeTypes;

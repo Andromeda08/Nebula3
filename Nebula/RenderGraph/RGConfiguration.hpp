@@ -31,35 +31,23 @@ namespace rg
     };
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ResourceStyle, cPin, cLink);
 
-    std::map<NodeType, NodeStyle> getDefaultNodeStyles();
-
-    std::map<ResourceType, ResourceStyle> getDefaultResourceStyles();
+    namespace detail
+    {
+        std::map<NodeType, NodeStyle>         getDefaultNodeStyles();
+        std::map<ResourceType, ResourceStyle> getDefaultResourceStyles();
+    }
 }
 
 struct RGConfiguration
 {
-    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles            = rg::getDefaultNodeStyles();
-    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles        = rg::getDefaultResourceStyles();
+    std::map<rg::NodeType, rg::NodeStyle>         nodeStyles            = rg::detail::getDefaultNodeStyles();
+    std::map<rg::ResourceType, rg::ResourceStyle> resourceStyles        = rg::detail::getDefaultResourceStyles();
     ImGuiKey                                      bindDeleteEdge        = ImGuiKey_X;
     ImGuiKey                                      bindDeleteNode        = ImGuiKey_C;
     bool                                          alwaysGenInitialGraph = true;
 
-    const rg::NodeStyle& getNodeStyle(const rg::NodeType nodeType) noexcept
-    {
-        if (nodeStyles.contains(nodeType))
-        {
-            return nodeStyles[nodeType];
-        }
-        return nodeStyles[rg::NodeType::Unknown];
-    }
+    const rg::NodeStyle& getNodeStyle(rg::NodeType nodeType) const noexcept;
 
-    const rg::ResourceStyle& getResourceStyle(const rg::ResourceType resourceType) noexcept
-    {
-        if (resourceStyles.contains(resourceType))
-        {
-            return resourceStyles[resourceType];
-        }
-        return resourceStyles[rg::ResourceType::Unknown];
-    }
+    const rg::ResourceStyle& getResourceStyle(rg::ResourceType resourceType) const noexcept;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGConfiguration, nodeStyles, resourceStyles, bindDeleteEdge, bindDeleteNode, alwaysGenInitialGraph);

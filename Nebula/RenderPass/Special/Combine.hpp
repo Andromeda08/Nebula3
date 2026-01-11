@@ -22,19 +22,19 @@ namespace rg
                     DependencyInfo {
                         .name           = "A",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "B",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "Out",
                         .dependencyType = DependencyType::Write,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },

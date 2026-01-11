@@ -21,7 +21,7 @@ namespace rg
                     DependencyInfo {
                         .name           = "PresentSrc",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },

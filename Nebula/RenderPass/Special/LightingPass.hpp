@@ -21,19 +21,19 @@ namespace rg
                     DependencyInfo {
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "Normal Buffer",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "Albedo Buffer",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
@@ -44,7 +44,7 @@ namespace rg
                     DependencyInfo {
                         .name           = "Lighting Result",
                         .dependencyType = DependencyType::Write,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },
