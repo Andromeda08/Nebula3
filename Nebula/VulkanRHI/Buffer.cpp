@@ -11,7 +11,7 @@ namespace RHI
 {
     Buffer::Buffer(const BufferCreateInfo& createInfo)
     : Resource(createInfo.device)
-    , mProperties(BufferProperties { createInfo.size, createInfo.type })
+    , mProperties(BufferProperties { createInfo.size, createInfo.type, isMappableBufferMemory(createInfo.type) })
     {
         const BufferMemoryAllocationInfo allocInfo = {
             .pHandle    = &mBuffer,
@@ -33,6 +33,15 @@ namespace RHI
     Buffer::~Buffer()
     {
         vmaDestroyBuffer(mDevice->getAllocator(), mBuffer, mAllocation->getAllocation());
+    }
+
+    vk::DescriptorBufferInfo* Buffer::getDescriptorInfo(const std::optional<vk::DeviceSize>& range) noexcept
+    {
+        if (!mDescriptorBufferInfo.has_value() || range.has_value())
+        {
+            mDescriptorBufferInfo = { mBuffer, 0, range.value_or(mProperties.size) };
+        }
+        return &mDescriptorBufferInfo.value();
     }
 
     void Buffer::map(void* ptr) const

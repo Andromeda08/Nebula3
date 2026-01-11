@@ -40,9 +40,8 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
-            const auto bufferInfo = vk::DescriptorBufferInfo().setBuffer(mCameraUB[i]->getHandle()).setOffset(0).setRange(sizeof(CameraData));
             const auto descriptorWrite = RHI::DescriptorWriteInfo()
-                .writeUniformBuffers(0, 1, &bufferInfo)
+                .writeUniformBuffers(0, 1, mCameraUB[i]->getDescriptorInfo(sizeof(CameraData)))
                 .setSetIndex(i);
             mSceneDescriptor->write_old(descriptorWrite);
         }

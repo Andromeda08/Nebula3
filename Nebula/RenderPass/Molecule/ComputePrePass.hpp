@@ -98,11 +98,10 @@ namespace viz
             });
 
             const auto imageInfo = vk::DescriptorImageInfo { nullptr, mImage3D->getImageView(), vk::ImageLayout::eGeneral };
-            const auto bufferInfo = vk::DescriptorBufferInfo { mPositions->getHandle(), 0, mPositions->getSize() };
             const auto write = RHI::DescriptorWriteInfo()
                 .setSetIndex(0)
                 .writeStorageImages(0, 1, &imageInfo)
-                .writeStorageBuffers(1, 1, &bufferInfo);
+                .writeStorageBuffers(1, 1, mPositions->getDescriptorInfo());
             mDescriptor->write_old(write);
 
             mPipeline = mRHI->createComputePipeline(RHI::ComputePipelineCreateInfo()

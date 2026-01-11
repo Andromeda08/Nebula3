@@ -73,7 +73,7 @@ namespace rg
 
             // Create Pass
             mPasses.push_back(passFactory.create(node));
-            nodeMapping.insert_or_assign(node->getId(), mPasses.size() - 1);
+            nodeMapping.insert_or_assign(node->getId(), static_cast<int32_t>(mPasses.size() - 1));
 
             // TODO : Connect resources
             for (const auto& optResource : createInfo.compilerResult.resourceTemplates)
