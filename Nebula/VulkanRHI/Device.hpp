@@ -9,9 +9,12 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
+#include "Allocation.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Core/Util.hpp"
+#include "Detail/BufferTraits.hpp"
 
 namespace RHI
 {
@@ -84,6 +87,15 @@ namespace RHI
         T           handle;
     };
 
+    struct BufferMemoryAllocationInfo
+    {
+        vk::Buffer*          pHandle;
+        BufferType           bufferType;
+        vk::BufferCreateInfo bufferInfo;
+    };
+
+    struct ImageMemoryAllocationInfo {};
+
     class Device
     {
     public:
@@ -91,6 +103,13 @@ namespace RHI
         nbl_CTOR(Device);
 
         ~Device();
+
+        /**
+         * Create Vulkan Buffer and allocate memory.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateBuffer(const BufferMemoryAllocationInfo& allocInfo) noexcept;
 
         void waitIdle() const;
 
@@ -133,6 +152,7 @@ namespace RHI
         DeviceQueue                         mGraphicsQueue;
 
         VmaAllocator                        mAllocator {};
+        std::vector<SPtr<Allocation>>       mAllocations;
     };
 
     template<class T>

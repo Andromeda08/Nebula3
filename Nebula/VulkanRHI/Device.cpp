@@ -209,6 +209,26 @@ namespace RHI
         vmaDestroyAllocator(mAllocator);
     }
 
+    SPtr<Allocation> Device::allocateBuffer(const BufferMemoryAllocationInfo& allocInfo) noexcept
+    {
+        const auto alloc = makeShared<Allocation>(mAllocator);
+
+        VmaAllocationCreateInfo createInfo = {};
+        createInfo.usage = allocInfo.bufferType == BufferType::Staging
+            ? VMA_MEMORY_USAGE_AUTO_PREFER_HOST
+            : VMA_MEMORY_USAGE_AUTO;
+        createInfo.flags = getBufferMemoryFlags(allocInfo.bufferType);
+
+        auto* handle = reinterpret_cast<VkBuffer*>(allocInfo.pHandle);
+        const VkBufferCreateInfo bufferCreateInfo = allocInfo.bufferInfo;
+        const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, handle,
+            &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Buffer and allocate memory!");
+
+        mAllocations.push_back(alloc);
+        return alloc;
+    }
+
     void Device::waitIdle() const
     {
         mDevice.waitIdle();
