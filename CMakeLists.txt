@@ -165,7 +165,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Image3D.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
-    Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
     Nebula/RenderPass/Molecule/ComputePrePass.hpp
     Nebula/Scene/Molecule/CIFGeometry.cpp
     Nebula/VulkanRHI/Image3D.cpp

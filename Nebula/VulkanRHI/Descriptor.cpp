@@ -131,19 +131,6 @@ namespace RHI
         mDevice->getHandle().updateDescriptorSets(writeInfo.writes, {});
     }
 
-    void Descriptor::write(DescriptorWrite descriptorWrite) const noexcept
-    {
-        for (const auto& i : descriptorWrite.mWriteSetIndices)
-        {
-            const auto dstSet = getSet(i);
-            for (auto& write : descriptorWrite.mWrites)
-            {
-                write.setDstSet(dstSet);
-            }
-            mDevice->getHandle().updateDescriptorSets(descriptorWrite.mWrites, {});
-        }
-    }
-
     vk::DescriptorSet Descriptor::getSet(const size_t i) const
     {
         assert(i < mSetCount);
