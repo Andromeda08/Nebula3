@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "TextureManager.hpp"
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 
@@ -97,4 +98,6 @@ private:
 
     std::string                         mName;
     SceneRenderOptions                  mSRO;
+
+    UPtr<TextureManager>                mTextureManager;
 };

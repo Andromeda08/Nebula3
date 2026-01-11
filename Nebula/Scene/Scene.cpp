@@ -10,6 +10,10 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 , mName(createInfo.name)
 , mPCSDF()
 {
+    mTextureManager = TextureManager::create({
+        .rhi = mRHI,
+    });
+
     /* CIF Loading */ {
         mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ Configuration::getMoleculeFile(), true, mRHI });
     }
@@ -41,7 +45,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
             const auto descriptorWrite = RHI::DescriptorWrite()
-                .writeUniformBuffer(0, mCameraUB[i].get());
+                .writeUniformBuffer(0, mCameraUB[i]);
             mSceneDescriptor->write(i, descriptorWrite);
 
             // const auto descriptorWrite = RHI::DescriptorWriteInfo()

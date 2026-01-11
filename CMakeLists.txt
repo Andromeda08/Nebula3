@@ -173,6 +173,8 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Allocation.cpp
     Nebula/VulkanRHI/Frame.cpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
+    Nebula/Scene/TextureManager.hpp
+    Nebula/Scene/TextureManager.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

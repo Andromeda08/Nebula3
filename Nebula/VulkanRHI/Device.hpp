@@ -111,6 +111,16 @@ namespace RHI
          */
         [[nodiscard]] SPtr<Allocation> allocateBuffer(const BufferMemoryAllocationInfo& allocInfo) noexcept;
 
+        /**
+         * Create Vulkan Image and allocate memory.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateImageMemory(const ImageMemoryAllocationInfo& allocInfo) noexcept
+        {
+            return nullptr;
+        }
+
         void waitIdle() const;
 
         template <class T>

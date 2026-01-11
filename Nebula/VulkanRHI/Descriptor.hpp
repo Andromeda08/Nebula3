@@ -56,6 +56,8 @@ namespace RHI
 
         void write(uint32_t setIndex, const DescriptorWrite& descriptorWrite) const noexcept;
 
+        void writeAll(const DescriptorWrite& descriptorWrite) const noexcept;
+
         vk::DescriptorSet getSet(size_t i = 0) const;
 
         vk::DescriptorSet operator[](size_t i) const;

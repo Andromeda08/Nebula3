@@ -11,7 +11,7 @@ TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
     createMetadataResources();
     createDescriptor();
 
-    const auto result = loadTexture(sMissingTextureName, sMissingTextureId, true);
+    const auto result = loadTexture(sMissingTextureName, sMissingTextureId);
     mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
         update(commandList);
     });
@@ -25,7 +25,7 @@ RHI::Image* TextureManager::getTexture(const uint32_t slot) const noexcept
     return mTextures[slot].get();
 }
 
-std::expected<bool, std::string> TextureManager::loadTexture(const std::string& textureFile, const uint32_t slot, const bool deferred) noexcept
+std::expected<bool, std::string> TextureManager::loadTexture(const std::string& textureFile, const uint32_t slot) noexcept
 {
     if (slot >= mTextures.size())
     {
@@ -43,11 +43,7 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
     }
 
     const auto size = getTextureSize(width, height);
-    const auto stagingBuffer = mRHI->createBuffer({
-        .size      = size,
-        .type      = RHI::BufferType::Staging,
-        .debugName = textureFile,
-    });
+    const auto stagingBuffer = mRHI->createBuffer({ size, RHI::BufferType::Staging, textureFile });
     stagingBuffer->setData(pixels, size);
     stbi_image_free(pixels);
 
@@ -68,25 +64,13 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
         .slot          = slot
     };
 
-    if (!deferred)
-    {
-        loadImmediately(loadInfo);
-    }
-    else
-    {
-        loadDeferred(loadInfo);
-    }
+    loadImmediately(loadInfo);
 
     return true;
 }
 
-void TextureManager::update(const RHI::CommandList* commandList)
+void TextureManager::update(const RHI::CommandList* commandList) const
 {
-    clearUploadQueue();
-    if (!mQueuedLoads.empty())
-    {
-        uploadQueuedTextures(commandList);
-    }
     if (mMetaIsDirty)
     {
         updateMetaTexture(commandList);
@@ -116,18 +100,9 @@ void TextureManager::loadImmediately(const TextureLoadInfo& textureLoadInfo) noe
     mTextures[slot] = textureImage;
     setSlot(slot, true);
 
-    for (auto i = 0; i < mDescriptor->getSetCount(); i++)
-    {
-        const auto write = RHI::DescriptorWrite()
-            .addSetIndex(i)
-            .writeCombinedImageSampler(0, slot, { textureImage->getSampler(), textureImage->getImageView(), vk::ImageLayout::eShaderReadOnlyOptimal });
-        mDescriptor->write(write);
-    }
-}
-
-void TextureManager::loadDeferred(const TextureLoadInfo& textureLoadInfo)
-{
-    mQueuedLoads.push_back(textureLoadInfo);
+    const auto write = RHI::DescriptorWrite()
+        .writeCombinedImageSampler(0, slot, vk::ImageLayout::eShaderReadOnlyOptimal, mTextures[slot]);
+    mDescriptor->writeAll(write);
 }
 
 void TextureManager::setSlot(const uint32_t slot, const bool hasTexture) noexcept
@@ -161,65 +136,6 @@ void TextureManager::updateMetaTexture(const RHI::CommandList* commandList) cons
     }).insert(commandList);
 }
 
-void TextureManager::uploadQueuedTextures(const RHI::CommandList* commandList)
-{
-    // Prepare
-    auto toTransferDstBarrier = RHI::Barrier();
-    auto toShaderReadOnlyBarrier = RHI::Barrier();
-
-    auto write = RHI::DescriptorWrite();
-    std::vector<vk::DescriptorImageInfo> textureImageInfos;
-
-    for (const auto& loadInfo : mQueuedLoads)
-    {
-        toTransferDstBarrier.addImageBarrier({
-            .dstUsage = RHI::ImageUsage::TransferDst,
-            .image    = loadInfo.textureImage,
-        });
-        toShaderReadOnlyBarrier.addImageBarrier({
-            .dstUsage = RHI::ImageUsage::ShaderReadOnly,
-            .image    = loadInfo.textureImage
-        });
-
-        mTextures[loadInfo.slot] = loadInfo.textureImage;
-        setSlot(loadInfo.slot, true);
-
-        const auto imageInfo = vk::DescriptorImageInfo()
-            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-            .setImageView(mTextures[loadInfo.slot]->getImageView())
-            .setSampler(mTextures[loadInfo.slot]->getSampler());
-        write.writeCombinedImageSampler(0, loadInfo.slot, imageInfo);
-
-        mLoadInfoDeletionQueue.insert(loadInfo.slot);
-    }
-
-    // Record commands
-    toTransferDstBarrier.insert(commandList);
-    for (const auto& loadInfo : mQueuedLoads)
-    {
-        commandList->copyBufferToImage({
-            .pSrcBuffer = loadInfo.stagingBuffer.get(),
-            .pDstImage  = loadInfo.textureImage.get(),
-        });
-    }
-    toShaderReadOnlyBarrier.insert(commandList);
-
-    updateMetaTexture(commandList);
-
-    write.addSetIndex(0).addSetIndex(1);
-    mDescriptor->write(write);
-}
-
-void TextureManager::clearUploadQueue()
-{
-    mQueuedLoads = mQueuedLoads
-        | std::views::filter([&](const auto& loadInfo) -> bool {
-            return !mLoadInfoDeletionQueue.contains(loadInfo.slot);
-        })
-        | std::ranges::to<std::vector<TextureLoadInfo>>();
-    mLoadInfoDeletionQueue.clear();
-}
-
 void TextureManager::createMetadataResources()
 {
     for (int32_t& value : mMetaData)
@@ -230,15 +146,15 @@ void TextureManager::createMetadataResources()
     mMetaTexture = mRHI->createImage({
         .extent        = { sMaxTextureCount, 1 },
         .format        = vk::Format::eR32Sint,
-        .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+        .usageFlags    = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
         .createSampler = true,
         .debugName     = "TextureMeta"
     });
 
     mMetaStaging = mRHI->createBuffer({
-        .size      = sMaxTextureCount * sizeof(int32_t),
-        .type      = RHI::BufferType::Staging,
-        .debugName = "TextureMeta-Staging",
+        .size  = sMaxTextureCount * sizeof(int32_t),
+        .type  = RHI::BufferType::Staging,
+        .label = "TextureMeta-Staging",
     });
 }
 
@@ -264,8 +180,6 @@ void TextureManager::createDescriptor()
 
 void TextureManager::writeInitialDescriptors() const
 {
-    auto initialWrite = RHI::DescriptorWrite();
-
     // Set all textures in the descriptor array to the missing texture.
     std::array<vk::DescriptorImageInfo, sMaxTextureCount> textureImageInfos;
     for (size_t i = 0; i < sMaxTextureCount; i++)
@@ -274,10 +188,11 @@ void TextureManager::writeInitialDescriptors() const
             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
             .setImageView(mTextures[0]->getImageView())
             .setSampler(mTextures[0]->getSampler());
-        initialWrite.writeCombinedImageSamplers(0, textureImageInfos | std::ranges::to<std::vector>());
     }
 
-    initialWrite.writeStorageImage(1, 0, { mMetaTexture->getSampler(), mMetaTexture->getImageView(), vk::ImageLayout::eGeneral });
-    initialWrite.addSetIndex(0).addSetIndex(1);
-    mDescriptor->write(initialWrite);
+    const auto descriptorWrite = RHI::DescriptorWrite()
+        .writeCombinedImageSamplerInfos(0, textureImageInfos)
+        .writeStorageImage(1, vk::ImageLayout::eGeneral, mMetaTexture);
+
+    mDescriptor->writeAll(descriptorWrite);
 }
