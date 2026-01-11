@@ -94,7 +94,16 @@ namespace RHI
         vk::BufferCreateInfo bufferInfo;
     };
 
-    struct ImageMemoryAllocationInfo {};
+    struct ImageMemoryAllocationInfo
+    {
+        vk::Image*          pHandle;
+        vk::ImageCreateInfo imageInfo;
+    };
+
+    struct AliasedImageMemoryAllocationInfo
+    {
+        std::vector<SPtr<class Texture>> textures;
+    };
 
     class Device
     {
@@ -116,10 +125,14 @@ namespace RHI
          * @param allocInfo
          * @return Allocation reference
          */
-        [[nodiscard]] SPtr<Allocation> allocateImageMemory(const ImageMemoryAllocationInfo& allocInfo) noexcept
-        {
-            return nullptr;
-        }
+        [[nodiscard]] SPtr<Allocation> allocateImage(const ImageMemoryAllocationInfo& allocInfo) noexcept;
+
+        /**
+         * Allocate memory for aliased images.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept;
 
         void waitIdle() const;
 

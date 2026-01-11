@@ -23,7 +23,7 @@ namespace Molecule
 
         void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
 
-        [[nodiscard]] SPtr<RHI::Image3D> getSDFTexture3D() const noexcept;
+        [[nodiscard]] SPtr<RHI::Texture> getSDFTexture3D() const noexcept;
 
         ~SDFComputePass() = default;
 
@@ -40,7 +40,7 @@ namespace Molecule
         SPtr<RHI::ComputePipeline>  mPipeline;
         std::array<uint32_t, 3>     mDispatchSize;
 
-        SPtr<RHI::Image3D>          mImage3D;
+        SPtr<RHI::Texture>          mImage3D;
         SPtr<RHI::Buffer>           mPositions;
         SPtr<RHI::Buffer>           mConfig;
 

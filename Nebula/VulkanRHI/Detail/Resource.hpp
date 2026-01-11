@@ -20,11 +20,9 @@ namespace RHI
 
         explicit Resource(const SPtr<Device>& pDevice, const std::optional<SPtr<Allocation>>& pAllocation = std::nullopt);
 
-        template <class T>
-        void setLabel(const T& handle, const std::string_view label) noexcept
+        void setLabel(const std::string_view label) noexcept
         {
             mLabel = label;
-            mDevice->nameObject<T>({ mLabel, handle });
         }
 
         void setAllocation(const SPtr<Allocation>& pAllocation) noexcept;

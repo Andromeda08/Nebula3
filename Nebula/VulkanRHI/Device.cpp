@@ -1,5 +1,7 @@
 #include "Device.hpp"
 
+#include "Texture.hpp"
+
 namespace RHI
 {
     struct VulkanAnyStruct
@@ -219,13 +221,55 @@ namespace RHI
             : VMA_MEMORY_USAGE_AUTO;
         createInfo.flags = getBufferMemoryFlags(allocInfo.bufferType);
 
-        auto* handle = reinterpret_cast<VkBuffer*>(allocInfo.pHandle);
+        auto* pHandle = reinterpret_cast<VkBuffer*>(allocInfo.pHandle);
         const VkBufferCreateInfo bufferCreateInfo = allocInfo.bufferInfo;
-        const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, handle,
+        const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, pHandle,
             &alloc->mAllocation, &alloc->mAllocationInfo);
         nbl_ASSERT(result == VK_SUCCESS, "Failed to create Buffer and allocate memory!");
 
         mAllocations.push_back(alloc);
+        return alloc;
+    }
+
+    SPtr<Allocation> Device::allocateImage(const ImageMemoryAllocationInfo& allocInfo) noexcept
+    {
+        const auto alloc = makeShared<Allocation>(mAllocator);
+        VmaAllocationCreateInfo createInfo = {};
+        createInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+        auto* pHandle = reinterpret_cast<VkImage*>(allocInfo.pHandle);
+        const VkImageCreateInfo imageCreateInfo = allocInfo.imageInfo;
+        const auto result = vmaCreateImage(mAllocator, &imageCreateInfo, &createInfo, pHandle,
+            &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Image and allocate memory!");
+
+        mAllocations.push_back(alloc);
+        return alloc;
+    }
+
+    SPtr<Allocation> Device::allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept
+    {
+        vk::MemoryRequirements finalRequirements = { 0, 0, 0 };
+        for (const auto& image : allocInfo.textures)
+        {
+            vk::MemoryRequirements memoryRequirements;
+            mDevice.getImageMemoryRequirements(image->getHandle(), &memoryRequirements);
+
+            finalRequirements.size           = std::max(finalRequirements.size, memoryRequirements.size);
+            finalRequirements.alignment      = std::max(finalRequirements.alignment, memoryRequirements.alignment);
+            finalRequirements.memoryTypeBits = finalRequirements.memoryTypeBits & memoryRequirements.memoryTypeBits;
+        }
+
+        const auto alloc = makeShared<Allocation>(mAllocator);
+        alloc->mAliasedUse = true;
+
+        VmaAllocationCreateInfo allocationCreateInfo = {};
+        allocationCreateInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+        const VkResult result = vmaAllocateMemory(mAllocator, reinterpret_cast<VkMemoryRequirements*>(&finalRequirements),
+            &allocationCreateInfo, &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to allocate memory for aliased Image use!");
+
         return alloc;
     }
 

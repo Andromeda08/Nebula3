@@ -27,15 +27,15 @@ namespace Molecule
 
     SDFComputePass::SDFComputePass(SPtr<RHI::VulkanRHI> rhi, const std::vector<glm::vec3>& atomPositions)
     : mRHI(std::move(rhi))
-    , mPushConstants(glm::vec4(INT_MAX), glm::vec4(INT_MIN), atomPositions.size(), .4f, .25f)
+    , mPushConstants(glm::vec4(std::numeric_limits<float>::max()), glm::vec4(std::numeric_limits<float>::min()), atomPositions.size(), .4f, .25f)
     , mTextureExtent(128, 128, 128)
     {
         // Create 3D SDF Texture
-        mImage3D = mRHI->createImage3D({
+        mImage3D = mRHI->createTexture({
             .extent     = mTextureExtent,
             .format     = vk::Format::eR32G32B32A32Sfloat,
             .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
-            .debugName  = "MoleculeSDF"
+            .label      = "MoleculeSDF"
         });
 
         // Calculate molecule bounding box
@@ -125,7 +125,7 @@ namespace Molecule
         commandList->endLabel();
     }
 
-    SPtr<RHI::Image3D> SDFComputePass::getSDFTexture3D() const noexcept
+    SPtr<RHI::Texture> SDFComputePass::getSDFTexture3D() const noexcept
     {
         return mImage3D;
     }

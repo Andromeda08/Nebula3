@@ -155,7 +155,8 @@ namespace rg
             rhiImages.push_back(rhiImage);
         }
 
-        return makeShared<ImageResource>(rhiImages, mRHI->allocatedAliasedImageMemory(rhiImages), makeResourceName(resourceTemplate));
+        //return makeShared<ImageResource>(rhiImages, mRHI->allocatedAliasedImageMemory(rhiImages), makeResourceName(resourceTemplate));
+        return nullptr;
     }
 
     vk::ImageUsageFlags ResourceFactory::getImageUsageFlags(const OptimizerResource& resourceTemplate)

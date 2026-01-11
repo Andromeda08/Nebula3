@@ -22,7 +22,7 @@ namespace Molecule
     class SDFRaymarchPass
     {
     public:
-        SDFRaymarchPass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, const SPtr<RHI::Image3D>& sdfTexture);
+        SDFRaymarchPass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, const SPtr<RHI::Texture>& sdfTexture);
 
         void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
 
@@ -42,7 +42,7 @@ namespace Molecule
         SPtr<RHI::GraphicsPipeline> mPipeline;
         SPtr<RHI::RenderPass>       mRenderPass;
 
-        SPtr<RHI::Image3D>          mSDFTexture;
+        SPtr<RHI::Texture>          mSDFTexture;
         SPtr<RHI::Descriptor>       mSceneDescriptor;
 
         SDFRaymarchParams           mParams = {};

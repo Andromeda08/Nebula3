@@ -183,6 +183,8 @@ add_executable(Nebula3
     Nebula/Scene/Components/MoleculeRenderingUI.hpp
     Nebula/Scene/Components/MoleculeRenderingUI.cpp
     Nebula/Scene/Molecule/RenderingOptions.hpp
+    Nebula/VulkanRHI/Texture.hpp
+    Nebula/VulkanRHI/Texture.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
