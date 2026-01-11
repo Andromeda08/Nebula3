@@ -135,14 +135,7 @@ namespace RHI
         imageInfo.device = mDevice;
         return Image::create(imageInfo);
     }
-
-    SPtr<Image3D> VulkanRHI::createImage3D(const RHIImage3DCreateInfo& createInfo) const
-    {
-        auto imageInfo = Image3DCreateInfo(createInfo);
-        imageInfo.device = mDevice;
-        return Image3D::create(imageInfo);
-    }
-
+    
     SPtr<Descriptor> VulkanRHI::createDescriptor(const RHIDescriptorCreateInfo& createInfo) const
     {
         auto descriptorInfo = DescriptorCreateInfo(createInfo);

@@ -162,12 +162,10 @@ add_executable(Nebula3
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
-    Nebula/VulkanRHI/Image3D.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
     Nebula/RenderPass/Molecule/SDFComputePass.hpp
     Nebula/Scene/Molecule/CIFGeometry.cpp
-    Nebula/VulkanRHI/Image3D.cpp
     Nebula/VulkanRHI/Detail/Resource.hpp
     Nebula/VulkanRHI/Detail/Resource.cpp
     Nebula/VulkanRHI/Allocation.cpp
