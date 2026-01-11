@@ -46,7 +46,7 @@ namespace RHI
         BufferCreateInfo bufferCreateInfo;
         bufferCreateInfo.size      = sbtSize;
         bufferCreateInfo.type      = BufferType::ShaderBindingTable;
-        bufferCreateInfo.debugName = createInfo.debugName;
+        bufferCreateInfo.label     = createInfo.debugName;
         bufferCreateInfo.device    = mDevice;
 
         mBuffer = Buffer::create(bufferCreateInfo);

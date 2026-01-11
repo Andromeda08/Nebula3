@@ -21,9 +21,9 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         for (auto& cameraUb : mCameraUB)
         {
             cameraUb = mRHI->createBuffer({
-                .size      = sizeof(CameraData),
-                .type      = RHI::BufferType::Uniform,
-                .debugName = "CameraUB",
+                .size  = sizeof(CameraData),
+                .type  = RHI::BufferType::Uniform,
+                .label = "CameraUB",
             });
             cameraUb->setData(&cameraData, sizeof(CameraData));
         }

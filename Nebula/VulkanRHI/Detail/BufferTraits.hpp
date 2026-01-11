@@ -99,4 +99,11 @@ namespace RHI
             || bufferType == BufferType::Staging
             || bufferType == BufferType::Uniform;
     }
+
+    struct BufferProperties
+    {
+        vk::DeviceSize  size;
+        BufferType      type;
+        bool            isMappable;
+    };
 }

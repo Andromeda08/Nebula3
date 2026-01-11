@@ -47,29 +47,29 @@ void CIFData::createRenderingResources() noexcept
     /* Sphere Geometry & Instances */ {
         const auto vertexSize = mSphereData.vertices.size() * sizeof(glm::vec3);
         mSphereVertexBuffer = mRHI->createBuffer({
-            .size      = vertexSize,
-            .type      = RHI::BufferType::Vertex,
-            .debugName = "Sphere-VertexBuffer",
+            .size  = vertexSize,
+            .type  = RHI::BufferType::Vertex,
+            .label = "Sphere-VertexBuffer",
         });
 
         const auto indexSize = mSphereData.indices.size() * sizeof(uint32_t);
         mSphereIndexBuffer = mRHI->createBuffer({
-            .size      = indexSize,
-            .type      = RHI::BufferType::Index,
-            .debugName = "Sphere-IndexBuffer",
+            .size  = indexSize,
+            .type  = RHI::BufferType::Index,
+            .label = "Sphere-IndexBuffer",
         });
 
         const auto instanceSize = mCID.sphereTransforms.size() * sizeof(glm::mat4);
         mSphereInstanceBuffer = mRHI->createBuffer({
-            .size      = instanceSize,
-            .type      = RHI::BufferType::Vertex,
-            .debugName = "Sphere-InstanceBuffer"
+            .size  = instanceSize,
+            .type  = RHI::BufferType::Vertex,
+            .label = "Sphere-InstanceBuffer"
         });
 
         const auto stagingBuffer = mRHI->createBuffer({
-            .size      = vertexSize + indexSize + instanceSize,
-            .type      = RHI::BufferType::Staging,
-            .debugName = "Sphere-Staging",
+            .size  = vertexSize + indexSize + instanceSize,
+            .type  = RHI::BufferType::Staging,
+            .label = "Sphere-Staging",
         });
         stagingBuffer->setData(mSphereData.vertices.data(), vertexSize, 0);
         stagingBuffer->setData(mSphereData.indices.data(), indexSize, vertexSize);
@@ -102,29 +102,29 @@ void CIFData::createRenderingResources() noexcept
     /* Cylinder Geometry & Instances */ {
         const auto vertexSize = mCylinderData.vertices.size() * sizeof(glm::vec3);
         mCylinderVertexBuffer = mRHI->createBuffer({
-            .size      = vertexSize,
-            .type      = RHI::BufferType::Vertex,
-            .debugName = "Cylinder-VertexBuffer",
+            .size  = vertexSize,
+            .type  = RHI::BufferType::Vertex,
+            .label = "Cylinder-VertexBuffer",
         });
 
         const auto indexSize = mCylinderData.indices.size() * sizeof(uint32_t);
         mCylinderIndexBuffer = mRHI->createBuffer({
-            .size      = indexSize,
-            .type      = RHI::BufferType::Index,
-            .debugName = "Cylinder-IndexBuffer",
+            .size  = indexSize,
+            .type  = RHI::BufferType::Index,
+            .label = "Cylinder-IndexBuffer",
         });
 
         const auto instanceSize = mCID.cylinderTransforms.size() * sizeof(glm::mat4);
         mCylinderInstanceBuffer = mRHI->createBuffer({
-            .size      = instanceSize,
-            .type      = RHI::BufferType::Vertex,
-            .debugName = "Cylinder-InstanceBuffer"
+            .size  = instanceSize,
+            .type  = RHI::BufferType::Vertex,
+            .label = "Cylinder-InstanceBuffer"
         });
 
         const auto stagingBuffer = mRHI->createBuffer({
-            .size      = vertexSize + indexSize + instanceSize,
-            .type      = RHI::BufferType::Staging,
-            .debugName = "Cylinder-Staging",
+            .size  = vertexSize + indexSize + instanceSize,
+            .type  = RHI::BufferType::Staging,
+            .label = "Cylinder-Staging",
         });
         stagingBuffer->setData(mCylinderData.vertices.data(), vertexSize, 0);
         stagingBuffer->setData(mCylinderData.indices.data(), indexSize, vertexSize);

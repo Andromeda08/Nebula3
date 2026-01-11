@@ -67,10 +67,10 @@ namespace viz
                 staging->setData(alignedPos.data(), positionsSize);
 
                 mPositions = mRHI->createBuffer({
-                    .size = positionsSize,
-                    .type = RHI::BufferType::Storage,
-                    .debugName = "Molecule Positions",
-                    });
+                    .size  = positionsSize,
+                    .type  = RHI::BufferType::Storage,
+                    .label = "Molecule Positions",
+                });
 
                 mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
                     const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);

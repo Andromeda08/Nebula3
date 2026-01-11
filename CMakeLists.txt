@@ -169,6 +169,9 @@ add_executable(Nebula3
     Nebula/RenderPass/Molecule/ComputePrePass.hpp
     Nebula/Scene/Molecule/CIFGeometry.cpp
     Nebula/VulkanRHI/Image3D.cpp
+    Nebula/VulkanRHI/Detail/Resource.hpp
+    Nebula/VulkanRHI/Detail/Resource.cpp
+    Nebula/VulkanRHI/Allocation.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
