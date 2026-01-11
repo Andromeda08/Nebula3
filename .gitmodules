@@ -22,3 +22,6 @@
 [submodule "External/gemmi"]
 	path = External/gemmi
 	url = https://github.com/project-gemmi/gemmi.git
+[submodule "External/spdlog"]
+	path = External/spdlog
+	url = https://github.com/gabime/spdlog.git
