@@ -26,7 +26,12 @@ layout (set = 1, binding = 0) uniform sampler3D SDFTexture;
 layout (push_constant) uniform Config {
     vec4 bboxMin;
     vec4 bboxMax;
+    vec4 sesColor;
     float voxelSize;
+    float blending;
+    float ls;
+    int useSubsurfaceScattering;
+    int raymarchingSteps;
 } config;
 
 float distanceFromSphere(in vec3 p, in vec3 c, float r)
@@ -70,21 +75,34 @@ bool intersectAABB(vec3 ro, vec3 rd, out float tEnter, out float tExit)
 vec4 rayMarch(vec3 ro, vec3 rd)
 {
     float tEnter, tExit;
-    if (!intersectAABB(ro, rd, tEnter, tExit)) return vec4(0);
+    if (!intersectAABB(ro, rd, tEnter, tExit)) return vec4(0.0);
     float t = max(tEnter, 0.0);
 
-    const int STEPS = 512;
-    const float VOXEL_SIZE = config.voxelSize;
-
-    for (int i = 0; i < STEPS && t < tExit; ++i)
+    for (int i = 0; i < config.raymarchingSteps && t < tExit; ++i)
     {
         vec3 p = ro + t * rd;
         float d = sampleSDF(p);
 
-        if (d < VOXEL_SIZE) 
-            return vec4(1.0, 0.0, 0.0, t);
+        if (d < config.voxelSize) {
+            vec4 color = config.sesColor;
 
-        t += max(d, VOXEL_SIZE);
+            if (config.useSubsurfaceScattering == 1) {
+                vec3 subsurfSample = p + config.ls * rd;
+                float l = sampleSDF(subsurfSample);
+                float s = (config.ls - l) / 2 * config.ls;
+                color = clamp(color + vec4(s), 0.0, 1.0);
+                /* color += vec4(vec3(s), 0.0);
+                float colorMin = min(min(color.x, color.y), color.z);
+                float colorMax = max(max(color.x, color.y), color.z);
+                color.x = normLinear01(color.x, colorMin, colorMax);
+                color.y = normLinear01(color.y, colorMin, colorMax);
+                color.z = normLinear01(color.z, colorMin, colorMax); */
+            }
+
+            return color;
+        }
+
+        t += max(d, config.voxelSize);
     }
 
     return vec4(0.0);
@@ -103,6 +121,6 @@ void main()
 
     vec4 rayMarchSample = rayMarch(ro, rd);
 
-    outColor = vec4(vec3(rayMarchSample), 0.1);
+    outColor = vec4(vec3(rayMarchSample), config.blending);
     //outColor = vec4(abs(rd), 1.0);
 }

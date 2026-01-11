@@ -30,7 +30,19 @@ struct SceneCreateInfo
 struct PCSDF {
     glm::vec4 bboxMin;
     glm::vec4 bboxMax;
+    glm::vec4 sesColor;
     float voxelSize;
+    float blending;
+    float ls;
+    int useSubsurfaceScattering;
+    int rayMarchingSteps;
+};
+
+struct SceneRenderOptions {
+    bool renderStructure = true;
+    bool renderSurface = true;
+    bool recalculateSDF = false;
+    bool calculatedSDF = false;
 };
 
 class Scene
@@ -84,4 +96,5 @@ private:
     SPtr<RHI::GraphicsPipeline>         mFwdPipeline;
 
     std::string                         mName;
+    SceneRenderOptions                  mSRO;
 };

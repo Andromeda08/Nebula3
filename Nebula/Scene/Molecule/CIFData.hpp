@@ -8,6 +8,12 @@
 #include "Core/Types.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
+struct MoleculeInfo {
+	size_t atoms;
+	size_t bonds;
+	size_t vertices;
+};
+
 struct CIFDataCreateInfo {
 	std::string			 filename;
 	bool				 centerMolecule;
@@ -20,6 +26,7 @@ public:
 
 	const std::vector<glm::vec3>& getAtomPositions() const noexcept { return mAtomPositions; }
 	const geo::CIFInstanceData&	getCIFInstanceData() const noexcept { return mCID; }
+	const MoleculeInfo& getInfo() const noexcept { return mInfo; }
 
 private:
 	friend class Scene;
@@ -46,4 +53,5 @@ private:
 	/*SPtr<RHI::Buffer>		mSDFAtomPositionsBuffer;*/
 
 	SPtr<RHI::VulkanRHI>	mRHI;
+	MoleculeInfo			mInfo;
 };

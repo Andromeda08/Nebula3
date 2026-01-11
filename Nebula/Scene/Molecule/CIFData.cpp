@@ -35,6 +35,10 @@ CIFData::CIFData(const CIFDataCreateInfo& createInfo)
         }
     }
 
+    mInfo.atoms = mCID.sphereTransforms.size();
+    mInfo.bonds = mCID.cylinderTransforms.size();
+    mInfo.vertices = mSphereData.vertices.size() + mCylinderData.vertices.size();
+
     createRenderingResources();
 }
 

@@ -14,4 +14,8 @@ public:
 
 private:
     Scene* mScene;
+
+    bool mUseSubsurfaceScattering;
+    float mRadius;
+    float mScale;
 };

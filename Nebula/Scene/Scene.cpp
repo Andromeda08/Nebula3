@@ -11,13 +11,12 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 , mPCSDF()
 {
     /* CIF Loading */ {
-        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ "Resources/CIFFiles/IBP.cif", true, mRHI });
+        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ Configuration::getMoleculeFile(), true, mRHI });
     }
 
     /* (Flying) Camera */ {
         const auto e = mRHI->getSwapchain()->getProperties().extent;
         mCamera = makeUnique<FlyingCamera>(glm::ivec2(e.width, e.height), glm::vec3(0.0f, 0.0f, 5.0f));
-        //mCIFUniforms = makeUnique<CIFRayMarchingUniforms>();
         const auto cameraData = mCamera->getCameraData();
         for (auto& cameraUb : mCameraUB)
         {
@@ -96,9 +95,7 @@ Scene::Scene(const SceneCreateInfo& createInfo)
                 .configure([](auto& stateInfo) {
                     stateInfo.attributeDescriptions = {{ 0, 0, vk::Format::eR32G32B32Sfloat, 0 }};
                     stateInfo.bindingDescriptions = {{ 0, sizeof(glm::vec3), vk::VertexInputRate::eVertex }};
-            })
-                // .addAttributeDescriptions<Vertex>()
-                // .addBindingDescriptions<Vertex>()
+                })
                 .addAttachmentState())
             .addShader({ "Resources/Shaders/bin/TestFwd.vert.spv", vk::ShaderStageFlagBits::eVertex })
             .addShader({ "Resources/Shaders/bin/TestFwd.frag.spv", vk::ShaderStageFlagBits::eFragment })
@@ -111,10 +108,16 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
     /* CIF SDF Compute Pass */ {
         mComputePrePass = makeUnique<viz::ComputePrePass>(mRHI, mCIFData->getAtomPositions());
-        mPCSDF.bboxMin = mComputePrePass->getBBoxMin();
-        mPCSDF.bboxMax = mComputePrePass->getBBoxMax();
-        mPCSDF.voxelSize = glm::length(glm::vec3(mPCSDF.bboxMax) - glm::vec3(mPCSDF.bboxMin)) / mComputePrePass->getTextureExtents().width;
     }
+
+    mPCSDF.bboxMin = mComputePrePass->getBBoxMin();
+    mPCSDF.bboxMax = mComputePrePass->getBBoxMax();
+    mPCSDF.sesColor = glm::vec4(0.1, 0.38, 0.14, 1.0);
+    mPCSDF.voxelSize = 0.5;
+    mPCSDF.blending = 0.5;
+    mPCSDF.ls = 1.0f;
+    mPCSDF.useSubsurfaceScattering = 1;
+    mPCSDF.rayMarchingSteps = 256;
 
     /* CIF Structure Rendering Pipeline */ {
         RHI::GraphicsPipelineCreateInfo pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
@@ -233,76 +236,83 @@ void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& fr
 {
     auto sdfTexture = mComputePrePass->getSDFTexture3D();
 
-    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Compute"));
-    /* SDF to Storage Image usage */ {
-        const auto barrier = RHI::Barrier()
-            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::StorageImage));
-        barrier.insert(commandList);
-    }
+    if (!mSRO.calculatedSDF || mSRO.recalculateSDF) {
+        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Compute"));
+        /* SDF to Storage Image usage */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::StorageImage));
+            barrier.insert(commandList);
+        }
 
-    // SDF Compute Pass
-    mComputePrePass->execute(commandList);
-    commandList->getHandle().endDebugUtilsLabelEXT();
+        // SDF Compute Pass
+        mComputePrePass->execute(commandList);
+        commandList->getHandle().endDebugUtilsLabelEXT();
+        mSRO.calculatedSDF = true;
+    }
 
     // Structure Pass
-    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("StructureRendering"));
-     auto colorAttachment = RHI::Attachment {
-        .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
-        .attachmentInfo = vk::RenderingAttachmentInfo()
-            .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
-            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
-            .setLoadOp(vk::AttachmentLoadOp::eClear)
-            .setStoreOp(vk::AttachmentStoreOp::eStore)
-    };
-    mRenderPass->setColorAttachment(0, colorAttachment);
-    mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mStructurePipeline->bind(commandBuffer);
-        mStructurePipeline->bindDescriptorSet(commandBuffer, mSceneDescriptor->getSet(frameData.currentFrame));
-        mStructurePipeline->pushConstants(commandBuffer, &mStructureColor);
+    if (mSRO.renderStructure) {
+        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("StructureRendering"));
+        auto colorAttachment = RHI::Attachment{
+            .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
+            .attachmentInfo = vk::RenderingAttachmentInfo()
+                .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+                .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
+                .setLoadOp(vk::AttachmentLoadOp::eClear)
+                .setStoreOp(vk::AttachmentStoreOp::eStore)
+        };
+        mRenderPass->setColorAttachment(0, colorAttachment);
+        mRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+            mStructurePipeline->bind(commandBuffer);
+            mStructurePipeline->bindDescriptorSet(commandBuffer, mSceneDescriptor->getSet(frameData.currentFrame));
+            mStructurePipeline->pushConstants(commandBuffer, &mStructureColor);
 
-        static constexpr vk::DeviceSize offsets[2] = { 0, 0 };
-        /* Spheres */ {
-            const std::array vertexBuffers { mCIFData->mSphereVertexBuffer->getHandle(), mCIFData->mSphereInstanceBuffer->getHandle() };
-            commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
-            commandBuffer.bindIndexBuffer(mCIFData->mSphereIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-            commandBuffer.drawIndexed(mCIFData->mCID.sphere.indices.size(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
-        }
-        /* Cylinders */ {
-            const std::array vertexBuffers { mCIFData->mCylinderVertexBuffer->getHandle(), mCIFData->mCylinderInstanceBuffer->getHandle() };
-            commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
-            commandBuffer.bindIndexBuffer(mCIFData->mCylinderIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-            commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
-        }
-    });
-    commandList->getHandle().endDebugUtilsLabelEXT();
-
-    commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Render"));
-    /* SDF to (probably) ShaderReadOnly Image usage */ {
-        const auto barrier = RHI::Barrier()
-            .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::ShaderReadOnly));
-        barrier.insert(commandList);
+            static constexpr vk::DeviceSize offsets[2] = { 0, 0 };
+            /* Spheres */ {
+                const std::array vertexBuffers{ mCIFData->mSphereVertexBuffer->getHandle(), mCIFData->mSphereInstanceBuffer->getHandle() };
+                commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
+                commandBuffer.bindIndexBuffer(mCIFData->mSphereIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+                commandBuffer.drawIndexed(mCIFData->mCID.sphere.indices.size(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
+            }
+            /* Cylinders */ {
+                const std::array vertexBuffers{ mCIFData->mCylinderVertexBuffer->getHandle(), mCIFData->mCylinderInstanceBuffer->getHandle() };
+                commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
+                commandBuffer.bindIndexBuffer(mCIFData->mCylinderIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+                commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
+            }
+            });
+        commandList->getHandle().endDebugUtilsLabelEXT();
     }
 
-    // SDF Render Pass
-    // ❗Don't clear previous render pass result
-    auto sdfColorAttachment = RHI::Attachment {
-        .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
-        .attachmentInfo = vk::RenderingAttachmentInfo()
-            .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 0.0f}))
-            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
-            .setLoadOp(vk::AttachmentLoadOp::eLoad)
-            .setStoreOp(vk::AttachmentStoreOp::eStore)
-    };
-    mSDFRenderPass->setColorAttachment(0, sdfColorAttachment);
-    mSDFRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        // TODO: SDF Render Pass commands
-        mSDFPipeline->bind(commandBuffer);
-        mSDFPipeline->pushConstants(commandBuffer, &mPCSDF);
-        mSDFPipeline->bindDescriptorSets(commandBuffer, { mSceneDescriptor->getSet(frameData.currentFrame), mSDFDescriptor->getSet(0) });
-        commandBuffer.draw(3, 1, 0, 0);
-     });
+    if (mSRO.renderSurface) {
+        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("SDF-Render"));
+        /* SDF to (probably) ShaderReadOnly Image usage */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(sdfTexture->getBarrier(RHI::ImageUsage::ShaderReadOnly));
+            barrier.insert(commandList);
+        }
 
-    commandList->getHandle().endDebugUtilsLabelEXT();
+        // SDF Render Pass
+        // ❗Don't clear previous render pass result
+        auto sdfColorAttachment = RHI::Attachment{
+            .image = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
+            .attachmentInfo = vk::RenderingAttachmentInfo()
+                .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 0.0f}))
+                .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
+                .setStoreOp(vk::AttachmentStoreOp::eStore)
+        };
+        mSDFRenderPass->setColorAttachment(0, sdfColorAttachment);
+        mSDFRenderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+            // TODO: SDF Render Pass commands
+            mSDFPipeline->bind(commandBuffer);
+            mSDFPipeline->pushConstants(commandBuffer, &mPCSDF);
+            mSDFPipeline->bindDescriptorSets(commandBuffer, { mSceneDescriptor->getSet(frameData.currentFrame), mSDFDescriptor->getSet(0) });
+            commandBuffer.draw(3, 1, 0, 0);
+            });
+
+        commandList->getHandle().endDebugUtilsLabelEXT();
+    }
 }

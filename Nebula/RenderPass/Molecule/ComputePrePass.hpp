@@ -22,7 +22,7 @@ namespace viz
         ComputePrePass(SPtr<RHI::VulkanRHI> rhi, const std::vector<glm::vec3>& atomPositions)
         : mRHI(std::move(rhi))
         , mTextureExtents(128, 128, 128)
-        , mPC(glm::vec4(INT_MAX), glm::vec4(INT_MIN), atomPositions.size(), .1f, 1.f)
+        , mPC(glm::vec4(INT_MAX), glm::vec4(INT_MIN), atomPositions.size(), .4f, .25f)
         {
             mImage3D = mRHI->createImage3D({
                 .extent     = mTextureExtents,
@@ -52,42 +52,36 @@ namespace viz
             mPC.bboxMin -= probeR;
             mPC.bboxMax += probeR;
 
-            // Normalize Pos
-            auto normalize = [](float v, float min, float max, float from, float to) {
-                return (to - from) * ((v - min) / (max - min)) + from;
-            };
+            /* Upload atom positions */ {
+                std::vector<glm::vec4> alignedPos;
+                alignedPos.reserve(atomPositions.size());
+                for (const auto& p : atomPositions) {
+                    alignedPos.emplace_back(p, 0.f);
+                }
 
-            std::vector<glm::vec3> normalizedAtomPositions;
-            normalizedAtomPositions.reserve(atomPositions.size());
-            for (const auto& p : atomPositions) {
-                normalizedAtomPositions.emplace_back(
-                    normalize(p.x, mPC.bboxMin.x, mPC.bboxMax.x, 0, mTextureExtents.width),
-                    normalize(p.y, mPC.bboxMin.y, mPC.bboxMax.y, 0, mTextureExtents.height),
-                    normalize(p.z, mPC.bboxMin.z, mPC.bboxMax.z, 0, mTextureExtents.depth)
-                );
+                auto positionsSize = alignedPos.size() * sizeof(glm::vec4);
+                auto staging = mRHI->createBuffer({
+                    .size = positionsSize,
+                    .type = RHI::BufferType::Staging,
+                    });
+                staging->setData(alignedPos.data(), positionsSize);
+
+                mPositions = mRHI->createBuffer({
+                    .size = positionsSize,
+                    .type = RHI::BufferType::Storage,
+                    .debugName = "Molecule Positions",
+                    });
+
+                mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+                    const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
+                    const auto info = vk::CopyBufferInfo2()
+                        .setSrcBuffer(staging->getHandle())
+                        .setDstBuffer(mPositions->getHandle())
+                        .setRegions(copy);
+                    commandList->getHandle().copyBuffer2(info);
+                    });
+
             }
-
-            auto positionsSize = normalizedAtomPositions.size() * sizeof(glm::vec3);
-            auto staging = mRHI->createBuffer({
-                .size = positionsSize,
-                .type = RHI::BufferType::Staging,
-                });
-            staging->setData(atomPositions.data(), positionsSize);
-
-            mPositions = mRHI->createBuffer({
-                .size = positionsSize,
-                .type = RHI::BufferType::Storage,
-                .debugName = "Molecule Positions",
-            });
-
-            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
-                const auto copy = vk::BufferCopy2().setSrcOffset(0).setDstOffset(0).setSize(positionsSize);
-                const auto info = vk::CopyBufferInfo2()
-                    .setSrcBuffer(staging->getHandle())
-                    .setDstBuffer(mPositions->getHandle())
-                    .setRegions(copy);
-                commandList->getHandle().copyBuffer2(info);
-            });
 
             vk::PushConstantRange pcr;
             pcr.offset = 0;
@@ -136,6 +130,11 @@ namespace viz
         glm::vec4 getBBoxMin() const noexcept { return mPC.bboxMin; }
         glm::vec4 getBBoxMax() const noexcept { return mPC.bboxMax; }
         vk::Extent3D getTextureExtents() const noexcept { return mTextureExtents; }
+
+        float getRadius() const noexcept { return mPC.radius; }
+        float getScale() const noexcept { return mPC.scale; }
+        void setRadius(float r) { mPC.radius = r; }
+        void setScale(float s) { mPC.scale = s; }
 
     private:
         SPtr<RHI::VulkanRHI>        mRHI;
