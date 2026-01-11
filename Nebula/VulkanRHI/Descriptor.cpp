@@ -131,6 +131,18 @@ namespace RHI
         mDevice->getHandle().updateDescriptorSets(writeInfo.writes, {});
     }
 
+    void Descriptor::write(const uint32_t setIndex, const DescriptorWrite& descriptorWrite) const noexcept
+    {
+        nbl_ASSERT(setIndex < mDescriptorSets.size(), "Descriptor Set index out of range!");
+        const auto writes = descriptorWrite.mWrites
+            | std::views::transform([&](const auto& write){
+                return vk::WriteDescriptorSet(write)
+                    .setDstSet(mDescriptorSets[setIndex]);
+            })
+            | std::ranges::to<std::vector>();
+        mDevice->getHandle().updateDescriptorSets(writes, {});
+    }
+
     vk::DescriptorSet Descriptor::getSet(const size_t i) const
     {
         assert(i < mSetCount);

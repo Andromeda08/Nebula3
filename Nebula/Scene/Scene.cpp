@@ -40,10 +40,14 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
-            const auto descriptorWrite = RHI::DescriptorWriteInfo()
-                .writeUniformBuffers(0, 1, mCameraUB[i]->getDescriptorInfo(sizeof(CameraData)))
-                .setSetIndex(i);
-            mSceneDescriptor->write_old(descriptorWrite);
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                .writeUniformBuffer(0, mCameraUB[i].get());
+            mSceneDescriptor->write(i, descriptorWrite);
+
+            // const auto descriptorWrite = RHI::DescriptorWriteInfo()
+            //     .writeUniformBuffers(0, 1, mCameraUB[i]->getDescriptorInfo(sizeof(CameraData)))
+            //     .setSetIndex(i);
+            // mSceneDescriptor->write_old(descriptorWrite);
         }
     }
 
