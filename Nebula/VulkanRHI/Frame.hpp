@@ -2,11 +2,12 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "Device.hpp"
 #include "Core/Types.hpp"
 
 namespace RHI
 {
+    class Device;
+
     struct FrameData
     {
         vk::Fence       waitFence;
@@ -33,38 +34,11 @@ namespace RHI
 
         uint64_t                      currentFrame;
 
-        explicit FrameSync(const SPtr<Device>& pDevice)
-        : currentFrame(0)
-        , mDevice(pDevice)
-        {
-            constexpr auto semaphoreCreateInfo = vk::SemaphoreCreateInfo();
-            constexpr auto fenceCreateInfo = vk::FenceCreateInfo().setFlags(vk::FenceCreateFlagBits::eSignaled);
+        explicit FrameSync(const SPtr<Device>& pDevice);
 
-            const auto d = mDevice->getHandle();
-            for (uint64_t i = 0; i < gFramesInFlight; i++)
-            {
-                frameInFlight[i]     = d.createFence(fenceCreateInfo);
-                imageReady[i]        = d.createSemaphore(semaphoreCreateInfo);
-                renderingFinished[i] = d.createSemaphore(semaphoreCreateInfo);
-            }
-        }
+        ~FrameSync();
 
-        ~FrameSync()
-        {
-            const auto d = mDevice->getHandle();
-            d.waitIdle();
-            for (uint64_t i = 0; i < gFramesInFlight; i++)
-            {
-                d.destroyFence(frameInFlight[i]);
-                d.destroySemaphore(imageReady[i]);
-                d.destroySemaphore(renderingFinished[i]);
-            }
-        }
-
-        void advanceCurrentFrame()
-        {
-            currentFrame = (currentFrame + 1) % gFramesInFlight;
-        }
+        void advanceCurrentFrame() noexcept;
 
     private:
         SPtr<Device> mDevice;
