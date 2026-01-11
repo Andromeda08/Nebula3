@@ -2,7 +2,6 @@
 
 #include "IPass.hpp"
 
-#include "GBufferPass.hpp"
 #include "HelloTrianglePass.hpp"
 #include "Special/AmbientOcclusionPass.hpp"
 #include "Special/AntiAliasingPass.hpp"

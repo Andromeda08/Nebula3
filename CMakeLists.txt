@@ -118,7 +118,6 @@ add_executable(Nebula3
     Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
     Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
     Nebula/RenderGraph/RenderPath/Resource.hpp
-    Nebula/RenderPass/GBufferPass.hpp
     Nebula/RenderPass/Special/LightingPass.hpp
     Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
@@ -138,7 +137,6 @@ add_executable(Nebula3
     Nebula/RenderGraph/Compiler/Export.cpp
     Nebula/RenderPass/Special/Combine.hpp
     Nebula/RenderPass/RenderPass.hpp
-    Nebula/RenderPass/GBufferPass.cpp
     Nebula/Scene/Types/Vertex.hpp
     Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
@@ -183,6 +181,11 @@ add_executable(Nebula3
     Nebula/Scene/Molecule/RenderingOptions.hpp
     Nebula/VulkanRHI/Texture.hpp
     Nebula/VulkanRHI/Texture.cpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture2DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture3DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.hpp
+    Nebula/RenderGraph/RenderPath/Resources/SceneResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
