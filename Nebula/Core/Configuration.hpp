@@ -22,7 +22,7 @@ struct ConfigurationData
     RGConfiguration     renderGraph = {};
     SceneConfiguration  scenes      = {};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, version, app, rhi, renderGraph);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, version, app, rhi, renderGraph, scenes);
 
 /**
  * Configuration reading & loading (singleton) class.
@@ -43,6 +43,11 @@ public:
     static std::string getShaderFilePath(const std::string& shaderFile) noexcept;
 
     static std::string getTextureFilePath(const std::string& textureFile) noexcept;
+
+    static std::string getMoleculeFile() noexcept
+    {
+        return std::format("{}/{}", sInstance->mData.scenes.moleculesDir, sInstance->mData.scenes.molecule);
+    }
 
 private:
     Configuration();

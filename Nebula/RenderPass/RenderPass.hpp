@@ -10,3 +10,4 @@
 #include "Special/LightingPass.hpp"
 #include "Special/PresentPass.hpp"
 #include "Special/ScenePass.hpp"
+#include "Molecule/ComputePrePass.hpp"

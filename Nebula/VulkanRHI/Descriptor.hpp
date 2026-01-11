@@ -7,6 +7,7 @@
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Detail/DescriptorWrite.hpp"
 
 namespace RHI
 {
@@ -61,7 +62,9 @@ namespace RHI
 
         ~Descriptor();
 
-        void write(DescriptorWriteInfo writeInfo) const;
+        [[deprecated("Use the new write() method and DescriptorWrite class")]] void write_old(DescriptorWriteInfo writeInfo) const;
+
+        void write(DescriptorWrite descriptorWrite) const noexcept;
 
         vk::DescriptorSet getSet(size_t i = 0) const;
 

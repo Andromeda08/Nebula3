@@ -11,6 +11,8 @@ struct Transform
     glm::vec3 _translate = glm::vec3(0.0f);
     glm::vec3 _scale     = glm::vec3(1.0f);
     glm::vec3 _euler     = glm::vec3(0.0f);
+    glm::vec3 _axis      = glm::vec3(0.0f);
+    float     _angle     = 0.f;
 
     Transform& translate(const glm::vec3& t) noexcept
     {
@@ -54,6 +56,15 @@ struct Transform
         return *this;
     }
 
+    Transform& setAxisAngleRotation(const glm::vec3& ax, float an) noexcept
+    {
+        _axis = ax;
+        _angle = an;
+        _dirty = true;
+        _useAxisAngle = true;
+        return *this;
+    }
+
     const glm::mat4& getModel() noexcept
     {
         if (_dirty)
@@ -68,11 +79,14 @@ private:
     {
         const glm::mat4 T = glm::translate(glm::mat4(1.0f), _translate);
         const glm::mat4 S = glm::scale(glm::mat4(1.0f), _scale);
-        const glm::mat4 R = glm::yawPitchRoll(glm::radians(_euler.y), glm::radians(_euler.x), glm::radians(_euler.z));
+        const glm::mat4 R = _useAxisAngle 
+            ? glm::rotate(glm::mat4(1.0f), glm::radians(_angle), _axis) 
+            : glm::yawPitchRoll(glm::radians(_euler.y), glm::radians(_euler.x), glm::radians(_euler.z));
         return T * R * S;
     }
 
     // _model is updated when _dirty is true and getModel() is called.
     glm::mat4 _model = glm::mat4(1.0f);
     bool      _dirty = false;
+    bool      _useAxisAngle = false;
 };

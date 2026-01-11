@@ -47,6 +47,10 @@ namespace RHI
                 attachmentInfo.colorAttachmentFormats.append_range(fmts);                           \
                 return *this;                                                                       \
             }                                                                                       \
+            T##PipelineCreateInfo& setDepthAttachmentFormat(const vk::Format format) {              \
+                attachmentInfo.depthFormat = format;                                                \
+                return *this;                                                                       \
+            }                                                                                       \
             T##PipelineCreateInfo& setDebugName(const std::string& string) {                        \
                 debugName = string;                                                                 \
                 return *this;                                                                       \

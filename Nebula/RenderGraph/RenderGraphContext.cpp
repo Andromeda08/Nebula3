@@ -19,15 +19,15 @@ namespace rg
             }
         }
 
-        if (!std::filesystem::exists(sRenderGraphExportDirectory))
-        {
-            std::filesystem::create_directory(sRenderGraphExportDirectory);
-        }
-
-        // Setup import/export directory
         if (!std::filesystem::exists(sRenderGraphDirectory))
         {
             std::filesystem::create_directory(sRenderGraphDirectory);
+        }
+
+        // Setup import/export directory
+        if (!std::filesystem::exists(sRenderGraphExportDirectory))
+        {
+            std::filesystem::create_directory(sRenderGraphExportDirectory);
         }
         // Load all Render Graphs from the directory
         int32_t loadedCount = 0;

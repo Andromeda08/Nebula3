@@ -73,7 +73,8 @@ namespace RHI
 
     struct DeviceCreateInfo
     {
-        vk::Instance instance;
+        RHIFeatureLevel featureLevel;
+        vk::Instance    instance;
     };
 
     template <class T>
@@ -104,6 +105,8 @@ namespace RHI
         vk::Device getHandle() const { return mDevice; }
         const std::string& getDeviceName() const noexcept { return mDeviceName; }
 
+        RHIFeatureLevel getFeatureLevel() const noexcept { return mRHIFeatureLevel; }
+
     private:
         void selectPhysicalDevice();
 
@@ -116,6 +119,7 @@ namespace RHI
             vk::QueueFlags               excludedFlags    = {},
             const std::set<QueueFamily>& excludedFamilies = {}) const noexcept;
 
+        RHIFeatureLevel                     mRHIFeatureLevel;
         bool                                mDebugFeatures;
         vk::Instance                        mInstance;
         vk::PhysicalDevice                  mPhysicalDevice;

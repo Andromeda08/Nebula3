@@ -3,6 +3,7 @@
 #include <print>
 
 #include "RenderPass/RenderPass.hpp"
+#include "RenderPass/Molecule/ComputePrePass.hpp"
 
 namespace rg
 {

@@ -27,16 +27,17 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>();
 
-    mRenderGraphContext = rg::RenderGraphContext::create({
-        .rhi = mVulkanRHI,
-    });
-    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+    // mRenderGraphContext = rg::RenderGraphContext::create({
+    //     .rhi = mVulkanRHI,
+    // });
+    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
     mScene = Scene::create({
         .rhi  = mVulkanRHI,
         .name = "Default Scene",
     });
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+    mScene->registerUIComponents(mUserInterface.get());
 }
 
 UPtr<App> App::create() noexcept
@@ -75,11 +76,11 @@ void App::run()
         commandList->begin();
         mScene->update(commandList, frameInfo, dt);
 
-        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
+        const vk::Image currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
             barrier.insert(commandList);
         }
 
@@ -93,7 +94,7 @@ void App::run()
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
              barrier.insert(commandList);
         }
 
@@ -101,7 +102,7 @@ void App::run()
 
         {
             auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::PresentSrc));
              barrier.insert(commandList);
         }
 
@@ -131,10 +132,14 @@ void App::run_renderPathLoop()
     while (!mWindow->shouldClose())
     {
         const float dt = mDeltaTime.getDeltaTime();
-        auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
+        // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
         // Input
         mWindow->pollEvents();
+        if (!mUserInterface->wantCaptureInput())
+        {
+            mScene->handleInput(mWindow->getHandle());
+        }
 
         // Rendering
         const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
@@ -142,40 +147,44 @@ void App::run_renderPathLoop()
 
         // Updates
         mScene->update(commandList, frameData, dt);
-        pRenderPath->update(dt, frameData);
+        // pRenderPath->update(dt, frameData);
         mUserInterface->update();
 
         commandList->begin();
-
-        const SPtr<RHI::Image> currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex);
 
         mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
 
         // =====================================
         // RenderPath
         // =====================================
-        pRenderPath->initialize(commandList);   // Runs once
+        // pRenderPath->initialize(commandList);   // Runs once
+        // pRenderPath->execute(commandList, frameData);
 
-        pRenderPath->execute(commandList, frameData);
+        /* Acquired Swapchain Image | ColorAttachment */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
+            barrier.insert(commandList);
+        }
+        mScene->render(commandList, frameData);
 
         // =====================================
         // User Interface
         // =====================================
-        #pragma region
-        {
-            auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::ColorAttachment, currentSwapchainImage });
-             barrier.insert(commandList);
-        }
+        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("ImGui"));
 
+        /* Acquired Swapchain Image | ColorAttachment */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
+            barrier.insert(commandList);
+        }
         mUserInterface->draw(commandList, frameData);
-
-        {
-            auto barrier = RHI::Barrier()
-                .addImageBarrier({ RHI::ImageUsage::PresentSrc, currentSwapchainImage });
-             barrier.insert(commandList);
+        /* Acquired Swapchain Image | PresentSrc */ {
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::PresentSrc));
+            barrier.insert(commandList);
         }
-        #pragma endregion
+
+        commandList->getHandle().endDebugUtilsLabelEXT();
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({
@@ -183,9 +192,9 @@ void App::run_renderPathLoop()
             .pCommandList = commandList,
         });
 
-        if (mRenderGraphContext->hasQueuedRenderPathChange())
-        {
-            mRenderGraphContext->changeToQueuedRenderPath();
-        }
+        // if (mRenderGraphContext->hasQueuedRenderPathChange())
+        // {
+        //     mRenderGraphContext->changeToQueuedRenderPath();
+        // }
     }
 }

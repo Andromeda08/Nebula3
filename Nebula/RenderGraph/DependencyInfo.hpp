@@ -13,6 +13,7 @@ namespace RHI
     NLOHMANN_JSON_SERIALIZE_ENUM(ImageUsage, {
         { ImageUsage::Undefined,        "Undefined"         },
         { ImageUsage::ColorAttachment,  "ColorAttachment"   },
+        { ImageUsage::DepthAttachment,  "DepthAttachment"   },
         { ImageUsage::Clear,            "Clear"             },
         { ImageUsage::General,          "General"           },
         { ImageUsage::ShaderReadOnly,   "ShaderReadOnly"    },

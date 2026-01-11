@@ -6,21 +6,10 @@
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Detail/BufferTraits.hpp"
 
 namespace RHI
 {
-    enum class BufferType
-    {
-        Index,
-        Vertex,
-        Indirect,
-        Storage,
-        Uniform,
-        AccelerationStructure,
-        ShaderBindingTable,
-        Staging,
-    };
-
     struct RHIBufferCreateInfo
     {
         uint64_t        size      = 0;
@@ -56,10 +45,6 @@ namespace RHI
         uint64_t          getAddress()   const { return mDeviceAddress;       }
 
     private:
-        static vk::BufferUsageFlags getUsageFlags(BufferType bufferType);
-
-        static int32_t getMemoryFlags(BufferType bufferType);
-
         vk::Buffer          mBuffer;
 
         VmaAllocation       mAllocation;

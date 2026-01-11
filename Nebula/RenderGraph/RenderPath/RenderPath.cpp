@@ -61,6 +61,7 @@ namespace rg
         // Create Passes & Connect Resources
         // =====================================
         const auto passFactory = PassFactory(createInfo.rhi);
+        std::map<int32_t, int32_t> nodeMapping; // Graph ID -> mPasses Index
         for (const auto* node : createInfo.compilerResult.nodeExecutionOrder)
         {
             // Debug label
@@ -72,8 +73,26 @@ namespace rg
 
             // Create Pass
             mPasses.push_back(passFactory.create(node));
+            nodeMapping.insert_or_assign(node->getId(), mPasses.size() - 1);
 
             // TODO : Connect resources
+            for (const auto& optResource : createInfo.compilerResult.resourceTemplates)
+            {
+                // 6.0 Get resource
+                const auto& resource = mResources[std::to_string(optResource.id)];
+
+                // 6.1 Connect to origin node
+                auto& origin = optResource.originalResource;
+                auto& cnode_origin = mPasses[nodeMapping[origin.pNode->getId()]];
+                cnode_origin->setResource(origin.originalDepName, resource);
+
+                // 6.2 Connect to consumer nodes
+                for (const auto& consumer : optResource.usagePoints)
+                {
+                    auto& cnode_consumer = mPasses[nodeMapping[consumer.userNodeId]];
+                    cnode_consumer->setResource(consumer.usedAs, resource);
+                }
+            }
         }
     }
 

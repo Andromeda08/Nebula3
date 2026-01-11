@@ -10,6 +10,7 @@
 #include "Device.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
+#include "Image3D.hpp"
 #include "Instance.hpp"
 #include "IWindow.hpp"
 #include "Raytracing.hpp"
@@ -40,6 +41,7 @@ namespace RHI
 
         SPtr<Buffer>     createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
+        SPtr<Image3D>    createImage3D(const RHIImage3DCreateInfo& createInfo) const;
         SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
 
         Allocation allocatedAliasedImageMemory(const std::vector<SPtr<Image>>& images) const;
@@ -50,8 +52,8 @@ namespace RHI
 
         UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
 
-        Device* getDevice() const { return mDevice.get(); }
-        Instance* getInstance() const { return mInstance.get(); }
+        SPtr<Device> getDevice() const { return mDevice; }
+        SPtr<Instance> getInstance() const { return mInstance; }
 
         RHIFeatureLevel getFeatureLevel() const noexcept
         {
@@ -66,9 +68,7 @@ namespace RHI
         UPtr<DebugContext>  mDebugContext;
         SPtr<Device>        mDevice;
         UPtr<Swapchain>     mSwapchain;
-
         UPtr<CommandQueue>  mGraphicsQueue;
-
         UPtr<FrameSync>     mFrameSync;
     };
 }

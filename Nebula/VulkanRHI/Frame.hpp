@@ -33,7 +33,7 @@ namespace RHI
 
         uint64_t                      currentFrame;
 
-        explicit FrameSync(Device* pDevice)
+        explicit FrameSync(const SPtr<Device>& pDevice)
         : currentFrame(0)
         , mDevice(pDevice)
         {
@@ -67,6 +67,6 @@ namespace RHI
         }
 
     private:
-        Device* mDevice;
+        SPtr<Device> mDevice;
     };
 }

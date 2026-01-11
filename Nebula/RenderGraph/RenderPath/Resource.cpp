@@ -66,7 +66,7 @@ namespace rg
     RHI::Attachment ImageResource::getBasicAttachment(const uint32_t i) const noexcept
     {
         return {
-            .image          = mImages[i],
+            .image          = mImages[i]->getImage(),
             .attachmentInfo = getBasicAttachmentInfo(i),
         };
     }

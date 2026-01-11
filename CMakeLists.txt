@@ -13,6 +13,7 @@ add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
+add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -83,8 +84,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Commands/CommandQueue.hpp
     Nebula/VulkanRHI/Commands/CommandQueue.cpp
     Nebula/VulkanRHI/Commands.hpp
-    Nebula/UserInterface/ImGuiRenderer.cpp
-    Nebula/UserInterface/ImGuiRenderer.hpp
     Nebula/UserInterface/UserInterface.cpp
     Nebula/UserInterface/UserInterface.hpp
     Nebula/UserInterface/IComponent.hpp
@@ -144,10 +143,8 @@ add_executable(Nebula3
     Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
     Nebula/Scene/Scene.hpp
-    Nebula/Scene/TextureManager.hpp
     Nebula/Scene/Types/LightParameters.hpp
     Nebula/Scene/SceneConfiguration.hpp
-    Nebula/Scene/TextureManager.cpp
     Nebula/Scene/Scene.cpp
     Nebula/Scene/Components/SceneInfoComponent.hpp
     Nebula/Scene/Components/SceneInfoComponent.cpp
@@ -155,6 +152,23 @@ add_executable(Nebula3
     Nebula/Scene/Geometry/Geometry.cpp
     Nebula/Scene/Types/CameraData.hpp
     Nebula/Scene/Camera/ICamera.hpp
+    Nebula/Scene/Molecule/CIFData.hpp
+    Nebula/Scene/Molecule/CIFData.cpp
+    Nebula/Scene/Molecule/CIFParser.cpp
+    Nebula/Scene/Molecule/CIFParser.hpp
+    Nebula/Scene/Molecule/CIFGeometry.hpp
+    Nebula/Scene/Camera/OrbitCamera.hpp
+    Nebula/Scene/Object.hpp
+    Nebula/Scene/Camera/FlyingCamera.hpp
+    Nebula/VulkanRHI/Detail/ImageTraits.hpp
+    Nebula/UserInterface/ImGuiRenderPass.hpp
+    Nebula/VulkanRHI/Image3D.hpp
+    Nebula/UserInterface/ImGuiRenderPass.cpp
+    Nebula/VulkanRHI/Detail/BufferTraits.hpp
+    Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
+    Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    Nebula/Scene/Molecule/CIFGeometry.cpp
+    Nebula/VulkanRHI/Image3D.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -168,6 +182,7 @@ target_include_directories(Nebula3 PUBLIC
     External/json/include
     External/stb
     External/vma/include
+    External/gemmi/include
     ${Vulkan_INCLUDE_DIRS}
 )
 
@@ -176,6 +191,7 @@ target_link_libraries(Nebula3 PUBLIC
     ${Vulkan_LIBRARIES}
     glfw
     glm::glm
+    gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
 )
 

@@ -27,7 +27,7 @@ namespace RHI
             mDebugContext = DebugContext::create({ mInstance });
         }
 
-        mDevice = Device::create({ mInstance->getHandle() });
+        mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
 
         mSwapchain = Swapchain::create({
@@ -41,7 +41,7 @@ namespace RHI
             .device = mDevice,
         });
 
-        mFrameSync = std::make_unique<FrameSync>(mDevice.get());
+        mFrameSync = std::make_unique<FrameSync>(mDevice);
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
@@ -117,6 +117,8 @@ namespace RHI
         const auto result = mDevice->getGraphicsQueue().queue.presentKHR(presentInfo);
         assert(result == vk::Result::eSuccess);
 
+        mDevice->getGraphicsQueue().queue.waitIdle();
+
         mFrameSync->advanceCurrentFrame();
     }
 
@@ -132,6 +134,13 @@ namespace RHI
         auto imageInfo = ImageCreateInfo(createInfo);
         imageInfo.device = mDevice;
         return Image::create(imageInfo);
+    }
+
+    SPtr<Image3D> VulkanRHI::createImage3D(const RHIImage3DCreateInfo& createInfo) const
+    {
+        auto imageInfo = Image3DCreateInfo(createInfo);
+        imageInfo.device = mDevice;
+        return Image3D::create(imageInfo);
     }
 
     SPtr<Descriptor> VulkanRHI::createDescriptor(const RHIDescriptorCreateInfo& createInfo) const

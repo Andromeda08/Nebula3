@@ -1,9 +1,15 @@
 #pragma once
 
+#include <GLFW/glfw3.h>
+
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 
-#include "TextureManager.hpp"
+#include "Camera/ICamera.hpp"
+#include "Geometry/Geometry.hpp"
+#include "Molecule/CIFData.hpp"
+#include "RenderPass/Molecule/ComputePrePass.hpp"
+#include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
 namespace RHI
@@ -21,19 +27,74 @@ struct SceneCreateInfo
     std::string          name;
 };
 
+struct PCSDF {
+    glm::vec4 bboxMin;
+    glm::vec4 bboxMax;
+    glm::vec4 sesColor;
+    float voxelSize;
+    float blending;
+    float ls;
+    int useSubsurfaceScattering;
+    int rayMarchingSteps;
+};
+
+struct SceneRenderOptions {
+    bool renderStructure = true;
+    bool renderSurface = true;
+    bool recalculateSDF = false;
+    bool calculatedSDF = false;
+};
+
 class Scene
 {
 public:
     nbl_DISABLE_COPY(Scene);
     nbl_CTOR(Scene);
 
-    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
+    void registerUIComponents(UserInterface* pUserInterface) const;
+
+    void handleInput(GLFWwindow* pWindow) const noexcept
     {
+        mCamera->registerKeys(pWindow);
+        mCamera->registerMouse(pWindow);
     }
+
+    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
+
+    void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData);
 
 private:
     friend class SceneInfoComponent;
 
-    std::string             mName;
-    UPtr<TextureManager>    mTextureManager;
+    UPtr<CIFData>                       mCIFData;
+
+    SPtr<RHI::VulkanRHI>                mRHI;
+
+    UPtr<ICamera>                       mCamera;
+    PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
+    SPtr<RHI::Descriptor>               mSceneDescriptor;
+
+    // Molecule: SDF
+    UPtr<viz::ComputePrePass>           mComputePrePass;
+    SPtr<RHI::Descriptor>               mSDFDescriptor;
+
+    // Molecule: Structure Rendering
+    glm::vec4                           mStructureColor = glm::vec4(0.45f, 0.2f, 0.8f, 1.0f);
+    SPtr<RHI::Image>                    mDepthBuffer;
+    SPtr<RHI::RenderPass>               mRenderPass;
+    SPtr<RHI::GraphicsPipeline>         mStructurePipeline;
+
+    // Molecule: SDF Rendering
+    SPtr<RHI::GraphicsPipeline>         mSDFPipeline;
+    SPtr<RHI::RenderPass>               mSDFRenderPass;
+    vk::Sampler                         mSDFSampler;
+    PCSDF                               mPCSDF;
+
+    SPtr<Geometry>                      mCube;
+    SPtr<RHI::Buffer>                   mVertexBuffer;
+    SPtr<RHI::Buffer>                   mIndexBuffer;
+    SPtr<RHI::GraphicsPipeline>         mFwdPipeline;
+
+    std::string                         mName;
+    SceneRenderOptions                  mSRO;
 };

@@ -1,7 +1,23 @@
 .idea
+.vs
 
 cmake-build-debug
 cmake-build-release
+Debug
+Release
+x64/*
+CMakeFiles
+Nebula3.dir
+nrt
+Resources/RenderGraphs
+RelWithDebInfo/
 
 *.spv
+*.vcxproj*
 .DS_Store
+CMakeCache.txt
+cmake_install.cmake
+*.sln
+nbl.json
+compile.bat
+imgui.ini

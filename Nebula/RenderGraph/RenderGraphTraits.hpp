@@ -24,7 +24,7 @@ namespace rg
         X(LightingPass) \
         X(AmbientOcclusionPass) \
         X(AntiAliasingPass) \
-        X(CombinePass) \
+        X(CombinePass)
 
     #pragma region "NodeType : Enum, JSON Serialization, toString"
     enum class NodeType
