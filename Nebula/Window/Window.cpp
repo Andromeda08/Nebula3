@@ -4,11 +4,13 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Core/ToString.hpp"
+#include "Core/Util.hpp"
 
 Window::Window(const WindowCreateInfo& createInfo)
 : mTitle(createInfo.title)
 {
-    assert(glfwInit());
+    const bool isInit = glfwInit();
+    nbl_ASSERT(isInit, "Failed to initialize GLFW");
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, false);
@@ -21,7 +23,7 @@ Window::Window(const WindowCreateInfo& createInfo)
     const int32_t height = std::min(static_cast<int32_t>(createInfo.size.height), videoMode->height);
 
     mWindow = glfwCreateWindow(width, height, mTitle.c_str(), nullptr, nullptr);
-    assert(mWindow);
+    nbl_ASSERT(mWindow != nullptr, "Failed to create GLFW Window");
 
     int32_t w, h;
     glfwGetWindowSize(mWindow, &w, &h);
