@@ -186,6 +186,8 @@ add_executable(Nebula3
     Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.hpp
     Nebula/RenderGraph/RenderPath/Resources/SceneResource.hpp
     Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
+    Nebula/Core/AppSpecification.cpp
+    Nebula/Core/Platform.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

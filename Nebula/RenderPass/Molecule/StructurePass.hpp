@@ -26,9 +26,6 @@ namespace Molecule
 
         static rg::NodeCreateInfo getNodeInfo() noexcept;
 
-    private:
-        friend class MoleculeRenderingUI;
-
         CIFData*                    mCIFData;
 
         SPtr<RHI::VulkanRHI>        mRHI;

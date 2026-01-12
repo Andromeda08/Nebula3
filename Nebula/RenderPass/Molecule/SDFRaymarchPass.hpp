@@ -37,9 +37,6 @@ namespace Molecule
 
         static rg::NodeCreateInfo getNodeInfo() noexcept;
 
-    private:
-        friend class MoleculeRenderingUI;
-
         void createSampler();
 
         SPtr<RHI::VulkanRHI>        mRHI;
