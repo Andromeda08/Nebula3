@@ -15,8 +15,10 @@ namespace rg
         int32_t         id;
         Node*           pSrc;
         int32_t         srcDependencyId;
+        DependencyInfo* pSrcDependency;
         Node*           pDst;
         int32_t         dstDependencyId;
+        DependencyInfo* pDstDependency;
         ResourceType    resourceType;
 
         int32_t         srcId;

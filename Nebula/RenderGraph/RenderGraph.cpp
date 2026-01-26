@@ -6,6 +6,7 @@
 #include "RenderPass/Molecule/SDFComputePass.hpp"
 #include "RenderPass/Molecule/SDFRaymarchPass.hpp"
 #include "RenderPass/Molecule/StructurePass.hpp"
+#include "RenderPass/Special/GBufferPass.hpp"
 
 namespace rg
 {
@@ -23,7 +24,7 @@ namespace rg
             case Scene:                 return ScenePass::getNodeInfo();
             case Present:               return PresentPass::getNodeInfo();
             case HelloTrianglePresent:  return HelloTrianglePass::getNodeInfo();
-            // case GBufferPass:           return GBufferPass::getNodeInfo();
+            case GBufferPass:           return GBufferPass::getNodeInfo();
             case LightingPass:          return LightingPass::getNodeInfo();
             case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
             case AntiAliasingPass:      return AntiAliasingPass::getNodeInfo();
@@ -146,8 +147,10 @@ namespace rg
             .id = RenderGraph::nextId(),
             .pSrc = startNode,
             .srcDependencyId = startAttrId,
+            .pSrcDependency = &startAttr,
             .pDst = endNode,
             .dstDependencyId = endAttrId,
+            .pDstDependency = &endAttr,
             .resourceType = startAttr.resourceType,
             .srcId = startNodeId,
             .dstId = endNodeId,
