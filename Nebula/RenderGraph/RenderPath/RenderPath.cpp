@@ -117,7 +117,7 @@ namespace rg
 
     void RenderPath::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
-        for (const auto& [i, pass] : std::views::enumerate(mPasses))
+        for (const auto& [i, pass] : nbl::enumerate(mPasses))
         {
             pCommandList->beginLabel(mLabels[i].color, mLabels[i].name);
 

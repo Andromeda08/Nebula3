@@ -354,7 +354,7 @@ namespace RHI
         const std::set<QueueFamily>& excludedFamilies) const noexcept
     {
         for (const std::vector queueFamilies = mPhysicalDevice.getQueueFamilyProperties();
-             auto&& [familyIndex, properties] : std::views::enumerate(queueFamilies))
+             auto&& [familyIndex, properties] : nbl::enumerate(queueFamilies))
         {
             if ((properties.queueCount > 0)
                 && (properties.queueFlags & requiredFlags)
