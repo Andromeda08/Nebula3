@@ -5,6 +5,7 @@
 
 namespace rg
 {
+    // Provides the graph with Scene-related external resources
     class SceneResource final : public Resource
     {
     public:
