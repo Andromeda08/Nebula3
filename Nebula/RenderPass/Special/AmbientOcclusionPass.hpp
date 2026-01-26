@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace rg
 {
-    class AmbientOcclusionPass final : public IPass
+    class AmbientOcclusionPass final : public Pass
     {
     public:
         ~AmbientOcclusionPass() override = default;

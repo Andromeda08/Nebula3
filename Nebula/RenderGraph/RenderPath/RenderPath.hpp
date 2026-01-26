@@ -8,7 +8,7 @@
 #include "Resource.hpp"
 #include "Core/Macro.hpp"
 #include "RenderGraph/Compiler/RenderGraphCompiler.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace rg
@@ -49,7 +49,7 @@ namespace rg
         RHI::Barrier                                    mInitialResourceBarriers;
         std::unordered_map<std::string, SPtr<Resource>> mResources;
         std::unordered_map<int32_t, RHI::Barrier>       mBarriers;
-        std::vector<UPtr<IPass>>                        mPasses;
+        std::vector<UPtr<Pass>>                         mPasses;
         std::vector<RenderPathLabel>                    mLabels;
         std::string                                     mRenderGraphName;
         bool                                            mIsInitialized = false;

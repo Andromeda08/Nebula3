@@ -22,18 +22,25 @@ namespace res
     static constexpr auto rFinalRender = "Final Render";
 }
 
-class IPass
+class Pass
 {
 public:
-    virtual ~IPass() = default;
+    virtual ~Pass() = default;
 
     virtual void initialize() {}
     virtual void update() {}
     virtual void execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) = 0;
 
-    virtual void setResource(const std::string& name, const SPtr<rg::Resource>& resource) {}
-    virtual rg::Resource* getResource(const std::string& name)
+    virtual void setResource(const std::string& name, const SPtr<rg::Resource>& resource) noexcept
     {
-        return nullptr;
+        mResources.insert_or_assign(name, resource);
     }
+
+    virtual rg::Resource* getResource(const std::string& name) const noexcept
+    {
+        return mResources.contains(name) ? mResources.at(name).get() : nullptr;
+    }
+
+protected:
+    std::map<std::string, SPtr<rg::Resource>> mResources;
 };

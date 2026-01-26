@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace rg
 {
-    class AntiAliasingPass final : public IPass
+    class AntiAliasingPass final : public Pass
     {
     public:
         ~AntiAliasingPass() override = default;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core/Types.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace RHI
 {
@@ -17,7 +17,7 @@ namespace rg
     public:
         explicit PassFactory(const SPtr<RHI::VulkanRHI>& rhi);
 
-        UPtr<IPass> create(const Node* pNode) const;
+        UPtr<Pass> create(const Node* pNode) const;
 
     private:
         SPtr<RHI::VulkanRHI> mRHI;

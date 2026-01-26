@@ -3,13 +3,13 @@
 #include <glm/glm.hpp>
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace Molecule
 {
-    class SDFComputePass : public IPass
+    class SDFComputePass : public Pass
     {
     public:
         struct PushConstants

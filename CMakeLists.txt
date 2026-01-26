@@ -112,7 +112,7 @@ add_executable(Nebula3
     Nebula/RenderGraph/RenderGraphContext.cpp
     Nebula/RenderGraph/RGConfiguration.cpp
     Nebula/RenderPass/Special/ScenePass.hpp
-    Nebula/RenderPass/IPass.hpp
+    Nebula/RenderPass/Pass.hpp
     Nebula/RenderGraph/Compiler/RenderGraphCompiler.hpp
     Nebula/RenderGraph/Compiler/GraphAlgorithm.hpp
     Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
@@ -188,6 +188,7 @@ add_executable(Nebula3
     Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
     Nebula/Core/AppSpecification.cpp
     Nebula/Core/Platform.hpp
+    Nebula/RenderPass/Special/GBufferPass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

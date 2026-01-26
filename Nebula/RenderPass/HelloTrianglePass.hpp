@@ -1,15 +1,15 @@
 #pragma once
 
-#include "IPass.hpp"
+#include "Pass.hpp"
 #include "RenderGraph/Node.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
-class HelloTrianglePass final : public IPass
+class HelloTrianglePass final : public Pass
 {
 public:
     explicit HelloTrianglePass(const SPtr<RHI::VulkanRHI>& rhi)
-    : IPass()
+    : Pass()
     {
         const auto attachment = RHI::Attachment {
             .image = rhi->getSwapchain()->getImage(0),

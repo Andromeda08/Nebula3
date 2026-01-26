@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 #include "Scene/Molecule/CIFData.hpp"
 #include "VulkanRHI/Rendering.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
@@ -15,7 +15,7 @@ namespace Molecule
         glm::vec4 structureColor = { 0.45f, 0.2f, 0.8f, 1.0f };
     };
 
-    class StructurePass : public IPass
+    class StructurePass : public Pass
     {
     public:
         ~StructurePass() override = default;

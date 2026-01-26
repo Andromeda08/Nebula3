@@ -19,7 +19,7 @@ namespace rg
     }
 
     // [AddNode-3] Add to PassFactory
-    UPtr<IPass> PassFactory::create(const Node* pNode) const
+    UPtr<Pass> PassFactory::create(const Node* pNode) const
     {
         switch (pNode->getNodeType())
         {

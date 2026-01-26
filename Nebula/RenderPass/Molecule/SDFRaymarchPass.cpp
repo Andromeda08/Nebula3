@@ -5,7 +5,8 @@
 namespace Molecule
 {
     SDFRaymarchPass::SDFRaymarchPass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, const SPtr<RHI::Texture>& sdfTexture)
-    : mRHI(rhi)
+    : Pass()
+    , mRHI(rhi)
     , mSDFTexture(sdfTexture)
     , mSceneDescriptor(sceneDescriptor)
     {

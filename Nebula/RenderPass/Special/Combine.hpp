@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace rg
 {
-    class CombinePass final : public IPass
+    class CombinePass final : public Pass
     {
     public:
         ~CombinePass() override = default;

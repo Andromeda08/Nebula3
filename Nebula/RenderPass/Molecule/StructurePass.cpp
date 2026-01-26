@@ -5,7 +5,8 @@
 namespace Molecule
 {
     StructurePass::StructurePass(const SPtr<RHI::VulkanRHI>& rhi, const SPtr<RHI::Descriptor>& sceneDescriptor, CIFData* pCIFData)
-    : mCIFData(pCIFData)
+    : Pass()
+    , mCIFData(pCIFData)
     , mRHI(rhi)
     , mSceneDescriptor(sceneDescriptor)
     {
