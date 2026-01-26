@@ -21,9 +21,20 @@ namespace rg
         {
         }
 
-        SPtr<Resource> create(const OptimizerResource& resourceTemplate) noexcept;
+        /**
+         * Create and allocate the underlying RHI resource for a resource template.
+         * @return List of created resources (size>1 if aliased).
+         */
+        std::vector<SPtr<Resource>> create(const OptimizerResource& resourceTemplate) noexcept;
 
     private:
+        /**
+         * Create and allocate a non-aliased Texture (2D or 3D) from an OptimizerResource.
+         * @tparam T Texture resource type
+         * @param resourceTemplate
+         * @param name
+         * @return SPtr to allocated Resource
+         */
         template <class T>
         [[nodiscard]] SPtr<Resource> createTexture(const OptimizerResource& resourceTemplate, const std::string& name) noexcept
         {
@@ -59,8 +70,22 @@ namespace rg
             return mResources.at(name);
         }
 
-        void createAliasedTexture2D(const OptimizerResource& resourceTemplate, const std::string& name) noexcept;
+        /**
+         * Create logical Texture2D-s and allocate aliased memory for them from an OptimizerResource.
+         * - Aliasing is possible if the OptimizerResource contains multiple "UsageRanges" i.e. different usages of a Texture don't overlap in time.
+         * - Creates multiple RHI Textures and binds a single allocation to all of them.
+         * - Naming scheme: Res[{id}-{resourceType}]-[{usageRangeStart}, [usageRangeEnd]]
+         * @param resourceTemplate
+         * @param name
+         * @return List of resources created (that share an allocation)
+         */
+        [[nodiscard]] std::vector<SPtr<Resource>> createAliasedTexture2D(const OptimizerResource& resourceTemplate, const std::string& name) noexcept;
 
+        /**
+         * Infers RHI image usage flag bits from ImageUsage.
+         * @param resourceTemplate
+         * @return
+         */
         [[nodiscard]] static vk::ImageUsageFlags getImageUsageFlags(const OptimizerResource& resourceTemplate) noexcept;
 
         std::map<std::string, SPtr<Resource>>                            mResources;

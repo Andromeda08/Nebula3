@@ -7,7 +7,7 @@
 
 namespace rg
 {
-    SPtr<Resource> ResourceRegistry::create(const OptimizerResource& resourceTemplate) noexcept
+    std::vector<SPtr<Resource>> ResourceRegistry::create(const OptimizerResource& resourceTemplate) noexcept
     {
         const auto name = std::format("Res[{}-{}]", resourceTemplate.id, toString(resourceTemplate.resourceType));
 
@@ -15,18 +15,18 @@ namespace rg
         {
             case ResourceType::SceneData: {
                 mResources[name] = makeShared<SceneResource>(mContext->getActiveScene(), name);
-                return mResources.at(name);
+                return { mResources.at(name) };
             }
             case ResourceType::Texture2D: {
+                // Alias if there are more than one usage ranges for the optimizer resource
                 if (resourceTemplate.usageRanges.size() > 1)
                 {
-                    createAliasedTexture2D(resourceTemplate, name);
-                    return nullptr;
+                    return createAliasedTexture2D(resourceTemplate, name);
                 }
-                return createTexture<Texture2DResource>(resourceTemplate, name);
+                return { createTexture<Texture2DResource>(resourceTemplate, name) };
             }
             case ResourceType::Texture3D: {
-                return createTexture<Texture3DResource>(resourceTemplate, name);
+                return { createTexture<Texture3DResource>(resourceTemplate, name) };
             }
             default: {}
         }
@@ -35,23 +35,23 @@ namespace rg
         std::unreachable();
     }
 
-    void ResourceRegistry::createAliasedTexture2D(const OptimizerResource& resourceTemplate, const std::string& name) noexcept
+    std::vector<SPtr<Resource>> ResourceRegistry::createAliasedTexture2D(const OptimizerResource& resourceTemplate, const std::string& name) noexcept
     {
         const auto swapchainExtent = mRHI->getSwapchain()->getProperties().extent;
         const auto defaultExtent = vk::Extent3D().setWidth(swapchainExtent.width).setHeight(swapchainExtent.height).setDepth(1);
 
         std::vector<SPtr<RHI::Texture>> pTextures;
-        std::vector<std::string>        localNames;
+        std::set<std::string>           localNames;
         for (const auto& usageRange : resourceTemplate.usageRanges)
         {
-            const auto localName = std::format("{}-[{}, {}]", name, usageRange.start, usageRange.end);
-            const auto firstUse  = resourceTemplate.getUsagePoint(usageRange.start).value();
-            auto*      params    = std::get_if<ImageInfo>(&(firstUse.dependencyInfo.resourceParams));
+            const std::string localName = std::format("{}-[{}, {}]", name, usageRange.start, usageRange.end);
+            const UsagePoint  firstUse  = resourceTemplate.getUsagePoint(usageRange.start).value();
+            const ImageInfo*  params    = std::get_if<ImageInfo>(&(firstUse.dependencyInfo.resourceParams));
 
             auto texture = mRHI->createTexture({
                 .extent      = params->extent.value_or(defaultExtent),
                 .format      = params->format,
-                .usageFlags  = getImageUsageFlags(resourceTemplate),
+                .usageFlags  = RHI::getImageUsageFlags(params->imageUsage),
                 .sampleCount = vk::SampleCountFlagBits::e1,
                 .mipmapping  = false,
                 .aliasing    = true,
@@ -60,6 +60,7 @@ namespace rg
 
             mResources[localName] = makeShared<Texture2DResource>(texture, localName, true);
             pTextures.push_back(mResources.at(localName)->as<Texture2DResource>()->getTexture());
+            localNames.insert(localName);
         }
 
         auto alloc = mRHI->getDevice()->allocateAliasedImageMemory({
@@ -71,6 +72,11 @@ namespace rg
         }
 
         mAliasedMemory[alloc] = pTextures;
+
+        return mResources
+            | std::views::filter([&localNames](const auto& resource){ return localNames.contains(resource.first); })
+            | std::views::values
+            | std::ranges::to<std::vector>();
     }
 
     vk::ImageUsageFlags ResourceRegistry::getImageUsageFlags(const OptimizerResource& resourceTemplate) noexcept
