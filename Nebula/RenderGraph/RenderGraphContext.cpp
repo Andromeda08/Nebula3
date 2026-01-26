@@ -117,6 +117,7 @@ namespace rg
         }
 
         Export::json_compilerResult(result);
+        Export::mermaid_renderGraph(pRenderGraph);
 
         return result;
     }
