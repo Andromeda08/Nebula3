@@ -3,12 +3,12 @@
 #include <functional>
 #include "Core/Macro.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
-#include "Window/Window.hpp"
+#include "Window/SDLWindow.hpp"
 
 struct ImGuiRenderPassCreateInfo
 {
     std::string          fontFile;
-    SPtr<Window>         window;
+    SPtr<SDLWindow>      window;
     SPtr<RHI::VulkanRHI> rhi;
 };
 
@@ -34,7 +34,7 @@ private:
     vk::DebugUtilsLabelEXT  mDebugLabel;
 
     const std::string       mFontFile;
-    SPtr<Window>            mWindow;
+    SPtr<SDLWindow>         mWindow;
     SPtr<RHI::VulkanRHI>    mRHI;
     SPtr<RHI::Device>       mDevice;
 };
