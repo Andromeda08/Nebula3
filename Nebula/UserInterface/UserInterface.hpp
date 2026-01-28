@@ -26,6 +26,8 @@ public:
 
     void update() const;
 
+    void processEvents(const SDL_Event& event) noexcept;
+
     void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 
     static bool wantCaptureInput() noexcept;

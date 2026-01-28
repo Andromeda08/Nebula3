@@ -71,6 +71,14 @@ void App::run_renderPathLoop()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            // Let ImGui process events
+            mUserInterface->processEvents(event);
+            // If ImGui didn't want to consume any input continue with Scene handlers.
+            if (!mUserInterface->wantCaptureInput())
+            {
+                mScene->onEvent(event);
+            }
+
             switch (event.type)
             {
                 case SDL_EVENT_KEY_DOWN: {
@@ -83,10 +91,6 @@ void App::run_renderPathLoop()
                 }
                 default: {}
             }
-        }
-        if (!mUserInterface->wantCaptureInput())
-        {
-            // mScene->handleInput(mWindow->getHandle());
         }
 
         // Rendering
