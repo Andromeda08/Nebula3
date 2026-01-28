@@ -15,8 +15,8 @@ namespace rg
     class ResourceRegistry
     {
     public:
-        ResourceRegistry(const SPtr<RenderGraphContext>& ctx, const SPtr<RHI::VulkanRHI>& rhi)
-        : mContext(ctx)
+        ResourceRegistry(RenderGraphContext* pCtx, const SPtr<RHI::VulkanRHI>& rhi)
+        : mContext(pCtx)
         , mRHI(rhi)
         {
         }
@@ -90,7 +90,7 @@ namespace rg
 
         std::map<std::string, SPtr<Resource>>                            mResources;
         std::map<SPtr<RHI::Allocation>, std::vector<SPtr<RHI::Texture>>> mAliasedMemory;
-        SPtr<RenderGraphContext>                                         mContext;
+        RenderGraphContext*                                              mContext;
         SPtr<RHI::VulkanRHI>                                             mRHI;
     };
 }
