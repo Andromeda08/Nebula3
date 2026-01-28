@@ -9,7 +9,6 @@ find_package(Vulkan REQUIRED)
 include(Tools/nrt/cmake/nrt.cmake)
 nrt_build()
 
-add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
@@ -18,8 +17,7 @@ add_subdirectory(External/SDL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
-    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
-    ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
     ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui.h ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
@@ -195,7 +193,6 @@ add_executable(Nebula3
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
-    External/glfw/include
     External/glm
     External/imgui
     External/imgui/backends
@@ -212,7 +209,6 @@ target_include_directories(Nebula3 PUBLIC
 target_link_libraries(Nebula3 PUBLIC
     ${NLOHMANN_JSON_TARGET_NAME}
     ${Vulkan_LIBRARIES}
-    glfw
     glm::glm
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
@@ -221,7 +217,6 @@ target_link_libraries(Nebula3 PUBLIC
 
 target_compile_definitions(Nebula3 PUBLIC
     NBL_CONFIG_REGEN
-    GLFW_INCLUDE_VULKAN
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
     -DImTextureID=ImU64
