@@ -27,10 +27,10 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>();
 
-    // mRenderGraphContext = rg::RenderGraphContext::create({
-    //     .rhi = mVulkanRHI,
-    // });
-    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+    mRenderGraphContext = rg::RenderGraphContext::create({
+        .rhi = mVulkanRHI,
+    });
+    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
     mScene = Scene::create({
         .rhi  = mVulkanRHI,

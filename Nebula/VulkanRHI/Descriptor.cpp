@@ -131,16 +131,32 @@ namespace RHI
         mDevice->getHandle().updateDescriptorSets(writeInfo.writes, {});
     }
 
-    void Descriptor::write(DescriptorWrite descriptorWrite) const noexcept
+    void Descriptor::write(const uint32_t setIndex, const DescriptorWrite& descriptorWrite) const noexcept
     {
-        for (const auto& i : descriptorWrite.mWriteSetIndices)
+        nbl_ASSERT(setIndex < mDescriptorSets.size(), "Descriptor Set index out of range!");
+
+        // Due to storage, Buffer infos are preserved as their address stays constant, unlike the internally stored ImageInfos.
+        // With the current setup only Buffers can be done this way, as Images have varying parameters.
+        std::vector<vk::WriteDescriptorSet> writes;
+        for (auto&& [i, write] : nbl::enumerate(descriptorWrite.mWrites))
         {
-            const auto dstSet = getSet(i);
-            for (auto& write : descriptorWrite.mWrites)
+            auto w = vk::WriteDescriptorSet(write)
+                .setDstSet(mDescriptorSets[setIndex]);
+            if (w.pImageInfo != nullptr)
             {
-                write.setDstSet(dstSet);
+                w.setPImageInfo(descriptorWrite.mImageInfos.at(i).data());
             }
-            mDevice->getHandle().updateDescriptorSets(descriptorWrite.mWrites, {});
+            writes.push_back(w);
+        }
+
+        mDevice->getHandle().updateDescriptorSets(writes, {});
+    }
+
+    void Descriptor::writeAll(const DescriptorWrite& descriptorWrite) const noexcept
+    {
+        for (uint32_t i = 0; i < mDescriptorSets.size(); i++)
+        {
+            write(i, descriptorWrite);
         }
     }
 
@@ -203,7 +219,7 @@ namespace RHI
         const vk::Result result = mDevice->getHandle().allocateDescriptorSets(&allocateInfo, mDescriptorSets.data());
         assert(result == vk::Result::eSuccess);
 
-        for (const auto& [i, descriptorSet] : std::views::enumerate(mDescriptorSets))
+        for (const auto& [i, descriptorSet] : nbl::enumerate(mDescriptorSets))
         {
             mDevice->nameObject<vk::DescriptorSet>({
                 .debugName = std::format("{} [DescriptorSet #{}]", mDebugName, i),

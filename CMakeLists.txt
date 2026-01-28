@@ -112,13 +112,12 @@ add_executable(Nebula3
     Nebula/RenderGraph/RenderGraphContext.cpp
     Nebula/RenderGraph/RGConfiguration.cpp
     Nebula/RenderPass/Special/ScenePass.hpp
-    Nebula/RenderPass/IPass.hpp
+    Nebula/RenderPass/Pass.hpp
     Nebula/RenderGraph/Compiler/RenderGraphCompiler.hpp
     Nebula/RenderGraph/Compiler/GraphAlgorithm.hpp
     Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
     Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
     Nebula/RenderGraph/RenderPath/Resource.hpp
-    Nebula/RenderPass/GBufferPass.hpp
     Nebula/RenderPass/Special/LightingPass.hpp
     Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
@@ -138,7 +137,6 @@ add_executable(Nebula3
     Nebula/RenderGraph/Compiler/Export.cpp
     Nebula/RenderPass/Special/Combine.hpp
     Nebula/RenderPass/RenderPass.hpp
-    Nebula/RenderPass/GBufferPass.cpp
     Nebula/Scene/Types/Vertex.hpp
     Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
@@ -162,13 +160,35 @@ add_executable(Nebula3
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
-    Nebula/VulkanRHI/Image3D.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
-    Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
-    Nebula/RenderPass/Molecule/ComputePrePass.hpp
+    Nebula/RenderPass/Molecule/SDFComputePass.hpp
     Nebula/Scene/Molecule/CIFGeometry.cpp
-    Nebula/VulkanRHI/Image3D.cpp
+    Nebula/VulkanRHI/Detail/Resource.hpp
+    Nebula/VulkanRHI/Detail/Resource.cpp
+    Nebula/VulkanRHI/Allocation.cpp
+    Nebula/VulkanRHI/Frame.cpp
+    Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
+    Nebula/Scene/TextureManager.hpp
+    Nebula/Scene/TextureManager.cpp
+    Nebula/RenderPass/Molecule/SDFComputePass.cpp
+    Nebula/RenderPass/Molecule/StructurePass.hpp
+    Nebula/RenderPass/Molecule/StructurePass.cpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.hpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.cpp
+    Nebula/Scene/Components/MoleculeRenderingUI.hpp
+    Nebula/Scene/Components/MoleculeRenderingUI.cpp
+    Nebula/Scene/Molecule/RenderingOptions.hpp
+    Nebula/VulkanRHI/Texture.hpp
+    Nebula/VulkanRHI/Texture.cpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture2DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture3DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.hpp
+    Nebula/RenderGraph/RenderPath/Resources/SceneResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
+    Nebula/Core/AppSpecification.cpp
+    Nebula/Core/Platform.hpp
+    Nebula/RenderPass/Special/GBufferPass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

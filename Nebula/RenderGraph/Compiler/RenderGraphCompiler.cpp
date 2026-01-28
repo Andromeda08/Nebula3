@@ -66,7 +66,7 @@ namespace rg
         {
             imageBarriers[optimizerResource.id] = {};
 
-            if (optimizerResource.resourceType != ResourceType::Image) continue;
+            if (optimizerResource.resourceType != ResourceType::Texture2D) continue;
             for (const auto& usageRange : optimizerResource.usageRanges)
             {
                 const UsagePoint firstUsagePoint = optimizerResource.getUsagePoint(usageRange.start).value();

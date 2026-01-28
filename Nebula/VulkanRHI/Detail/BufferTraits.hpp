@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
+
 namespace RHI
 {
     enum class BufferType
@@ -96,4 +99,11 @@ namespace RHI
             || bufferType == BufferType::Staging
             || bufferType == BufferType::Uniform;
     }
+
+    struct BufferProperties
+    {
+        vk::DeviceSize  size;
+        BufferType      type;
+        bool            isMappable;
+    };
 }

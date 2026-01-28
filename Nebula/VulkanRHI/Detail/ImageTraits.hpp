@@ -146,7 +146,8 @@ namespace RHI
             }
         }
 
-        assert(false);
+        nbl_ASSERT(false, "Unknown ImageUsage!");
+        std::unreachable();
     }
 
     /**

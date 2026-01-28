@@ -47,6 +47,18 @@ namespace RHI
         mCommandBuffer.beginDebugUtilsLabelEXT(label);
     }
 
+    void CommandList::beginLabel(const std::string& name) const
+    {
+        if (!mDebug)
+        {
+            return;
+        }
+
+        const auto label = vk::DebugUtilsLabelEXT()
+            .setPLabelName(name.c_str());
+        mCommandBuffer.beginDebugUtilsLabelEXT(label);
+    }
+
     void CommandList::endLabel() const
     {
         if (!mDebug)

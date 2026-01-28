@@ -10,12 +10,12 @@
 #include "Device.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
-#include "Image3D.hpp"
 #include "Instance.hpp"
 #include "IWindow.hpp"
 #include "Raytracing.hpp"
 #include "Rendering.hpp"
 #include "Swapchain.hpp"
+#include "Texture.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
@@ -41,10 +41,8 @@ namespace RHI
 
         SPtr<Buffer>     createBuffer(const RHIBufferCreateInfo& createInfo) const;
         SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
-        SPtr<Image3D>    createImage3D(const RHIImage3DCreateInfo& createInfo) const;
         SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
-
-        Allocation allocatedAliasedImageMemory(const std::vector<SPtr<Image>>& images) const;
+        SPtr<Texture>    createTexture(const RHITextureCreateInfo& createInfo) const;
 
         UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
         UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;

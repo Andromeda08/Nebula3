@@ -9,9 +9,12 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
+#include "Allocation.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Core/Util.hpp"
+#include "Detail/BufferTraits.hpp"
 
 namespace RHI
 {
@@ -84,6 +87,24 @@ namespace RHI
         T           handle;
     };
 
+    struct BufferMemoryAllocationInfo
+    {
+        vk::Buffer*          pHandle;
+        BufferType           bufferType;
+        vk::BufferCreateInfo bufferInfo;
+    };
+
+    struct ImageMemoryAllocationInfo
+    {
+        vk::Image*          pHandle;
+        vk::ImageCreateInfo imageInfo;
+    };
+
+    struct AliasedImageMemoryAllocationInfo
+    {
+        std::vector<SPtr<class Texture>> textures;
+    };
+
     class Device
     {
     public:
@@ -91,6 +112,27 @@ namespace RHI
         nbl_CTOR(Device);
 
         ~Device();
+
+        /**
+         * Create Vulkan Buffer and allocate memory.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateBuffer(const BufferMemoryAllocationInfo& allocInfo) noexcept;
+
+        /**
+         * Create Vulkan Image and allocate memory.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateImage(const ImageMemoryAllocationInfo& allocInfo) noexcept;
+
+        /**
+         * Allocate memory for aliased images.
+         * @param allocInfo
+         * @return Allocation reference
+         */
+        [[nodiscard]] SPtr<Allocation> allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept;
 
         void waitIdle() const;
 
@@ -133,6 +175,7 @@ namespace RHI
         DeviceQueue                         mGraphicsQueue;
 
         VmaAllocator                        mAllocator {};
+        std::vector<SPtr<Allocation>>       mAllocations;
     };
 
     template<class T>

@@ -1,38 +1,46 @@
 #pragma once
 
 #include <vk_mem_alloc.h>
-#include "Device.hpp"
+#include <vulkan/vulkan.hpp>
+
+#include "Core/Util.hpp"
 
 namespace RHI
 {
+    class Device;
+
     class Allocation
     {
     public:
-        Allocation(const VmaAllocation alloc, const VmaAllocationInfo& allocationInfo, const SPtr<Device>& device)
-        : mAllocation(alloc)
-        , mAllocationInfo(allocationInfo)
-        , mDevice(device)
+        explicit Allocation(const VmaAllocator& allocator);
+
+        void mapMemory(void* pData) const noexcept;
+
+        void unmapMemory() const noexcept;
+
+        VmaAllocation getAllocation() const;
+
+        const VmaAllocationInfo& getAllocationInfo() const;
+
+        void free() const;
+
+        [[nodiscard]] bool allowAliasedUse() const noexcept
         {
+            return mAliasedUse;
         }
 
-        VmaAllocation getAllocation() const
+        void bindAliasedImageMemory(const vk::Image& image) const noexcept
         {
-            return mAllocation;
-        }
-
-        const VmaAllocationInfo& getAllocationInfo() const
-        {
-            return mAllocationInfo;
-        }
-
-        void free() const
-        {
-            vmaFreeMemory(mDevice->getAllocator(), mAllocation);
+            const auto result = vmaBindImageMemory(mAllocator, mAllocation, image);
+            nbl_ASSERT(result == VK_SUCCESS, "Failed to bind image memory!");
         }
 
     private:
-        VmaAllocation       mAllocation;
-        VmaAllocationInfo   mAllocationInfo;
-        SPtr<Device>        mDevice;
+        friend class Device;
+
+        bool              mAliasedUse     = false;
+        VmaAllocator      mAllocator      = nullptr;
+        VmaAllocation     mAllocation     = nullptr;
+        VmaAllocationInfo mAllocationInfo = {};
     };
 }

@@ -4,22 +4,12 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Device.hpp"
-#include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 #include "Detail/DescriptorWrite.hpp"
 
 namespace RHI
 {
-    enum class DescriptorType
-    {
-        CombinedImageSampler,
-        StorageBuffer,
-        StorageImage,
-        UniformBuffer,
-        AccelerationStructure,
-    };
-
     struct DescriptorWriteInfo
     {
         uint32_t                              setIndex = 0;
@@ -64,7 +54,9 @@ namespace RHI
 
         [[deprecated("Use the new write() method and DescriptorWrite class")]] void write_old(DescriptorWriteInfo writeInfo) const;
 
-        void write(DescriptorWrite descriptorWrite) const noexcept;
+        void write(uint32_t setIndex, const DescriptorWrite& descriptorWrite) const noexcept;
+
+        void writeAll(const DescriptorWrite& descriptorWrite) const noexcept;
 
         vk::DescriptorSet getSet(size_t i = 0) const;
 

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace rg
 {
-    class AntiAliasingPass final : public IPass
+    class AntiAliasingPass final : public Pass
     {
     public:
         ~AntiAliasingPass() override = default;
@@ -22,13 +22,13 @@ namespace rg
                     DependencyInfo {
                         .name           = "AA Input",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ShaderReadOnly },
                     },
                     DependencyInfo {
                         .name           = "AA Output",
                         .dependencyType = DependencyType::Write,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::ColorAttachment },
                     },
                 },

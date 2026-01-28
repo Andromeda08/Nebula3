@@ -22,9 +22,7 @@ namespace rg
         if (mRenderGraph->addEdge(pSrc, srcDependency, pDst, dstDependency))
         {
             const auto it = std::ranges::find_if(mRenderGraph->getEdges(), [&](const Edge& edge) -> bool {
-                return edge.pSrc->getId() == pSrc->getId()
-                    && edge.pDst->getId() == pDst->getId()
-                    && edge.srcDependencyId == pSrc->getDependencyInfo(srcDependency).id
+                return edge.srcDependencyId == pSrc->getDependencyInfo(srcDependency).id
                     && edge.dstDependencyId == pDst->getDependencyInfo(dstDependency).id;
             });
             return it->id;

@@ -24,7 +24,10 @@ namespace rg
         X(LightingPass) \
         X(AmbientOcclusionPass) \
         X(AntiAliasingPass) \
-        X(CombinePass)
+        X(CombinePass) \
+        X(MolSDFComputePass) \
+        X(MolStructurePass) \
+        X(MolSDFRaymarchPass)
 
     #pragma region "NodeType : Enum, JSON Serialization, toString"
     enum class NodeType
@@ -100,7 +103,8 @@ namespace rg
         X(Unknown) \
         X(SceneData) \
         X(Buffer) \
-        X(Image) \
+        X(Texture2D) \
+        X(Texture3D) \
         X(TopLevelAS)
 
     #pragma region "ResourceType : Enum, JSON Serialization, toString"

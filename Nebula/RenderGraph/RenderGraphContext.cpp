@@ -117,6 +117,7 @@ namespace rg
         }
 
         Export::json_compilerResult(result);
+        Export::mermaid_renderGraph(pRenderGraph);
 
         return result;
     }
@@ -212,12 +213,15 @@ namespace rg
         {
             for (const auto& renderGraph : mRenderGraphs)
             {
+                // (Very basic) RenderGraph validity sanity check
                 if (renderGraph->hasSinkNode() && renderGraph->hasSourceNode() && renderGraph->getNodes().size() >= 2)
                 {
-                    const auto result = compileRenderGraph(renderGraph.get());
-                    queueRenderPath(result);
-                    changeToQueuedRenderPath();
-                    return;
+                    if (const auto result = compileRenderGraph(renderGraph.get()); result.success)
+                    {
+                        queueRenderPath(result);
+                        changeToQueuedRenderPath();
+                        return;
+                    }
                 }
             }
         }

@@ -37,6 +37,7 @@ namespace RHI
         void end();
 
         void beginLabel(const std::array<float, 3>& color, const std::string& name) const;
+        void beginLabel(const std::string& name) const;
         void endLabel() const;
 
         void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;

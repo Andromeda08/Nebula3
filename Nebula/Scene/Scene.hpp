@@ -2,13 +2,16 @@
 
 #include <GLFW/glfw3.h>
 
+#include "TextureManager.hpp"
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 
 #include "Camera/ICamera.hpp"
-#include "Geometry/Geometry.hpp"
 #include "Molecule/CIFData.hpp"
-#include "RenderPass/Molecule/ComputePrePass.hpp"
+#include "Molecule/RenderingOptions.hpp"
+#include "RenderPass/Molecule/SDFComputePass.hpp"
+#include "RenderPass/Molecule/SDFRaymarchPass.hpp"
+#include "RenderPass/Molecule/StructurePass.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
@@ -25,24 +28,6 @@ struct SceneCreateInfo
 {
     SPtr<RHI::VulkanRHI> rhi;
     std::string          name;
-};
-
-struct PCSDF {
-    glm::vec4 bboxMin;
-    glm::vec4 bboxMax;
-    glm::vec4 sesColor;
-    float voxelSize;
-    float blending;
-    float ls;
-    int useSubsurfaceScattering;
-    int rayMarchingSteps;
-};
-
-struct SceneRenderOptions {
-    bool renderStructure = true;
-    bool renderSurface = true;
-    bool recalculateSDF = false;
-    bool calculatedSDF = false;
 };
 
 class Scene
@@ -67,6 +52,7 @@ private:
     friend class SceneInfoComponent;
 
     UPtr<CIFData>                       mCIFData;
+    UPtr<TextureManager>                mTextureManager;
 
     SPtr<RHI::VulkanRHI>                mRHI;
 
@@ -74,27 +60,11 @@ private:
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
     SPtr<RHI::Descriptor>               mSceneDescriptor;
 
-    // Molecule: SDF
-    UPtr<viz::ComputePrePass>           mComputePrePass;
-    SPtr<RHI::Descriptor>               mSDFDescriptor;
-
-    // Molecule: Structure Rendering
-    glm::vec4                           mStructureColor = glm::vec4(0.45f, 0.2f, 0.8f, 1.0f);
-    SPtr<RHI::Image>                    mDepthBuffer;
-    SPtr<RHI::RenderPass>               mRenderPass;
-    SPtr<RHI::GraphicsPipeline>         mStructurePipeline;
-
-    // Molecule: SDF Rendering
-    SPtr<RHI::GraphicsPipeline>         mSDFPipeline;
-    SPtr<RHI::RenderPass>               mSDFRenderPass;
-    vk::Sampler                         mSDFSampler;
-    PCSDF                               mPCSDF;
-
-    SPtr<Geometry>                      mCube;
-    SPtr<RHI::Buffer>                   mVertexBuffer;
-    SPtr<RHI::Buffer>                   mIndexBuffer;
-    SPtr<RHI::GraphicsPipeline>         mFwdPipeline;
+    // Molecule Rendering
+    MoleculeRenderingOptions            mMoleculeRenderingOptions;
+    UPtr<Molecule::SDFComputePass>      mSDFComputePass;
+    UPtr<Molecule::StructurePass>       mStructurePass;
+    UPtr<Molecule::SDFRaymarchPass>     mSDFRaymarchPass;
 
     std::string                         mName;
-    SceneRenderOptions                  mSRO;
 };

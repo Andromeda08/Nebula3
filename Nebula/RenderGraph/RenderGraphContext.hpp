@@ -10,6 +10,7 @@
 #include "RenderGraphTraits.hpp"
 #include "Builder/RenderGraphBuilder.hpp"
 #include "RenderPath/RenderPath.hpp"
+#include "Scene/Scene.hpp"
 
 namespace rg
 {
@@ -31,6 +32,11 @@ namespace rg
 
         const std::set<NodeType>& getEnabledNodes() const noexcept;
 
+        [[nodiscard]] Scene* getActiveScene() const noexcept
+        {
+            return mActiveScene;
+        }
+
         // =====================================
         // RenderGraph : Graph Management
         // =====================================
@@ -41,18 +47,40 @@ namespace rg
 
         RenderGraph* getActiveEditorRenderGraph() const;
 
+        /**
+         * Create a new, empty RenderGraph
+         * @param changeActiveGraph If true, the active (editor) RenderGraph is changed for the new one.
+         * @return ref to the new RenderGraph
+         */
         RenderGraph* createRenderGraph(bool changeActiveGraph = false);
 
+        /**
+         * Spawn a RenderGraph builder with a fresh, empty RenderGraph.
+         * @return RenderGraphBuilder
+         */
         RenderGraphBuilder createBuilder();
 
+        /**
+         * Compile the specified RenderGraph
+         * @param pRenderGraph
+         */
         static RenderGraphCompilerResult compileRenderGraph(RenderGraph* pRenderGraph);
 
         // =====================================
         // RenderGraph : Serialization
         // =====================================
 
+        /**
+         * Load a RenderGraph from the specified file.
+         * @param filePath Path to JSON file containing a saved RenderGraph
+         * @return UPtr to the loaded RenderGraph or an error message
+         */
         [[nodiscard]] std::expected<UPtr<RenderGraph>, std::string> loadRenderGraph(const std::filesystem::path& filePath) const;
 
+        /**
+         * Save the specified RenderGraph to a JSON file.
+         * @param pRenderGraph
+         */
         static void saveRenderGraph(const RenderGraph* pRenderGraph);
 
         // =====================================
@@ -69,6 +97,8 @@ namespace rg
 
     private:
         void createInitialRenderPath();
+
+        Scene*                          mActiveScene = nullptr;
 
         // Configuration
         std::set<NodeType>              mEnabledNodeTypes;

@@ -17,7 +17,7 @@ namespace rg
             .originalDepName = dependencyInfo.name,
             .resourceType    = dependencyInfo.resourceType,
             .initDepType     = dependencyInfo.dependencyType,
-            .isOptimizable   = dependencyInfo.resourceType == ResourceType::Image && !dependencyInfo.dontOptimize,
+            .isOptimizable   = dependencyInfo.resourceType == ResourceType::Texture2D && !dependencyInfo.dontOptimize,
             .consumers       = {},
         };
     }

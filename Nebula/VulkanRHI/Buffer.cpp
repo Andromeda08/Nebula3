@@ -2,70 +2,74 @@
 
 #include "Device.hpp"
 #include "Image.hpp"
+#include "Core/Util.hpp"
+
+#define nbl_ASSERT_MAPPABLE_MEMORY() \
+    nbl_ASSERT(isMappableBufferMemory(mProperties.type), "Cannot map memory for BufferType");
 
 namespace RHI
 {
     Buffer::Buffer(const BufferCreateInfo& createInfo)
-    : mDevice(createInfo.device)
-    , mSize(createInfo.size)
-    , mBufferType(createInfo.type)
-    , mName(createInfo.debugName)
+    : Resource(createInfo.device)
+    , mProperties(BufferProperties { createInfo.size, createInfo.type, isMappableBufferMemory(createInfo.type) })
     {
-        auto bufferInfo = vk::BufferCreateInfo()
-            .setSize(createInfo.size)
-            .setUsage(getBufferUsageFlags(mBufferType, mDevice->getFeatureLevel() >= RHIFeatureLevel::Complete));
+        const BufferMemoryAllocationInfo allocInfo = {
+            .pHandle    = &mBuffer,
+            .bufferType = mProperties.type,
+            .bufferInfo = vk::BufferCreateInfo()
+                .setSize(createInfo.size)
+                .setUsage(getBufferUsageFlags(mProperties.type, mDevice->getFeatureLevel() >= RHIFeatureLevel::Complete)),
+        };
 
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocInfo.flags = getBufferMemoryFlags(mBufferType);
-
-        if (mBufferType == BufferType::Staging)
-        {
-            allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-        }
-
-        const auto* pBufferInfo = reinterpret_cast<VkBufferCreateInfo*>(&bufferInfo);
-        auto* pBuffer = reinterpret_cast<VkBuffer*>(&mBuffer);
-        const auto result = vmaCreateBuffer(mDevice->getAllocator(), pBufferInfo, &allocInfo, pBuffer, &mAllocation, &mAllocationInfo);
-        assert(result == VK_SUCCESS);
-
-        mDevice->nameObject<vk::Buffer>({
-            .debugName = mName,
-            .handle    = mBuffer,
-        });
+        const auto allocation = mDevice->allocateBuffer(allocInfo);
+        setAllocation(allocation);
 
         const auto addressInfo = vk::BufferDeviceAddressInfo().setBuffer(mBuffer);
         mDeviceAddress = mDevice->getHandle().getBufferAddress(&addressInfo);
+
+        mDevice->nameObject<vk::Buffer>({
+            .debugName = mLabel,
+            .handle    = mBuffer,
+        });
     }
 
     Buffer::~Buffer()
     {
-        vmaDestroyBuffer(mDevice->getAllocator(), mBuffer, mAllocation);
+        vmaDestroyBuffer(mDevice->getAllocator(), mBuffer, mAllocation->getAllocation());
+    }
+
+    vk::DescriptorBufferInfo* Buffer::getDescriptorInfo(const std::optional<vk::DeviceSize>& range) noexcept
+    {
+        if (!mDescriptorBufferInfo.has_value() || range.has_value())
+        {
+            mDescriptorBufferInfo = { mBuffer, 0, range.value_or(mProperties.size) };
+        }
+        return &mDescriptorBufferInfo.value();
     }
 
     void Buffer::map(void* ptr) const
     {
-        assert(isMappableBufferMemory(mBufferType));
-        vmaMapMemory(mDevice->getAllocator(), mAllocation, &ptr);
+        nbl_ASSERT_MAPPABLE_MEMORY();
+        mAllocation->mapMemory(ptr);
     }
 
     void Buffer::unmap() const
     {
-        assert(isMappableBufferMemory(mBufferType));
-        vmaUnmapMemory(mDevice->getAllocator(), mAllocation);
+        nbl_ASSERT_MAPPABLE_MEMORY();
+        mAllocation->unmapMemory();
     }
 
     void Buffer::setData(const void* pData, const uint64_t size, const uint64_t offset) const
     {
-        assert(isMappableBufferMemory(mBufferType));
-        const auto result = vmaCopyMemoryToAllocation(mDevice->getAllocator(), pData, mAllocation, offset, size);
-        assert(result == VK_SUCCESS);
+        nbl_ASSERT_MAPPABLE_MEMORY();
+        const auto result = vmaCopyMemoryToAllocation(mDevice->getAllocator(), pData, mAllocation->getAllocation(), offset, size);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to copy memory to allocation!");
     }
 
     void Buffer::readBack(void* pData, const uint64_t size, const uint64_t offset) const
     {
-        assert(isMappableBufferMemory(mBufferType));
-        const auto result = vmaCopyAllocationToMemory(mDevice->getAllocator(), mAllocation, offset, pData, size);
-        assert(result == VK_SUCCESS);
+        nbl_ASSERT_MAPPABLE_MEMORY();
+        const auto result = vmaCopyAllocationToMemory(mDevice->getAllocator(), mAllocation->getAllocation(), offset, pData, size);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to copy from memory to allocation!");
     }
 }

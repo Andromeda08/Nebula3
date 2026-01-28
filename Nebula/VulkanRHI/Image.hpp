@@ -59,7 +59,6 @@ namespace RHI
             return barrier;
         }
 
-
         void updateState(const ImageState& imageState)
         {
             mState = imageState;

@@ -1,5 +1,7 @@
 #include "Device.hpp"
 
+#include "Texture.hpp"
+
 namespace RHI
 {
     struct VulkanAnyStruct
@@ -209,6 +211,68 @@ namespace RHI
         vmaDestroyAllocator(mAllocator);
     }
 
+    SPtr<Allocation> Device::allocateBuffer(const BufferMemoryAllocationInfo& allocInfo) noexcept
+    {
+        const auto alloc = makeShared<Allocation>(mAllocator);
+
+        VmaAllocationCreateInfo createInfo = {};
+        createInfo.usage = allocInfo.bufferType == BufferType::Staging
+            ? VMA_MEMORY_USAGE_AUTO_PREFER_HOST
+            : VMA_MEMORY_USAGE_AUTO;
+        createInfo.flags = getBufferMemoryFlags(allocInfo.bufferType);
+
+        auto* pHandle = reinterpret_cast<VkBuffer*>(allocInfo.pHandle);
+        const VkBufferCreateInfo bufferCreateInfo = allocInfo.bufferInfo;
+        const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, pHandle,
+            &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Buffer and allocate memory!");
+
+        mAllocations.push_back(alloc);
+        return alloc;
+    }
+
+    SPtr<Allocation> Device::allocateImage(const ImageMemoryAllocationInfo& allocInfo) noexcept
+    {
+        const auto alloc = makeShared<Allocation>(mAllocator);
+        VmaAllocationCreateInfo createInfo = {};
+        createInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+        auto* pHandle = reinterpret_cast<VkImage*>(allocInfo.pHandle);
+        const VkImageCreateInfo imageCreateInfo = allocInfo.imageInfo;
+        const auto result = vmaCreateImage(mAllocator, &imageCreateInfo, &createInfo, pHandle,
+            &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Image and allocate memory!");
+
+        mAllocations.push_back(alloc);
+        return alloc;
+    }
+
+    SPtr<Allocation> Device::allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept
+    {
+        vk::MemoryRequirements finalRequirements = { 0, 0, 0 };
+        for (const auto& image : allocInfo.textures)
+        {
+            vk::MemoryRequirements memoryRequirements;
+            mDevice.getImageMemoryRequirements(image->getHandle(), &memoryRequirements);
+
+            finalRequirements.size           = std::max(finalRequirements.size, memoryRequirements.size);
+            finalRequirements.alignment      = std::max(finalRequirements.alignment, memoryRequirements.alignment);
+            finalRequirements.memoryTypeBits = finalRequirements.memoryTypeBits & memoryRequirements.memoryTypeBits;
+        }
+
+        const auto alloc = makeShared<Allocation>(mAllocator);
+        alloc->mAliasedUse = true;
+
+        VmaAllocationCreateInfo allocationCreateInfo = {};
+        allocationCreateInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+        const VkResult result = vmaAllocateMemory(mAllocator, reinterpret_cast<VkMemoryRequirements*>(&finalRequirements),
+            &allocationCreateInfo, &alloc->mAllocation, &alloc->mAllocationInfo);
+        nbl_ASSERT(result == VK_SUCCESS, "Failed to allocate memory for aliased Image use!");
+
+        return alloc;
+    }
+
     void Device::waitIdle() const
     {
         mDevice.waitIdle();
@@ -290,7 +354,7 @@ namespace RHI
         const std::set<QueueFamily>& excludedFamilies) const noexcept
     {
         for (const std::vector queueFamilies = mPhysicalDevice.getQueueFamilyProperties();
-             auto&& [familyIndex, properties] : std::views::enumerate(queueFamilies))
+             auto&& [familyIndex, properties] : nbl::enumerate(queueFamilies))
         {
             if ((properties.queueCount > 0)
                 && (properties.queueFlags & requiredFlags)

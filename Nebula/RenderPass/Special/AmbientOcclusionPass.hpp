@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderGraph/Node.hpp"
-#include "RenderPass/IPass.hpp"
+#include "RenderPass/Pass.hpp"
 
 namespace rg
 {
-    class AmbientOcclusionPass final : public IPass
+    class AmbientOcclusionPass final : public Pass
     {
     public:
         ~AmbientOcclusionPass() override = default;
@@ -22,13 +22,13 @@ namespace rg
                     DependencyInfo {
                         .name           = "Position Buffer",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                     DependencyInfo {
                         .name           = "Normal Buffer",
                         .dependencyType = DependencyType::Read,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                     DependencyInfo {
@@ -39,7 +39,7 @@ namespace rg
                     DependencyInfo {
                         .name           = "AO Buffer",
                         .dependencyType = DependencyType::Write,
-                        .resourceType   = ResourceType::Image,
+                        .resourceType   = ResourceType::Texture2D,
                         .resourceParams = ImageInfo { RHI::ImageUsage::StorageImage },
                     },
                 },

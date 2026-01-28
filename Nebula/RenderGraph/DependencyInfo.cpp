@@ -5,16 +5,16 @@
 
 namespace vk
 {
-    void to_json(nlohmann::json& json, const Extent2D& extent)
+    void to_json(nlohmann::json& json, const Extent3D& extent)
     {
         json = nlohmann::json {
-            { "extent", std::array{extent.width, extent.height} }
+            { "extent", std::array{extent.width, extent.height, extent.depth } }
         };
     }
 
-    void from_json(const nlohmann::json& json, Extent2D& extent)
+    void from_json(const nlohmann::json& json, Extent3D& extent)
     {
-        extent.setWidth(json.at("extent").at(0)).setHeight(json.at("extent").at(1));
+        extent.setWidth(json.at("extent").at(0)).setHeight(json.at("extent").at(1)).setDepth(json.at("extent").at(2));
     }
 }
 

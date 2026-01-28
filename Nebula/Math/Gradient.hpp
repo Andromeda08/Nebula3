@@ -6,8 +6,6 @@
 #include <glm/gtx/color_space.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "Utility.hpp"
-
 struct Gradient
 {
     struct Key
@@ -27,7 +25,7 @@ struct Gradient
         if (const auto _t = std::ranges::find_if(mKeys, [&](const Key& k){ return k.t == t; });
             _t != std::end(mKeys))
         {
-            Nbl_WARNING(fmt::format("Gradient already has a key at [t={}]", t));
+            // TODO: Nbl_WARNING(fmt::format("Gradient already has a key at [t={}]", t));
             return *this;
         }
 

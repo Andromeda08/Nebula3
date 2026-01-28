@@ -43,20 +43,16 @@ public:
 
     /**
      * Loads a Texture from the specified file into a given slot.
-     * [Note!] By default, this function will load the texture immediately, if deferred is true
-     * updating the meta texture and descriptor will be done on the next update() call.
+     * [Note!] The texture will be loaded immediately for now.
      * @returns If successfully loaded true, otherwise an error message.
      */
-    std::expected<bool, std::string> loadTexture(const std::string& textureFile, uint32_t slot, bool deferred = false) noexcept;
+    std::expected<bool, std::string> loadTexture(const std::string& textureFile, uint32_t slot) noexcept;
 
-    void update(const RHI::CommandList* commandList);
+    void update(const RHI::CommandList* commandList) const;
 
 private:
     // Blocking texture load.
     void loadImmediately(const TextureLoadInfo& textureLoadInfo) noexcept;
-
-    // Add a deferred texture load to the queue.
-    void loadDeferred(const TextureLoadInfo& textureLoadInfo);
 
     // Update slot validity in metadata, mark as dirty if needed.
     void setSlot(uint32_t slot, bool hasTexture) noexcept;
@@ -71,10 +67,10 @@ private:
      * - Update slot metadata
      * - Update metadata texture via updateMetaTexture()
      */
-    void uploadQueuedTextures(const RHI::CommandList* commandList);
+   //  void uploadQueuedTextures(const RHI::CommandList* commandList);
 
     // Clears the done tasks from the upload queue. (should be called from update())
-    void clearUploadQueue();
+    // void clearUploadQueue();
 
     // =====================================
     // Constructor functions
