@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-
 #include "TextureManager.hpp"
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
