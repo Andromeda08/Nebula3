@@ -40,8 +40,8 @@ public:
 
     void handleInput(GLFWwindow* pWindow) const noexcept
     {
-        mCamera->registerKeys(pWindow);
-        mCamera->registerMouse(pWindow);
+        // mCamera->registerKeys(pWindow);
+        // mCamera->registerMouse(pWindow);
     }
 
     void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
