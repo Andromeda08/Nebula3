@@ -9,6 +9,7 @@
 #include "Core/Macro.hpp"
 #include "RenderGraph/Compiler/RenderGraphCompiler.hpp"
 #include "RenderPass/Pass.hpp"
+#include "Resources/ResourceRegistry.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace rg
@@ -46,11 +47,15 @@ namespace rg
         }
 
     private:
-        RHI::Barrier                                    mInitialResourceBarriers;
-        std::unordered_map<std::string, SPtr<Resource>> mResources;
-        std::unordered_map<int32_t, RHI::Barrier>       mBarriers;
-        std::vector<UPtr<Pass>>                         mPasses;
-        std::vector<RenderPathLabel>                    mLabels;
+        void createResources(const RenderPathCreateInfo& createInfo) noexcept;
+
+        UPtr<ResourceRegistry> mResourceRegistry;
+
+        RHI::Barrier                                    old_mInitialResourceBarriers;
+        std::unordered_map<std::string, SPtr<Resource>> old_mResources;
+        std::unordered_map<int32_t, RHI::Barrier>       old_mBarriers;
+        std::vector<UPtr<Pass>>                         old_mPasses;
+        std::vector<RenderPathLabel>                    old_mLabels;
         std::string                                     mRenderGraphName;
         bool                                            mIsInitialized = false;
     };

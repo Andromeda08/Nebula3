@@ -70,7 +70,7 @@ namespace rg
         {
             // [RHI Feature Level : Complete]
             case AmbientOcclusionPass:
-                return RHIFeatureLevel::Complete;
+                // return RHIFeatureLevel::Complete;
 
             // [RHI Feature Level : Basic]
             case Scene:
