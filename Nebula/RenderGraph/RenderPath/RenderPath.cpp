@@ -52,7 +52,7 @@ namespace rg
     {
         for (const auto& resourceTemplate : createInfo.compilerResult.resourceTemplates)
         {
-            mResourceRegistry->create(resourceTemplate);
+            // mResourceRegistry->create(resourceTemplate);
         }
     }
 }
