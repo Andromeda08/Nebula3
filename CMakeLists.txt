@@ -157,7 +157,6 @@ add_executable(Nebula3
     Nebula/Scene/Molecule/CIFParser.cpp
     Nebula/Scene/Molecule/CIFParser.hpp
     Nebula/Scene/Molecule/CIFGeometry.hpp
-    Nebula/Scene/Camera/OrbitCamera.hpp
     Nebula/Scene/Object.hpp
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp

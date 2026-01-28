@@ -76,6 +76,8 @@ void Scene::registerUIComponents(UserInterface* pUserInterface) const
 
 void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
 {
+    mCamera->onUpdate();
+
     const auto cameraData = mCamera->getCameraData();
     mCameraUB[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
 }

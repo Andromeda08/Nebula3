@@ -38,10 +38,9 @@ public:
 
     void registerUIComponents(UserInterface* pUserInterface) const;
 
-    void handleInput(GLFWwindow* pWindow) const noexcept
+    void onEvent(const SDL_Event& event) const noexcept
     {
-        // mCamera->registerKeys(pWindow);
-        // mCamera->registerMouse(pWindow);
+        mCamera->onEvent(event);
     }
 
     void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
