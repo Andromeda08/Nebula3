@@ -1,6 +1,7 @@
 #include "UserInterface.hpp"
 
 #include <imgui.h>
+#include <imgui_impl_sdl3.h>
 
 UserInterface::UserInterface(const UserInterfaceCreateInfo& createInfo)
 {
@@ -17,6 +18,11 @@ void UserInterface::update() const
     {
         component->update();
     }
+}
+
+void UserInterface::processEvents(const SDL_Event& event) noexcept
+{
+    ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
 void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const

@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 #include <imnodes.h>
-#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_vulkan.h>
 
 #include "VulkanRHI/Barrier.hpp"
@@ -28,7 +28,7 @@ ImGuiRenderPass::~ImGuiRenderPass()
     ImNodes::DestroyContext();
 
     ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
     mDevice->getHandle().destroy(mDescriptorPool);
@@ -55,7 +55,7 @@ void ImGuiRenderPass::render(const RHI::CommandList* pCommandList, const RHI::Fr
     commandBuffer.beginRendering(mRenderingInfo);
     {
         ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
 
         ImGui::NewFrame();
         uiDraws();
@@ -102,7 +102,7 @@ void ImGuiRenderPass::init_ImGui() const noexcept
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(1.0f);
 
-    auto bResult = ImGui_ImplGlfw_InitForVulkan(mWindow->getHandle(), true);
+    auto bResult = ImGui_ImplSDL3_InitForVulkan(mWindow->getHandle());
     assert(bResult);
 
     const auto format = static_cast<VkFormat>(mRHI->getSwapchain()->getProperties().format);

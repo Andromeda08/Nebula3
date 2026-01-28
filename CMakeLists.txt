@@ -9,15 +9,15 @@ find_package(Vulkan REQUIRED)
 include(Tools/nrt/cmake/nrt.cmake)
 nrt_build()
 
-add_subdirectory(External/glfw)
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
 add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
+add_subdirectory(External/SDL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
-    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
     ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui.h ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
@@ -37,11 +37,9 @@ add_executable(Nebula3
     Nebula/Core/Configuration.cpp
     Nebula/Core/Macro.hpp
     Nebula/Core/App.cpp
-    Nebula/Window/Window.hpp
     Nebula/Math/DeltaTime.hpp
     Nebula/Math/DeltaTime.cpp
     Nebula/VulkanRHI/IWindow.hpp
-    Nebula/Window/Window.cpp
     Nebula/Core/ToString.hpp
     Nebula/VulkanRHI/VulkanRHI.hpp
     Nebula/Math/Transform.hpp
@@ -155,7 +153,6 @@ add_executable(Nebula3
     Nebula/Scene/Molecule/CIFParser.cpp
     Nebula/Scene/Molecule/CIFParser.hpp
     Nebula/Scene/Molecule/CIFGeometry.hpp
-    Nebula/Scene/Camera/OrbitCamera.hpp
     Nebula/Scene/Object.hpp
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
@@ -189,11 +186,14 @@ add_executable(Nebula3
     Nebula/Core/AppSpecification.cpp
     Nebula/Core/Platform.hpp
     Nebula/RenderPass/Special/GBufferPass.hpp
+    Nebula/Window/SDLWindow.hpp
+    Nebula/Window/WindowCreateInfo.hpp
+    Nebula/Window/SDLWindow.cpp
+    Nebula/Scene/Camera/FlyingCamera.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
-    External/glfw/include
     External/glm
     External/imgui
     External/imgui/backends
@@ -203,21 +203,21 @@ target_include_directories(Nebula3 PUBLIC
     External/stb
     External/vma/include
     External/gemmi/include
+    External/SDL/include
     ${Vulkan_INCLUDE_DIRS}
 )
 
 target_link_libraries(Nebula3 PUBLIC
     ${NLOHMANN_JSON_TARGET_NAME}
     ${Vulkan_LIBRARIES}
-    glfw
     glm::glm
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
+    SDL3-static
 )
 
 target_compile_definitions(Nebula3 PUBLIC
     NBL_CONFIG_REGEN
-    GLFW_INCLUDE_VULKAN
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
     -DImTextureID=ImU64

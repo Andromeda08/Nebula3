@@ -12,7 +12,7 @@ App* gApplication = nullptr;
 App::App()
 {
     const auto& config = Configuration::getConfig();
-    mWindow = Window::create({
+    mWindow = SDLWindow::create({
         .size  = config.app.windowSize,
         .title = config.app.windowTitle,
     });
@@ -45,100 +45,52 @@ UPtr<App> App::create() noexcept
     return std::make_unique<App>();
 }
 
-void App::run()
-{
-    mDeltaTime.initialize();
-
-    const SPtr<RHI::CommandPool> graphicsCommandPool = mVulkanRHI->getGraphicsQueue()->createCommandPool();
-
-    PerFrameArray<RHI::CommandList*> commandLists;
-    for (auto i = 0; i < commandLists.size(); i++)
-    {
-        commandLists[i] = graphicsCommandPool->allocate();
-    }
-
-    const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
-
-    // Main Loop
-    while (!mWindow->shouldClose())
-    {
-        // Input
-        mWindow->pollEvents();
-
-        // Updates
-        const float dt = mDeltaTime.getDeltaTime();
-        mUserInterface->update();
-
-        // Rendering
-        const RHI::FrameData frameInfo   = mVulkanRHI->beginFrame();
-        RHI::CommandList*    commandList = commandLists[frameInfo.currentFrame];
-
-        commandList->begin();
-        mScene->update(commandList, frameInfo, dt);
-
-        const vk::Image currentSwapchainImage = mVulkanRHI->getSwapchain()->getImage(frameInfo.acquiredIndex);
-
-        {
-            auto barrier = RHI::Barrier()
-                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
-            barrier.insert(commandList);
-        }
-
-        // commandList->getHandle().clearColorImage(
-        //     currentSwapchainImage->getImage(), vk::ImageLayout::eTransferDstOptimal,
-        //     vk::ClearColorValue().setFloat32({ 0.8f, 0.2f, 1.0f }),
-        //     currentSwapchainImage->getProperties().subresourceRange);
-
-        mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
-        helloTrianglePass->execute(commandList, frameInfo);
-
-        {
-            auto barrier = RHI::Barrier()
-                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::ColorAttachment));
-             barrier.insert(commandList);
-        }
-
-        mUserInterface->draw(commandList, frameInfo);
-
-        {
-            auto barrier = RHI::Barrier()
-                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameInfo.acquiredIndex, RHI::ImageUsage::PresentSrc));
-             barrier.insert(commandList);
-        }
-
-        commandList->end();
-        mVulkanRHI->endFrame_submitAndPresent({
-            .frameData    = frameInfo,
-            .pCommandList = commandList,
-        });
-    }
-}
-
 void App::run_renderPathLoop()
 {
+    // Initialize variables, start main loop
+    mRunning = true;
     mDeltaTime.initialize();
 
     const SPtr<RHI::CommandPool> graphicsCommandPool = mVulkanRHI->getGraphicsQueue()->createCommandPool();
 
     PerFrameArray<RHI::CommandList*> commandLists;
-    for (auto i = 0; i < commandLists.size(); i++)
+    for (auto& commandList : commandLists)
     {
-        commandLists[i] = graphicsCommandPool->allocate();
+        commandList = graphicsCommandPool->allocate();
     }
 
     const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
 
     // Main Loop
-    while (!mWindow->shouldClose())
+    while (mRunning)
     {
         const float dt = mDeltaTime.getDeltaTime();
         // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
         // Input
-        mWindow->pollEvents();
-        if (!mUserInterface->wantCaptureInput())
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
         {
-            mScene->handleInput(mWindow->getHandle());
+            // Let ImGui process events
+            mUserInterface->processEvents(event);
+            // If ImGui didn't want to consume any input continue with Scene handlers.
+            if (!mUserInterface->wantCaptureInput())
+            {
+                mScene->onEvent(event);
+            }
+
+            switch (event.type)
+            {
+                case SDL_EVENT_KEY_DOWN: {
+                    const SDL_KeyboardEvent& keyboardEvent = event.key;
+                    if (keyboardEvent.key == SDLK_ESCAPE)
+                    {
+                        mRunning = false;
+                    }
+                    break;
+                }
+                default: {}
+            }
         }
 
         // Rendering

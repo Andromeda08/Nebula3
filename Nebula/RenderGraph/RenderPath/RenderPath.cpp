@@ -33,13 +33,13 @@ namespace rg
 
     void RenderPath::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
-        for (const auto& [i, pass] : nbl::enumerate(mPasses))
+        for (const auto& [i, pass] : nbl::enumerate(old_mPasses))
         {
-            pCommandList->beginLabel(mLabels[i].color, mLabels[i].name);
+            pCommandList->beginLabel(old_mLabels[i].color, old_mLabels[i].name);
 
-            if (mBarriers.contains(i))
+            if (old_mBarriers.contains(i))
             {
-                mBarriers.at(i).insert(pCommandList);
+                old_mBarriers.at(i).insert(pCommandList);
             }
 
             pass->execute(pCommandList, frameData);
@@ -52,7 +52,7 @@ namespace rg
     {
         for (const auto& resourceTemplate : createInfo.compilerResult.resourceTemplates)
         {
-            mResourceRegistry->create(resourceTemplate);
+            // mResourceRegistry->create(resourceTemplate);
         }
     }
 }

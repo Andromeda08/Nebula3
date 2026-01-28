@@ -6,7 +6,7 @@
 #include "Scene/Scene.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
-#include "Window/Window.hpp"
+#include "Window/SDLWindow.hpp"
 
 class App
 {
@@ -16,13 +16,13 @@ public:
     App();
     static UPtr<App> create() noexcept;
 
-    void run();
-
     void run_renderPathLoop();
 
 private:
+    bool                         mRunning = false;
+
     DeltaTime                    mDeltaTime;
-    SPtr<Window>                 mWindow;
+    SPtr<SDLWindow>              mWindow;
     SPtr<RHI::VulkanRHI>         mVulkanRHI;
     UPtr<UserInterface>          mUserInterface;
     SPtr<rg::RenderGraphContext> mRenderGraphContext;

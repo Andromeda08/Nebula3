@@ -3,6 +3,7 @@
 #include "SceneResource.hpp"
 #include "Texture2DResource.hpp"
 #include "Texture3DResource.hpp"
+#include "RenderGraph/RenderGraphContext.hpp"
 #include "VulkanRHI/Texture.hpp"
 
 namespace rg

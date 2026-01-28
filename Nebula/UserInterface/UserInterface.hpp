@@ -3,11 +3,12 @@
 #include "IComponent.hpp"
 #include "ImGuiRenderPass.hpp"
 #include "Core/Macro.hpp"
+#include "Window/SDLWindow.hpp"
 
 struct UserInterfaceCreateInfo
 {
     std::string          fontFile;
-    SPtr<Window>         window;
+    SPtr<SDLWindow>      window;
     SPtr<RHI::VulkanRHI> rhi;
 };
 
@@ -24,6 +25,8 @@ public:
     }
 
     void update() const;
+
+    void processEvents(const SDL_Event& event) noexcept;
 
     void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 

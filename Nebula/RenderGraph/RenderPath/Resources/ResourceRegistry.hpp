@@ -3,12 +3,14 @@
 #include <map>
 #include <vector>
 
-#include "RenderGraph/RenderGraphContext.hpp"
+#include "RenderGraph/Compiler/ResourceOptimizer.hpp"
 #include "RenderGraph/RenderPath/Resource.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace rg
 {
+    class RenderGraphContext;
+
     class Texture3DResource;
     class Texture2DResource;
 
