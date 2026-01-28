@@ -14,6 +14,7 @@ add_subdirectory(External/glm)
 add_subdirectory(External/json)
 add_subdirectory(External/vma)
 add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
+add_subdirectory(External/SDL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -189,6 +190,9 @@ add_executable(Nebula3
     Nebula/Core/AppSpecification.cpp
     Nebula/Core/Platform.hpp
     Nebula/RenderPass/Special/GBufferPass.hpp
+    Nebula/Window/SDLWindow.hpp
+    Nebula/Window/WindowCreateInfo.hpp
+    Nebula/Window/SDLWindow.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -203,6 +207,7 @@ target_include_directories(Nebula3 PUBLIC
     External/stb
     External/vma/include
     External/gemmi/include
+    External/SDL/include
     ${Vulkan_INCLUDE_DIRS}
 )
 
@@ -213,6 +218,7 @@ target_link_libraries(Nebula3 PUBLIC
     glm::glm
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
+    SDL3-static
 )
 
 target_compile_definitions(Nebula3 PUBLIC
