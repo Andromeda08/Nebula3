@@ -39,11 +39,9 @@ add_executable(Nebula3
     Nebula/Core/Configuration.cpp
     Nebula/Core/Macro.hpp
     Nebula/Core/App.cpp
-    Nebula/Window/Window.hpp
     Nebula/Math/DeltaTime.hpp
     Nebula/Math/DeltaTime.cpp
     Nebula/VulkanRHI/IWindow.hpp
-    Nebula/Window/Window.cpp
     Nebula/Core/ToString.hpp
     Nebula/VulkanRHI/VulkanRHI.hpp
     Nebula/Math/Transform.hpp
