@@ -189,6 +189,7 @@ add_executable(Nebula3
     Nebula/Window/SDLWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp
     Nebula/Window/SDLWindow.cpp
+    Nebula/Scene/Camera/FlyingCamera.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
