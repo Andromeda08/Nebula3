@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
-#include <print>
+#include <spdlog/spdlog.h>
 
 UPtr<Configuration> Configuration::sInstance = nullptr;
 
@@ -43,15 +43,15 @@ Configuration::Configuration()
         mData = ConfigurationData();
         writeConfigFile();
         #ifdef NBL_CONFIG_REGEN
-        std::println("[Config] Regenerating configuration from in-code defaults. (dev-mode)");
+        spdlog::debug("[Config] Regenerating configuration from in-code defaults. (dev-mode)");
         #else
-        std::println("[Config] No configuration file found, using defaults and creating one.");
+        spdlog::warn("[Config] No configuration file found, using defaults and creating one.");
         #endif
         return;
     }
 
     readConfigFile();
-    std::println("[Config] Configuration loaded from file.");
+    spdlog::debug("[Config] Configuration loaded from file.");
 }
 
 void Configuration::writeConfigFile() const

@@ -3,6 +3,7 @@
 #include <limits>
 
 #include "Image.hpp"
+#include "Core/Ranges.hpp"
 
 namespace RHI
 {
@@ -57,13 +58,13 @@ namespace RHI
 
     vk::Image Swapchain::getImage(const size_t i) const
     {
-        assert(i < mImages.size());
+        exitOnAssert(i < mImages.size(), "Image index out of range.");
         return mImages[i];
     }
 
     vk::ImageView Swapchain::getImageView(const size_t i) const
     {
-        assert(i < mImages.size());
+        exitOnAssert(i < mImages.size(), "Image index out of range.");
         return mImageViews[i];
     }
 
@@ -77,7 +78,8 @@ namespace RHI
 
         // Image Count must be withing [min, max]
         const auto imageCountOk = !(surfaceCaps.minImageCount > mImageCount || surfaceCaps.maxImageCount < mImageCount);
-        assert(imageCountOk);
+        exitOnAssert(imageCountOk, "Unsupported swapchain image count: {}, valid range [{}, {}]",
+            mImageCount, surfaceCaps.minImageCount, surfaceCaps.maxImageCount);
 
         // Extent
         if (surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max())
@@ -100,7 +102,7 @@ namespace RHI
 
         // Surface Format & ColorSpace
         const auto surfaceFormats = physicalDevice.getSurfaceFormatsKHR(mSurface);
-        assert(!surfaceFormats.empty());
+        exitOnAssert(!surfaceFormats.empty(), "No supported surface formats were returned by the driver.");
 
         bool hasPreferredFormat = false;
         for (const auto& surfaceFormat : surfaceFormats)
@@ -124,7 +126,10 @@ namespace RHI
 
         // Present Mode
         const auto presentModes = physicalDevice.getSurfacePresentModesKHR(mSurface);
-        assert(!presentModes.empty());
+        #ifndef NDEBUG
+        spdlog::debug("[RHI] Supported present modes: {}", join(presentModes | std::views::transform([](const auto& p){ return vk::to_string(p); })));
+        #endif
+        exitOnAssert(!presentModes.empty(), "No supported surface formats were returned by the driver.");
 
         const auto presentModeIt = std::ranges::find(presentModes, info.prefPresentMode);
         mProperties.presentMode = (presentModeIt != std::end(presentModes)) ? info.prefPresentMode : presentModes[0];
@@ -136,7 +141,7 @@ namespace RHI
 
         auto imageCount = static_cast<uint32_t>(mImageCount);
         result = mDevice->getHandle().getSwapchainImagesKHR(mSwapchain, &imageCount, mImages.data());
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "Failed to get swapchain images.");
 
         constexpr vk::ComponentMapping componentMapping = {
             vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity,
@@ -153,7 +158,7 @@ namespace RHI
         {
             viewCreateInfo.setImage(mImages[i]);
             result = mDevice->getHandle().createImageView(&viewCreateInfo, nullptr, &mImageViews[i]);
-            assert(result == vk::Result::eSuccess);
+            exitOnAssert(result == vk::Result::eSuccess, "Failed to create ImageView.");
 
             mDevice->nameObject<vk::Image>({
                 .debugName = std::format("SwapchainImage[{}]", i),

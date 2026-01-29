@@ -193,6 +193,7 @@ add_executable(Nebula3
     Nebula/Scene/Camera/FlyingCamera.cpp
     Nebula/Scene/Scenes/MoleculeScene.hpp
     Nebula/Scene/Scenes/MoleculeScene.cpp
+    Nebula/Core/Ranges.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

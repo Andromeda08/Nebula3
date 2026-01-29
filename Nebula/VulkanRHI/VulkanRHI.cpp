@@ -1,7 +1,7 @@
 #include "VulkanRHI.hpp"
 
 #include <limits>
-#include <print>
+#include <spdlog/spdlog.h>
 
 #include "Core/ToString.hpp"
 
@@ -44,7 +44,7 @@ namespace RHI
         mFrameSync = std::make_unique<FrameSync>(mDevice);
 
         const auto& swapchainProperties = mSwapchain->getProperties();
-        std::println("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
+        spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
             mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures),
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
@@ -57,7 +57,7 @@ namespace RHI
         const vk::Fence fence = mFrameSync->frameInFlight[currentFrame];
 
         const vk::Result result = device.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "vk::Device::waitForFences failed: {}", vk::to_string(result));
 
         device.resetFences(fence);
 
@@ -115,7 +115,7 @@ namespace RHI
             .setPResults(nullptr);
 
         const auto result = mDevice->getGraphicsQueue().queue.presentKHR(presentInfo);
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "Failed to present image.");
 
         mDevice->getGraphicsQueue().queue.waitIdle();
 
@@ -166,8 +166,7 @@ namespace RHI
     {
         if (mFeatureLevel != RHIFeatureLevel::Complete)
         {
-            std::println("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
-            return nullptr;
+            exitWithError("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
         }
         createInfo.setDevice(mDevice);
         return RaytracingPipeline::create(createInfo);

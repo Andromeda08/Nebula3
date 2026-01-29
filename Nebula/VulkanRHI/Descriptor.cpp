@@ -108,7 +108,7 @@ namespace RHI
         device.waitIdle();
 
         const vk::Result result = device.freeDescriptorSets(mDescriptorPool, mSetCount, mDescriptorSets.data());
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "Failed to free descriptor sets [label={}]", mDebugName);
 
         device.destroyDescriptorPool(mDescriptorPool);
         device.destroyDescriptorSetLayout(mLayout);
@@ -116,10 +116,10 @@ namespace RHI
 
     void Descriptor::write_old(DescriptorWriteInfo writeInfo) const
     {
-        assert(writeInfo.setIndex < mSetCount);
+        exitOnAssert(writeInfo.setIndex < mSetCount, "Set index is out of range.");
         if (writeInfo.writes.empty())
         {
-            std::println("[RHI] Warning: Empty descriptor write for Descriptor {} set #{}", mDebugName, writeInfo.setIndex);
+            spdlog::warn("[RHI] Warning: Empty descriptor write for Descriptor {} set #{}", mDebugName, writeInfo.setIndex);
             return;
         }
 
@@ -133,7 +133,7 @@ namespace RHI
 
     void Descriptor::write(const uint32_t setIndex, const DescriptorWrite& descriptorWrite) const noexcept
     {
-        nbl_ASSERT(setIndex < mDescriptorSets.size(), "Descriptor Set index out of range!");
+        exitOnAssert(setIndex < mDescriptorSets.size(), "Descriptor Set index out of range! [label={}]", mDebugName);
 
         // Due to storage, Buffer infos are preserved as their address stays constant, unlike the internally stored ImageInfos.
         // With the current setup only Buffers can be done this way, as Images have varying parameters.
@@ -162,7 +162,7 @@ namespace RHI
 
     vk::DescriptorSet Descriptor::getSet(const size_t i) const
     {
-        assert(i < mSetCount);
+        exitOnAssert(i < mDescriptorSets.size(), "Descriptor Set index out of range! [label={}]", mDebugName);
         return mDescriptorSets[i];
     }
 
@@ -217,7 +217,7 @@ namespace RHI
             .setPSetLayouts(layouts.data());
 
         const vk::Result result = mDevice->getHandle().allocateDescriptorSets(&allocateInfo, mDescriptorSets.data());
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "Failed to allocated descriptor sets. [label={}]", mDebugName);
 
         for (const auto& [i, descriptorSet] : nbl::enumerate(mDescriptorSets))
         {

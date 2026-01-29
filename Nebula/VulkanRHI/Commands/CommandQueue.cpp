@@ -57,6 +57,7 @@ namespace RHI
             const auto signalSemaphoreInfo = vk::SemaphoreSubmitInfo()
                 .setSemaphore(signalSemaphore)
                 .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
+            signalSemaphoreInfos.push_back(signalSemaphoreInfo);
         }
 
         const auto vkSubmitInfo = vk::SubmitInfo2()
@@ -84,7 +85,7 @@ namespace RHI
             .setPCommandBuffers(&handle);
 
         const auto result = mQueue.queue.submit(1, &submitInfo, nullptr);
-        assert(result == vk::Result::eSuccess);
+        exitOnAssert(result == vk::Result::eSuccess, "Submission to Queue failed");
 
         mQueue.queue.waitIdle();
         mImmediatePool->free(commandList);

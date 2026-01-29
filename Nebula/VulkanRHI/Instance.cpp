@@ -1,5 +1,7 @@
 #include "Instance.hpp"
 
+#include "Core/Util.hpp"
+
 namespace RHI
 {
     Instance::Instance(const InstanceCreateInfo& createInfo)
@@ -19,10 +21,10 @@ namespace RHI
         mExtensions.append_range(createInfo.pWindow->getVulkanInstanceExtensions());
 
         const auto layerSupport = evaluateSupport(vk::enumerateInstanceLayerProperties(), mLayers);
-        assert(layerSupport);
+        exitOnAssert(layerSupport, "Not all requested Instance layers are supported.");
 
         const auto extensionSupport = evaluateSupport(vk::enumerateInstanceExtensionProperties(), mExtensions);
-        assert(extensionSupport);
+        exitOnAssert(extensionSupport, "Not all requested Instance extensions are supported.");
 
         const auto instanceCreateInfo = vk::InstanceCreateInfo()
             .setFlags(Platform::getInstanceFlags())
