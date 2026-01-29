@@ -34,28 +34,39 @@ public:
     nbl_DISABLE_COPY(Scene);
     nbl_CTOR(Scene);
 
-    void registerUIComponents(UserInterface* pUserInterface) const;
+    virtual ~Scene() = default;
 
-    void onEvent(const SDL_Event& event) const noexcept
-    {
-        mCamera->onEvent(event);
-    }
+    virtual void registerUIComponents(UserInterface* pUserInterface) const noexcept;
 
-    void update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt);
+    virtual void onEvent(const SDL_Event& event) const noexcept;
 
-    void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData);
+    virtual void onUpdate(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, float dt) noexcept;
+
+    virtual void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept;
+
+protected:
+    /**
+     * Add a new Camera to the scene.
+     * @param camera UPtr Camera
+     * @param makeActive Also set the new camera as the active one. (always true if first camera)
+     */
+    void addCamera(UPtr<ICamera> camera, bool makeActive = false) noexcept;
+
+    SPtr<RHI::VulkanRHI>                mRHI;
+    SPtr<RHI::Descriptor>               mSceneDescriptor;
+    PerFrameArray<SPtr<RHI::Buffer>>    mCameraUniformBuffers;
 
 private:
+    // Interface version
+    std::vector<UPtr<ICamera>>          mCameras;
+    ICamera*                            mActiveCamera;
+
     friend class SceneInfoComponent;
 
     UPtr<CIFData>                       mCIFData;
     UPtr<TextureManager>                mTextureManager;
 
-    SPtr<RHI::VulkanRHI>                mRHI;
-
     UPtr<ICamera>                       mCamera;
-    PerFrameArray<SPtr<RHI::Buffer>>    mCameraUB;
-    SPtr<RHI::Descriptor>               mSceneDescriptor;
 
     // Molecule Rendering
     MoleculeRenderingOptions            mMoleculeRenderingOptions;

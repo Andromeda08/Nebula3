@@ -1,9 +1,15 @@
 #include "CIFData.hpp"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/bundled/color.h>
+
 CIFData::CIFData(const CIFDataCreateInfo& createInfo)
 : mCIF(createInfo.filename, createInfo.centerMolecule)
 , mRHI(createInfo.rhi)
 {
+    mName = std::filesystem::path(createInfo.filename).stem().string();
+    // spdlog::debug("Loaded molecule: {}", styled(mName, fg(fmt::color::cyan) | fmt::emphasis::bold));
+
     mSphereData = mCID.sphere;
     mCylinderData = mCID.cylinder;
 

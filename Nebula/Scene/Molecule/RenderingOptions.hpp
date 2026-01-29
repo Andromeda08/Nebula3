@@ -6,4 +6,5 @@ struct MoleculeRenderingOptions
     bool renderSurface        = true;
     bool shouldRecalculateSDF = false;
     bool hasCalculatedSDF     = false;
+    bool useSubsurfaceScattering = true;
 };

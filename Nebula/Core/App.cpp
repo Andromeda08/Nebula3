@@ -4,6 +4,7 @@
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "RenderPass/HelloTrianglePass.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
+#include "../Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
@@ -32,12 +33,12 @@ App::App()
     });
     mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
-    mScene = Scene::create({
+    mScene = makeUnique<MoleculeScene>(SceneCreateInfo{
         .rhi  = mVulkanRHI,
-        .name = "Default Scene",
+        .name = "Molecule Scene",
     });
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
-    mScene->registerUIComponents(mUserInterface.get());
+    MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 }
 
 UPtr<App> App::create() noexcept
@@ -98,7 +99,7 @@ void App::run_renderPathLoop()
         RHI::CommandList*    commandList = commandLists[frameData.currentFrame];
 
         // Updates
-        mScene->update(commandList, frameData, dt);
+        mScene->onUpdate(commandList, frameData, dt);
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
 

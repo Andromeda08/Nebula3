@@ -1,10 +1,5 @@
 #include "Scene.hpp"
 
-#include "Camera/FlyingCamera.hpp"
-#include "Components/MoleculeRenderingUI.hpp"
-#include "RenderPass/Molecule/StructurePass.hpp"
-
-#include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 Scene::Scene(const SceneCreateInfo& createInfo)
@@ -15,23 +10,14 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         .rhi = mRHI,
     });
 
-    /* CIF Loading */ {
-        mCIFData = makeUnique<CIFData>(CIFDataCreateInfo{ Configuration::getMoleculeFile(), true, mRHI });
-    }
-
-    /* (Flying) Camera */ {
-        const auto e = mRHI->getSwapchain()->getProperties().extent;
-        mCamera = makeUnique<FlyingCamera>(glm::ivec2(e.width, e.height), glm::vec3(0.0f, 0.0f, 5.0f));
-        const auto cameraData = mCamera->getCameraData();
-        for (auto& cameraUb : mCameraUB)
-        {
-            cameraUb = mRHI->createBuffer({
-                .size  = sizeof(CameraData),
-                .type  = RHI::BufferType::Uniform,
-                .label = "CameraUB",
-            });
-            cameraUb->setData(&cameraData, sizeof(CameraData));
-        }
+    // Create camera uniform buffers
+    for (auto& buffer : mCameraUniformBuffers)
+    {
+        buffer = mRHI->createBuffer({
+            .size  = sizeof(CameraData),
+            .type  = RHI::BufferType::Uniform,
+            .label = "CameraUB",
+        });
     }
 
     /* Scene Descriptor */ {
@@ -46,57 +32,44 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
             const auto descriptorWrite = RHI::DescriptorWrite()
-                .writeUniformBuffer(0, mCameraUB[i]);
+                .writeUniformBuffer(0, mCameraUniformBuffers[i]);
             mSceneDescriptor->write(i, descriptorWrite);
         }
     }
+}
 
-    /* Molecule Rendering : Renderpasses */ {
-        mSDFComputePass  = makeUnique<Molecule::SDFComputePass>(mRHI, mCIFData->getAtomPositions());
-        mStructurePass   = makeUnique<Molecule::StructurePass>(mRHI, mSceneDescriptor, mCIFData.get());
-        mSDFRaymarchPass = makeUnique<Molecule::SDFRaymarchPass>(mRHI, mSceneDescriptor, mSDFComputePass->getSDFTexture3D());
+void Scene::registerUIComponents(UserInterface* pUserInterface) const noexcept
+{
+}
 
-        mSDFRaymarchPass->setParams({
-            .bboxMin = mSDFComputePass->getPushConstants().bboxMin,
-            .bboxMax = mSDFComputePass->getPushConstants().bboxMax,
-            .sesColor = glm::vec4(0.1f, 0.38f, 0.14f, 1.0f),
-            .voxelSize = 0.5f,
-            .blending = 0.5f,
-            .ls = 1.0f,
-            .useSubsurfaceScattering = 1,
-            .rayMarchingSteps = 256
-        });
+void Scene::onEvent(const SDL_Event& event) const noexcept
+{
+    if (mActiveCamera)
+    {
+        mActiveCamera->onEvent(event);
     }
 }
 
-void Scene::registerUIComponents(UserInterface* pUserInterface) const
+void Scene::onUpdate(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, float dt) noexcept
 {
-    pUserInterface->addComponent<MoleculeRenderingUI>(&mMoleculeRenderingOptions, mSDFComputePass.get(), mStructurePass.get(), mSDFRaymarchPass.get());
+    if (mActiveCamera)
+    {
+        mActiveCamera->onUpdate();
+
+        const auto cameraData = mActiveCamera->getCameraData();
+        mCameraUniformBuffers[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
+    }
 }
 
-void Scene::update(const RHI::CommandList* commandList, const RHI::FrameData& frameData, const float dt)
+void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
 {
-    mCamera->onUpdate();
-
-    const auto cameraData = mCamera->getCameraData();
-    mCameraUB[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
 }
 
-void Scene::render(const RHI::CommandList* commandList, const RHI::FrameData& frameData)
+void Scene::addCamera(UPtr<ICamera> camera, const bool makeActive) noexcept
 {
-    if (!mMoleculeRenderingOptions.hasCalculatedSDF || mMoleculeRenderingOptions.shouldRecalculateSDF)
+    mCameras.push_back(std::move(camera));
+    if (makeActive || mCameras.size() == 1)
     {
-        mSDFComputePass->execute(commandList, frameData);
-        mMoleculeRenderingOptions.hasCalculatedSDF = true;
-    }
-
-    if (mMoleculeRenderingOptions.renderStructure)
-    {
-        mStructurePass->execute(commandList, frameData);
-    }
-
-    if (mMoleculeRenderingOptions.renderSurface)
-    {
-        mSDFRaymarchPass->execute(commandList, frameData);
+        mActiveCamera = mCameras[0].get();
     }
 }

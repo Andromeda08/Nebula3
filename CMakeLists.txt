@@ -174,8 +174,8 @@ add_executable(Nebula3
     Nebula/RenderPass/Molecule/StructurePass.cpp
     Nebula/RenderPass/Molecule/SDFRaymarchPass.hpp
     Nebula/RenderPass/Molecule/SDFRaymarchPass.cpp
-    Nebula/Scene/Components/MoleculeRenderingUI.hpp
-    Nebula/Scene/Components/MoleculeRenderingUI.cpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.hpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.cpp
     Nebula/Scene/Molecule/RenderingOptions.hpp
     Nebula/VulkanRHI/Texture.hpp
     Nebula/VulkanRHI/Texture.cpp
@@ -191,8 +191,8 @@ add_executable(Nebula3
     Nebula/Window/WindowCreateInfo.hpp
     Nebula/Window/SDLWindow.cpp
     Nebula/Scene/Camera/FlyingCamera.cpp
-    Nebula/Scene/Scenes/MoleculeScene.hpp
-    Nebula/Scene/Scenes/MoleculeScene.cpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.hpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.cpp
     Nebula/Core/Ranges.hpp
 )
 

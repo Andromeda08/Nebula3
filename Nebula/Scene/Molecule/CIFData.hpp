@@ -26,11 +26,13 @@ struct CIFDataCreateInfo {
 
 class CIFData {
 public:
-	explicit CIFData(const CIFDataCreateInfo& createInfo);
+	nbl_CTOR(CIFData);
 
 	const std::vector<glm::vec3>& getAtomPositions() const noexcept { return mAtomPositions; }
 	const geo::CIFInstanceData&	getCIFInstanceData() const noexcept { return mCID; }
 	const MoleculeInfo& getInfo() const noexcept { return mInfo; }
+
+	const std::string& getName() const noexcept { return mName; }
 
 private:
 	friend class Molecule::StructurePass;
@@ -58,4 +60,5 @@ private:
 
 	SPtr<RHI::VulkanRHI>	mRHI;
 	MoleculeInfo			mInfo;
+	std::string				mName;
 };
