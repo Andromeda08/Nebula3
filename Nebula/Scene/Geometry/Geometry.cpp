@@ -2,6 +2,8 @@
 
 #include <numbers>
 
+#include "glm/gtc/constants.hpp"
+
 #pragma region "Cube index and vertex data"
 
 std::vector<uint32_t> Cube::sCubeIndices = {
@@ -141,5 +143,102 @@ std::vector<uint32_t> Sphere::generateIndices(const int32_t stackCount, const in
             }
         }
     }
+    return indices;
+}
+
+Cylinder::Cylinder(const Params& params)
+: Geometry()
+{
+    // TODO: UVs are not generated yet
+    mVertices    = generateVertices(params.tesselation, params.radius, params.height);
+    mVertexCount = static_cast<uint32_t>(mVertices.size());
+
+    mIndices     = generateIndices(params.tesselation);
+    mIndexCount  = static_cast<uint32_t>(mIndices.size());
+
+    mName = "Cylinder";
+}
+
+std::vector<Vertex> Cylinder::generateVertices(const uint32_t segments, const float radius, const float height) noexcept
+{
+    std::vector<Vertex> vertices;
+
+    vertices.push_back({
+        .position = { 0.0f, -height / 2.0f, 0.0f },
+        .normal   = { 0.0f, -1.0f, 0.0f },
+        .uv       = {}
+    });
+
+    vertices.push_back({
+        .position = { 0.0f, height / 2.0f, 0.0f },
+        .normal   = { 0.0f, 1.0f, 0.0f },
+        .uv       = {}
+    });
+
+    // Circle
+    const float step = glm::two_pi<float>() / static_cast<float>(segments);
+    for (auto i = 0; i < segments; i++)
+    {
+        glm::vec3 position = {
+            glm::cos(i * step) * radius,
+            -height / 2.0f,
+            glm::sin(i * step) * radius
+        };
+
+        // Bottom ring
+        vertices.push_back({
+            .position = position,
+            .normal   = { 0.0f, -1.0f, 0.0f },
+            .uv       = {},
+        });
+        vertices.push_back({
+            .position = position,
+            .normal   = glm::normalize(position - glm::vec3(0, -height / 2.0f, 0)),
+            .uv       = {},
+        });
+
+        // Top ring
+        position.y = height / 2.0f;
+        vertices.push_back({
+            .position = position,
+            .normal   = { 0.0f, 1.0f, 0.0f },
+            .uv       = {},
+        });
+        vertices.push_back({
+            .position = position,
+            .normal   = glm::normalize(position - glm::vec3(0, height / 2.f, 0)),
+            .uv       = {},
+        });
+    }
+
+    return vertices;
+}
+
+std::vector<uint32_t> Cylinder::generateIndices(const uint32_t segments) noexcept
+{
+    std::vector<uint32_t> indices;
+
+    for (auto i = 0; i < segments; i++)
+    {
+        // Bottom face
+        indices.push_back(0);
+        indices.push_back(2 + i * 4);
+        indices.push_back(i == segments - 1 ? 2 : 2 + (i + 1) * 4);
+
+        // Top face
+        indices.push_back(1);
+        indices.push_back(i == segments - 1 ? 4 : (i + 2) * 4);
+        indices.push_back((i + 1) * 4);
+
+        // Side faces
+        indices.push_back(3 + i * 4);
+        indices.push_back(i == segments - 1 ? 5 : 5 + (i + 1) * 4);
+        indices.push_back(i == segments - 1 ? 3 : 3 + (i + 1) * 4);
+
+        indices.push_back(i == segments - 1 ? 5 : 5 + (i + 1) * 4);
+        indices.push_back(3 + i * 4);
+        indices.push_back(5 + i * 4);
+    }
+
     return indices;
 }

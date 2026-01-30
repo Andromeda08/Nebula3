@@ -17,11 +17,28 @@ public:
 
     virtual ~Geometry() = default;
 
-    const std::vector<Vertex>& getVertices() const { return mVertices; }
-    const std::vector<uint32_t>& getIndices() const { return mIndices; }
+    [[nodiscard]] const std::vector<Vertex>& getVertices() const noexcept
+    {
+        return mVertices;
+    }
+    [[nodiscard]] const std::vector<uint32_t>& getIndices() const noexcept
+    {
+        return mIndices;
+    }
 
-    uint32_t vertexCount() const { return mVertexCount; }
-    uint32_t indexCount() const { return mIndexCount; }
+    [[nodiscard]] uint32_t vertexCount() const noexcept
+    {
+        return mVertexCount;
+    }
+    [[nodiscard]] uint32_t indexCount() const noexcept
+    {
+        return mIndexCount;
+    }
+
+    [[nodiscard]] const std::string& getName() const noexcept
+    {
+        return mName;
+    }
 
 protected:
     Geometry() = default;
@@ -32,6 +49,10 @@ protected:
     uint32_t                mIndexCount  = 0;
     std::string             mName        = "Unknown Geometry";
 };
+
+// ============================
+// Primitives
+// ============================
 
 class Cube final : public Geometry
 {
@@ -70,4 +91,24 @@ private:
     static std::vector<Vertex> generateVertices(int32_t stackCount, int32_t sectorCount, float radius);
 
     static std::vector<uint32_t> generateIndices(int32_t stackCount, int32_t sectorCount);
+};
+
+class Cylinder final : public Geometry
+{
+public:
+    struct Params
+    {
+        float    radius       = 1.0f;
+        float    height       = 1.0f;
+        uint32_t tesselation = 60;
+    };
+
+    explicit Cylinder(const Params& params);
+
+    ~Cylinder() override = default;
+
+private:
+    static std::vector<Vertex> generateVertices(uint32_t segments, float radius, float height) noexcept;
+
+    static std::vector<uint32_t> generateIndices(uint32_t segments) noexcept;
 };
