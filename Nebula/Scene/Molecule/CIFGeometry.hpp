@@ -4,7 +4,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+
+#include "Core/Types.hpp"
 #include "Math/Transform.hpp"
+#include "Scene/Geometry/Geometry.hpp"
+#include "Scene/Geometry/Geometry.hpp"
+#include "Scene/Geometry/Geometry.hpp"
+#include "Scene/Types/GPUObjectInstanceData.hpp"
 
 namespace geo
 {
@@ -37,10 +43,10 @@ namespace geo
 	Data createCylinderData(uint32_t seg, float radius, float height);
 
 	struct CIFInstanceData {
-		Data sphere = createSphereData2(1.0f, 20, 20);
-		Data cylinder = createCylinderData(8, .05f, 1.f);
+		UPtr<Geometry> sphere = makeUnique<Sphere>(Sphere::Params { 1.0f, 20, 20 });
+		UPtr<Geometry> cylinder = makeUnique<Cylinder>(Cylinder::Params { .05f, 1.f, 8 });
 
-		std::vector<glm::mat4> sphereTransforms;
-		std::vector<glm::mat4> cylinderTransforms;
+		std::vector<GPUObjectInstanceData> sphereTransforms;
+		std::vector<GPUObjectInstanceData> cylinderTransforms;
 	};
 }

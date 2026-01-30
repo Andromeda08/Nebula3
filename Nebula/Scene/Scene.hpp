@@ -1,15 +1,10 @@
 #pragma once
 
 #include "TextureManager.hpp"
+#include "Camera/ICamera.hpp"
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
-
-#include "Camera/ICamera.hpp"
-#include "Molecule/CIFData.hpp"
-#include "Molecule/RenderingOptions.hpp"
-#include "RenderPass/Molecule/SDFComputePass.hpp"
-#include "RenderPass/Molecule/SDFRaymarchPass.hpp"
-#include "RenderPass/Molecule/StructurePass.hpp"
+#include "Geometry/Geometry.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
@@ -52,27 +47,29 @@ protected:
      */
     void addCamera(UPtr<ICamera> camera, bool makeActive = false) noexcept;
 
-    SPtr<RHI::VulkanRHI>                mRHI;
+    template <class T, class... Args>
+    requires std::is_base_of_v<Geometry, T>
+    T* addGeometry(Args&&... args) noexcept
+    {
+        mGeometries.push_back(makeUnique<T>(std::forward<Args>(args)...));
+        return dynamic_cast<T*>(mGeometries.back().get());
+    }
+
+    void createGPUGeometryResources() noexcept;
+
+    std::vector<UPtr<Geometry>>         mGeometries;
+
     SPtr<RHI::Descriptor>               mSceneDescriptor;
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUniformBuffers;
 
-private:
-    // Interface version
-    std::vector<UPtr<ICamera>>          mCameras;
-    ICamera*                            mActiveCamera;
-
-    friend class SceneInfoComponent;
-
-    UPtr<CIFData>                       mCIFData;
     UPtr<TextureManager>                mTextureManager;
 
-    UPtr<ICamera>                       mCamera;
+    SPtr<RHI::VulkanRHI>                mRHI;
 
-    // Molecule Rendering
-    MoleculeRenderingOptions            mMoleculeRenderingOptions;
-    UPtr<Molecule::SDFComputePass>      mSDFComputePass;
-    UPtr<Molecule::StructurePass>       mStructurePass;
-    UPtr<Molecule::SDFRaymarchPass>     mSDFRaymarchPass;
+private:
+    friend class SceneInfoComponent;
 
+    std::vector<UPtr<ICamera>>          mCameras;
+    ICamera*                            mActiveCamera;
     std::string                         mName;
 };

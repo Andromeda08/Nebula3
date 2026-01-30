@@ -6,9 +6,9 @@
 
 struct GPUObjectInstanceData
 {
-    glm::mat4 model;
-    glm::vec4 solidColor;
-    int32_t   textureIndex;
+    glm::mat4 model        = glm::mat4(1.0f);
+    glm::vec4 solidColor   = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+    int32_t   textureIndex = -1;
 
     [[nodiscard]] static RHI::VertexAttributes getAttributes(const uint32_t firstLoc = 0, const uint32_t binding = 0) noexcept
     {

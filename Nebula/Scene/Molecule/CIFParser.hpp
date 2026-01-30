@@ -75,8 +75,9 @@ struct AtomSiteHasher
  */
 struct PositionData
 {
-    glm::vec3 observed;
-    glm::vec3 expected;
+    glm::vec3   observed;
+    glm::vec3   expected;
+    std::string typeSymbol;
 };
 
 #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES

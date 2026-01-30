@@ -7,6 +7,15 @@
 #include "Scene/Molecule/CIFData.hpp"
 #include "Scene/Molecule/RenderingOptions.hpp"
 
+struct MoleculeObject
+{
+    UPtr<CIFData>                               mCIFData;
+
+    UPtr<Molecule::SDFComputePass>              mSDFComputePass;
+    UPtr<Molecule::StructurePass>               mStructurePass;
+    UPtr<Molecule::SDFRaymarchPass>             mSDFRaymarchPass;
+};
+
 class MoleculeScene : public Scene
 {
 public:
@@ -21,20 +30,12 @@ private:
 
     void changeActiveMolecule(const std::string& name) noexcept;
 
+
     friend class MoleculeSceneParamsComponent;
 
-    struct MoleculeData
-    {
-        UPtr<CIFData>                       mCIFData;
-        UPtr<Molecule::SDFComputePass>      mSDFComputePass;
-        UPtr<Molecule::StructurePass>       mStructurePass;
-        UPtr<Molecule::SDFRaymarchPass>     mSDFRaymarchPass;
-    };
-
     // Molecule Data
-    std::vector<MoleculeData>   mMolecules;
+    std::vector<MoleculeObject> mMolecules;
     std::vector<std::string>    mLoadedMolecules;
-    MoleculeData*               mActiveMolecule;
+    MoleculeObject*             mActiveMolecule;
     MoleculeRenderingOptions    mMoleculeRenderingOptions;
-
 };

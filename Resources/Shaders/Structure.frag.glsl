@@ -3,6 +3,7 @@
 // Input Attributes
 // ========================================
 layout (location = 0) in vec4 inWorldPosition;
+layout (location = 1) in vec4 inColor;
 
 // Bound Resources
 // ========================================
@@ -31,5 +32,5 @@ vec3 gammaCorrection(vec3 color)
 
 void main()
 {
-    outColor = vec4(color.rgb, 1.0);
+    outColor = vec4(inColor.rgb, 1.0);
 }

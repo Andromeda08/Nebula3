@@ -1,5 +1,6 @@
 #include "StructurePass.hpp"
 
+#include "Scene/Types/Vertex.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
 namespace Molecule
@@ -55,15 +56,19 @@ namespace Molecule
             .setStateInfo(RHI::GraphicsPipelineStateInfo()
                 .configure([](auto& stateInfo) {
                     stateInfo.attributeDescriptions = {
-                        { 0, 0, vk::Format::eR32G32B32Sfloat, 0 },
-                        { 1, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 0 },
-                        { 2, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 1 },
-                        { 3, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 2 },
-                        { 4, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 3 },
+                        { 0, 0, vk::Format::eR32G32B32Sfloat,    sizeof(glm::vec3) * 0 },
+                        { 1, 0, vk::Format::eR32G32B32Sfloat,    sizeof(glm::vec3) * 1 },
+                        { 2, 0, vk::Format::eR32G32B32Sfloat,    sizeof(glm::vec3) * 2 },
+                        { 3, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 0 },
+                        { 4, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 1 },
+                        { 5, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 2 },
+                        { 6, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 3 },
+                        { 7, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 4 },
+                        { 8, 1, vk::Format::eR32Sint,            sizeof(glm::vec4) * 5 },
                     };
                     stateInfo.bindingDescriptions = {
-                        { 0, sizeof(glm::vec3), vk::VertexInputRate::eVertex },
-                        { 1, sizeof(glm::mat4), vk::VertexInputRate::eInstance },
+                        { 0, sizeof(Vertex),                vk::VertexInputRate::eVertex },
+                        { 1, sizeof(GPUObjectInstanceData), vk::VertexInputRate::eInstance },
                     };
                 })
                 .addAttachmentState())
@@ -100,13 +105,13 @@ namespace Molecule
                 const std::array vertexBuffers{ mCIFData->mSphereVertexBuffer->getHandle(), mCIFData->mSphereInstanceBuffer->getHandle() };
                 commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
                 commandBuffer.bindIndexBuffer(mCIFData->mSphereIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-                commandBuffer.drawIndexed(mCIFData->mCID.sphere.indices.size(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
+                commandBuffer.drawIndexed(mCIFData->mCID.sphere->indexCount(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
             }
             /* Cylinders */ {
                 const std::array vertexBuffers{ mCIFData->mCylinderVertexBuffer->getHandle(), mCIFData->mCylinderInstanceBuffer->getHandle() };
                 commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
                 commandBuffer.bindIndexBuffer(mCIFData->mCylinderIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-                commandBuffer.drawIndexed(mCIFData->mCID.cylinder.indices.size(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
+                commandBuffer.drawIndexed(mCIFData->mCID.cylinder->indexCount(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
             }
         });
 

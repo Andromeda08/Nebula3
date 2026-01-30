@@ -4,6 +4,7 @@
 
 Scene::Scene(const SceneCreateInfo& createInfo)
 : mRHI(createInfo.rhi)
+, mActiveCamera(nullptr)
 , mName(createInfo.name)
 {
     mTextureManager = TextureManager::create({
@@ -14,19 +15,23 @@ Scene::Scene(const SceneCreateInfo& createInfo)
     for (auto& buffer : mCameraUniformBuffers)
     {
         buffer = mRHI->createBuffer({
-            .size  = sizeof(CameraData),
-            .type  = RHI::BufferType::Uniform,
+            .size = sizeof(CameraData),
+            .type = RHI::BufferType::Uniform,
             .label = "CameraUB",
         });
     }
 
-    /* Scene Descriptor */ {
+    /* Scene Descriptor */
+    {
         mSceneDescriptor = mRHI->createDescriptor({
-            .bindings     = {
-                vk::DescriptorSetLayoutBinding { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment },
+            .bindings = {
+                vk::DescriptorSetLayoutBinding{
+                    0, vk::DescriptorType::eUniformBuffer, 1,
+                    vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+                },
             },
-            .setCount     = 2,
-            .debugName    = "SceneDescriptor",
+            .setCount = 2,
+            .debugName = "SceneDescriptor",
         });
 
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)

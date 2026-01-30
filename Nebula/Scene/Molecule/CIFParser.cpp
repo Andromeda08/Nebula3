@@ -190,6 +190,7 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
             mPositions[key] = PositionData {
                 .observed = observedPosition,
                 .expected = detail::makeVec3({idealX[i], idealY[i], idealZ[i]}),
+                .typeSymbol = mAtoms[compIds[i]][i].typeSymbol,
             };
         }
 
@@ -223,6 +224,8 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
             AtomSiteId id = { siteAsymIds[i], siteSeqIds[i], siteCompIds[i], siteAtomIds[i] };
             mPositions[id] = PositionData {
                 .observed = observedPosition,
+                .expected = glm::vec3(0.0f),
+                .typeSymbol = mAtoms[compIds[i]][i].typeSymbol,
             };
         }
 

@@ -5,6 +5,7 @@
 #include "MoleculeSceneParamsComponent.hpp"
 #include "Core/Ranges.hpp"
 #include "Scene/Camera/FlyingCamera.hpp"
+#include "Scene/Geometry/Geometry.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 

@@ -43,20 +43,19 @@ private:
 	geo::CIFInstanceData	mCID;
 
 	// Spheres for Structure Rendering
-	geo::Data				mSphereData;
+	Geometry*				mSphereData;
 	SPtr<RHI::Buffer>		mSphereVertexBuffer;
 	SPtr<RHI::Buffer>		mSphereIndexBuffer;
 	SPtr<RHI::Buffer>		mSphereInstanceBuffer;
 
 	// Cylinders for Structure Rendering
-	geo::Data				mCylinderData;
+	Geometry*				mCylinderData;
 	SPtr<RHI::Buffer>		mCylinderVertexBuffer;
 	SPtr<RHI::Buffer>		mCylinderIndexBuffer;
 	SPtr<RHI::Buffer>		mCylinderInstanceBuffer;
 
 	// Atom Positions data for SDF
 	std::vector<glm::vec3>	mAtomPositions;
-	/*SPtr<RHI::Buffer>		mSDFAtomPositionsBuffer;*/
 
 	SPtr<RHI::VulkanRHI>	mRHI;
 	MoleculeInfo			mInfo;
