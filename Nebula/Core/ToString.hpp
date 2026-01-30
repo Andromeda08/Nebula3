@@ -1,7 +1,9 @@
 #pragma once
 
 #include <format>
+#include <sstream>
 #include <string>
+#include <glm/glm.hpp>
 
 #include "Types.hpp"
 #include "VulkanRHI/RHIConfiguration.hpp"
@@ -23,4 +25,28 @@ inline std::string toString(const RHIFeatureLevel featureLevel) noexcept
         return "Basic";
     }
     return "Complete";
+}
+
+namespace fmt
+{
+    /**
+     * Convert any glm vector to a string with the format [{}, {}, ...]
+     * @param vec
+     */
+    template<glm::length_t L, typename T, glm::qualifier Q>
+    [[nodiscard]] std::string vec(const glm::vec<L, T, Q>& vec) noexcept
+    {
+        std::stringstream sstr;
+        sstr << "[";
+        for (auto i = 0; i < L; i++)
+        {
+            if (i != 0)
+            {
+                sstr << ", ";
+            }
+            sstr << vec[i];
+        }
+        sstr << "]";
+        return sstr.str();
+    }
 }

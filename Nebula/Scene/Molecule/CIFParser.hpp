@@ -3,81 +3,69 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 #include <gemmi/cif.hpp>
-
-// If defined, uses glm datatypes instead of std datatypes
-#define USE_GLM
+#include <glm/glm.hpp>
 
 // If defined, converts cartesian to fractional coords and stores those in the expected field of PositionData instead of 0
 #define CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
 
-#ifndef USE_GLM
-#include <array>
-#else
-#include <glm/glm.hpp>
-#endif
-
 enum class BondType
 {
-	sing = 1,
-	doub,
-	trip,
-	quad,
-	arom,
-	poly,
-	delo,
-	pi
+    sing = 1,
+    doub,
+    trip,
+    quad,
+    arom,
+    poly,
+    delo,
+    pi
 };
 
 struct AtomData
 {
-	std::string compId;
-	std::string atomId;
-	std::string typeSymbol;
+    std::string compId;
+    std::string atomId;
+    std::string typeSymbol;
 };
 
 struct BondData
 {
-	std::string atom2Id;
-	BondType bondType;
+    std::string atom2Id;
+    BondType bondType;
 };
 
 struct AtomSiteId
 {
-	AtomSiteId(const std::string& asymId, const std::string& seqId, const std::string& compId, const std::string& atomId)
-		: asymId{ asymId }, seqId{ seqId }, compId{ compId }, atomId{ atomId }
-	{
-	}
+    AtomSiteId& setAtomId(const std::string& _atomId) noexcept
+    {
+        atomId = _atomId;
+        return *this;
+    }
 
-	friend std::ostream& operator<<(std::ostream& os, const AtomSiteId& id) {
-		os << id.compId << ", " << id.atomId << ", " << id.asymId << ", " << id.seqId;
-		return os;
-	}
-	auto operator<=>(const AtomSiteId&) const = default;
+    auto operator<=>(const AtomSiteId&) const = default;
 
-	std::string asymId;
-	std::string seqId;
-	std::string compId;
-	std::string atomId;
+    std::string asymId;
+    std::string seqId;
+    std::string compId;
+    std::string atomId;
 };
 
 //https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
 struct AtomSiteHasher
 {
-	std::size_t operator()(const AtomSiteId& id) const
-	{
-		using std::size_t;
-		using std::hash;
-		using std::string;
+    std::size_t operator()(const AtomSiteId& id) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
 
-		size_t res = 17;
-		res = res * 31 + hash<string>()(id.asymId);
-		res = res * 31 + hash<string>()(id.seqId);
-		res = res * 31 + hash<string>()(id.compId);
-		res = res * 31 + hash<string>()(id.atomId);
-		return res;
-	}
+        size_t res = 17;
+        res = res * 31 + hash<string>()(id.asymId);
+        res = res * 31 + hash<string>()(id.seqId);
+        res = res * 31 + hash<string>()(id.compId);
+        res = res * 31 + hash<string>()(id.atomId);
+        return res;
+    }
 };
 
 /*
@@ -87,73 +75,54 @@ struct AtomSiteHasher
  */
 struct PositionData
 {
-	PositionData() = default;
-
-	PositionData(double ox, double oy, double oz, double ex = 0, double ey = 0, double ez = 0) {
-		observed[0] = ox;
-		observed[1] = oy;
-		observed[2] = oz;
-		expected[0] = ex;
-		expected[1] = ey;
-		expected[2] = ez;
-	}
-#ifndef USE_GLM
-	std::array<double, 3> observed;
-	std::array<double, 3> expected;
-#else
-	glm::vec3 observed;
-	glm::vec3 expected;
-#endif
+    glm::vec3 observed;
+    glm::vec3 expected;
 };
 
 #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
 // Only exists if fractional transforms are saved in the file (m_fractTransfData = true)
 struct FractionalTransform
 {
-#ifndef USE_GLM
-	std::array<double, 9> transfMatrix;
-	std::array<double, 3> translVector;
-#else
-	glm::mat3 transfMatrix;
-	glm::vec3 translVector;
-#endif
+    glm::mat3 transfMatrix;
+    glm::vec3 translVector;
 };
 #endif
 
-using AtomContainer = std::unordered_map<std::string, std::vector<AtomData>>;
-using BondContainer = std::unordered_map<std::string, std::unordered_map<std::string, std::vector<BondData>>>;
+using CompoundId = std::string;
+
+using AtomContainer = std::unordered_map<CompoundId, std::vector<AtomData>>;
+using BondContainer = std::unordered_map<CompoundId, std::unordered_map<std::string, std::vector<BondData>>>;
 using AtomSiteContainer = std::unordered_map<AtomSiteId, PositionData, AtomSiteHasher>;
 
 class CIFParser
 {
 public:
-	CIFParser(const std::string& filename, bool centerPos = false);
+    explicit CIFParser(const std::string& filename, bool centerPos = false);
 
-	void printAtoms();
-	void printBonds();
-	void printPositions();
+    void printAtoms() const noexcept;
+    void printBonds() const noexcept;
+    void printPositions() const noexcept;
 
-	inline bool hasFractTransfData() const { return m_fractTransfData; }
+    bool hasFractTransfData() const { return mFractTransfData; }
 
-	AtomContainer atoms;
-	BondContainer bonds;
-	AtomSiteContainer positions;
-#ifdef USE_GLM
-	glm::vec3 centerOffset;
-#endif
-#ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
-	FractionalTransform fractTrans;
-#endif
+    AtomContainer       mAtoms;
+    BondContainer       mBonds;
+    AtomSiteContainer	mPositions;
+    glm::vec3			mCenterOffset;
+
+    #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
+    FractionalTransform mFractTrans;
+    #endif
 
 private:
-	void loadCIFFile(const std::string& filename);
-	void getAtoms();
-	void getBonds();
-	void getPositions(gemmi::cif::Table& table, gemmi::cif::Column& compIds, gemmi::cif::Column& atomIds);
+    void loadCIFFile(const std::string& filename);
+    void parseAtoms();
+    void parseBonds();
+    void getPositions(gemmi::cif::Table& table, gemmi::cif::Column& compIds, gemmi::cif::Column& atomIds);
 
-	gemmi::cif::Block m_block;
-	bool m_useAtomSite;
-	bool m_fractTransfData;
-	bool m_centerPos;
+    gemmi::cif::Block mBlock;
+    bool mUseAtomSize;
+    bool mFractTransfData;
+    bool mCenterPos;
 };
 

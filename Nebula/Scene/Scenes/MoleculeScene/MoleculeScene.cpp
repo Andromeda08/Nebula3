@@ -90,6 +90,8 @@ void MoleculeScene::findAndLoadMolecules() noexcept
             mLoadedMolecules.push_back(mMolecules.back().mCIFData->getName());
             fmtLoaded.push_back(fmt::format("{}", styled(mMolecules.back().mCIFData->getName(), fg(fmt::color::cyan) | fmt::emphasis::bold)));
         }
+        // todo: load first temporarily
+        break;
     }
     const auto endTime = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<float> delta = endTime - startTime;
