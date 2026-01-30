@@ -75,6 +75,7 @@ void MoleculeScene::findAndLoadMolecules() noexcept
     }
 
     std::vector<std::string> fmtLoaded;
+    const auto startTime = std::chrono::high_resolution_clock::now();
     for (const auto& file : std::filesystem::directory_iterator(moleculesDir))
     {
         if (file.is_regular_file() && file.path().extension() == ".cif")
@@ -90,7 +91,11 @@ void MoleculeScene::findAndLoadMolecules() noexcept
             fmtLoaded.push_back(fmt::format("{}", styled(mMolecules.back().mCIFData->getName(), fg(fmt::color::cyan) | fmt::emphasis::bold)));
         }
     }
-    spdlog::info("Loaded molecule(s): {}", join(fmtLoaded));
+    const auto endTime = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<float> delta = endTime - startTime;
+    const float dt = delta.count();
+
+    spdlog::info("Loaded molecule(s): {} (time: {}s)", join(fmtLoaded), dt);
 }
 
 void MoleculeScene::changeActiveMolecule(const std::string& name) noexcept
