@@ -225,7 +225,7 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
             mPositions[id] = PositionData {
                 .observed = observedPosition,
                 .expected = glm::vec3(0.0f),
-                .typeSymbol = mAtoms[compIds[i]][i].typeSymbol,
+                .typeSymbol = "",
             };
         }
 
