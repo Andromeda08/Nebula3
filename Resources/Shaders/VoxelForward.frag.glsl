@@ -3,13 +3,11 @@
 // Input Attributes
 // ========================================
 layout (location = 0) in vec4 inWorldPosition;
-// layout (location = 1) in vec4 inWorldNormal;
+layout (location = 1) in vec4 inWorldNormal;
+layout (location = 2) in vec4 inColor;
 
 // Bound Resources
 // ========================================
-layout (push_constant) uniform PushConstant {
-    vec4 color;
-};
 layout (set = 0, binding = 0) uniform CameraData {
     mat4  view;
     mat4  proj;
@@ -25,12 +23,7 @@ layout (set = 0, binding = 0) uniform CameraData {
 // ========================================
 layout (location = 0) out vec4 outColor;
 
-vec3 gammaCorrection(vec3 color)
-{
-    return pow(color, vec3(1.0 / 2.2));
-}
-
 void main()
 {
-    outColor = vec4(color.rgb, 1.0);
+    outColor = vec4(inColor.rgb, 1.0);
 }

@@ -197,6 +197,10 @@ add_executable(Nebula3
     Nebula/Math/HeightMap.hpp
     Nebula/Core/Random.hpp
     Nebula/Math/HeightMap.cpp
+    Nebula/Scene/Voxel/TerrainGenerator.hpp
+    Nebula/Scene/Voxel/TerrainGenerator.cpp
+    Nebula/Scene/Voxel/VoxelScene.hpp
+    Nebula/Scene/Voxel/GPUVoxelInstanceData.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

@@ -5,6 +5,7 @@
 #include "RenderPass/HelloTrianglePass.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
 #include "../Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
+#include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
@@ -33,12 +34,12 @@ App::App()
     });
     mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
-    mScene = makeUnique<MoleculeScene>(SceneCreateInfo{
+    mScene = makeUnique<VoxelScene>(SceneCreateInfo{
         .rhi  = mVulkanRHI,
-        .name = "Molecule Scene",
+        .name = "Voxel Scene",
     });
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
-    MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
+    // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 }
 
 UPtr<App> App::create() noexcept
