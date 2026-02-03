@@ -194,6 +194,9 @@ add_executable(Nebula3
     Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.hpp
     Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.cpp
     Nebula/Core/Ranges.hpp
+    Nebula/Math/HeightMap.hpp
+    Nebula/Core/Random.hpp
+    Nebula/Math/HeightMap.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
