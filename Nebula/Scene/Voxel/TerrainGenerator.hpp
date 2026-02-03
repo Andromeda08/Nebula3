@@ -43,6 +43,7 @@ namespace vxl
         };
 
         TerrainGeneratorControl              mControl;
+        glm::vec3                            mOffset;
         HeightMap                            mHeightMap;
         std::vector<UPtr<IFeatureGenerator>> mGenerators;
         std::vector<VoxelData>               mVoxels;

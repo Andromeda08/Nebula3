@@ -60,17 +60,6 @@ glm::vec3 HeightMap::sample() const noexcept
 {
     const auto s = randomPoint();
     const auto y = mHeightMap[s.x][s.y];
-
-    if (mCentered)
-    {
-        const auto sizeOver2 = static_cast<float>(mSize) / 2.0f;
-        return {
-            static_cast<float>(s.x) - sizeOver2,
-            static_cast<float>(y),
-            static_cast<float>(s.y) - sizeOver2,
-        };
-    }
-
     return { static_cast<float>(s.x), static_cast<float>(y), static_cast<float>(s.y) };
 }
 

@@ -3,6 +3,7 @@
 #include "GPUVoxelInstanceData.hpp"
 #include "TerrainGenerator.hpp"
 #include "Features/FoliageGenerator.hpp"
+#include "Features/PillarGenerator.hpp"
 #include "Math/Transform.hpp"
 #include "Scene/Scene.hpp"
 #include "Scene/Camera/FlyingCamera.hpp"
@@ -80,6 +81,7 @@ private:
     void generateTerrainVoxelData() noexcept
     {
         auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 128, true });
+        terrainGenerator.addGenerator<vxl::PillarGenerator>(64);
         terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
             .patchCount             = 96,
             .patchRadius            = 12,
@@ -94,7 +96,7 @@ private:
 
         mInstanceData = terrainGenerator.getResult()
             | std::views::transform([](const vxl::VoxelData& data) -> GPUVoxelInstanceData {
-                auto t = Transform().setTranslate(data.position);
+                auto t = Transform().setScale(data.scale).setTranslate(data.position);
                 return {
                     .model = t.getModel(),
                     .color = glm::vec4(data.color, 1.0f),

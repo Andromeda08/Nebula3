@@ -6,6 +6,8 @@ namespace vxl
     : mControl(control)
     , mHeightMap(control)
     {
+        const auto sizeOver2 = static_cast<float>(control.size) / 2.0f;
+        mOffset = control.centered ? glm::vec3(sizeOver2, 0.0f, sizeOver2) : glm::vec3(0.0f);
     }
 
     void TerrainGenerator::generate() noexcept
@@ -26,6 +28,7 @@ namespace vxl
                     const auto value = height.value();
                     VoxelData voxel = {
                         .position = glm::vec3(x, value, y),
+                        .scale    = glm::vec3(1.0f),
                         .color    = glm::vec3(xPercent, 0.0f, yPercent),
                     };
                     mVoxels.push_back(voxel);
@@ -37,6 +40,11 @@ namespace vxl
         for (auto&& generator : mGenerators)
         {
             mVoxels.append_range(generator->generate());
+        }
+
+        for (auto& voxel : mVoxels)
+        {
+            voxel.position -= mOffset;
         }
     }
 
