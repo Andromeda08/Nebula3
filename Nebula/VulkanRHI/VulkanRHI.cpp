@@ -181,4 +181,26 @@ namespace RHI
         }
         return RenderPass::create(privateCreateInfo);
     }
+
+    void VulkanRHI::immediate_uploadToBuffer(const Buffer* pDst, const void* pData, const uint64_t size, const uint64_t srcOffset, const uint64_t dstOffset) const noexcept
+    {
+        const auto staging = createBuffer({
+            .size  = size,
+            .type  = BufferType::Staging,
+            .label = std::format("StagingBuffer-DstId-{}", pDst->getId()),
+        });
+        staging->setData(pData, size, srcOffset);
+
+        mGraphicsQueue->immediate([&](const CommandList* pCommandList) -> void {
+            const auto region = vk::BufferCopy2()
+                .setSrcOffset(srcOffset)
+                .setDstOffset(dstOffset)
+                .setSize(size);
+            const auto copy = vk::CopyBufferInfo2()
+                .setSrcBuffer(staging->getHandle())
+                .setDstBuffer(pDst->getHandle())
+                .setRegions(region);
+            pCommandList->getHandle().copyBuffer2(copy);
+        });
+    }
 }
