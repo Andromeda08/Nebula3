@@ -55,8 +55,6 @@ protected:
         return dynamic_cast<T*>(mGeometries.back().get());
     }
 
-    void createGPUGeometryResources() noexcept;
-
     std::vector<UPtr<Geometry>>         mGeometries;
 
     SPtr<RHI::Descriptor>               mSceneDescriptor;
