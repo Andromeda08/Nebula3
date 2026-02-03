@@ -3,24 +3,13 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include "IFeatureGenerator.hpp"
+#include "VoxelData.hpp"
 #include "Core/Types.hpp"
 #include "Math/HeightMap.hpp"
 
 namespace vxl
 {
-    struct VoxelData
-    {
-        glm::vec3 position = glm::vec3(0.0f);
-        glm::vec3 color    = glm::vec3(1.0f);
-    };
-
-    class IFeatureGenerator
-    {
-    public:
-        virtual ~IFeatureGenerator() = default;
-        virtual std::vector<VoxelData> generate() noexcept = 0;
-    };
-
     struct TerrainGeneratorControl : public HeightMap::Control
     {
     };

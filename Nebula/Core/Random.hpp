@@ -26,6 +26,11 @@ public:
         return std::uniform_real_distribution{from, to}(Random::getInstance().mEngine);
     }
 
+    [[nodiscard]] static float unit() noexcept
+    {
+        return std::uniform_real_distribution<float>{0.0f, 1.0f}(Random::getInstance().mEngine);
+    }
+
     #ifdef nbl_RND_GLM
 
     /**

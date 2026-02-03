@@ -33,6 +33,11 @@ namespace vxl
                 }
             }
         }
+
+        for (auto&& generator : mGenerators)
+        {
+            mVoxels.append_range(generator->generate());
+        }
     }
 
     std::array<int32_t, 4> TerrainGenerator::getNeighborhoodDeltas(const glm::ivec3& pos) const noexcept

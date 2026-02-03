@@ -2,6 +2,7 @@
 
 #include "GPUVoxelInstanceData.hpp"
 #include "TerrainGenerator.hpp"
+#include "Features/FoliageGenerator.hpp"
 #include "Math/Transform.hpp"
 #include "Scene/Scene.hpp"
 #include "Scene/Camera/FlyingCamera.hpp"
@@ -79,6 +80,15 @@ private:
     void generateTerrainVoxelData() noexcept
     {
         auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 128, true });
+        terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
+            .patchCount             = 96,
+            .patchRadius            = 12,
+            .radiusVariance         = 3,
+            .density                = 0.65f,
+            .patchDensityVariance   = true,
+            .instanceRandomOffset   = true,
+            .instanceRandomScale    = true,
+        });
 
         terrainGenerator.generate();
 
