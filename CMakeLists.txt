@@ -204,6 +204,7 @@ add_executable(Nebula3
     Nebula/Scene/Voxel/Features/FoliageGenerator.hpp
     Nebula/Scene/Voxel/IFeatureGenerator.hpp
     Nebula/Scene/Voxel/VoxelData.hpp
+    Nebula/Scene/Voxel/Features/FoliageGenerator.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
