@@ -97,6 +97,15 @@ namespace RHI
             attachmentStates.push_back(state);
             return *this;
         }
+
+        GraphicsPipelineStateInfo& addDefaultAttachmentStates(const uint32_t count = 1) noexcept
+        {
+            for (auto i = 0; i < count; i++)
+            {
+                attachmentStates.push_back(PipelineUtils::makeColorBlendAttachmentState());
+            }
+            return *this;
+        }
     };
 
     begin_PipelineCreateInfoStruct(Graphics)

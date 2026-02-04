@@ -220,5 +220,23 @@ namespace RHI
             return { extent.width, extent.height, 1 };
         }
 
+        [[nodiscard]] vk::ImageSubresourceLayers getSubresourceLayers() const noexcept
+        {
+            return vk::ImageSubresourceLayers()
+                .setAspectMask(aspectFlags)
+                .setBaseArrayLayer(0)
+                .setLayerCount(1)
+                .setMipLevel(0);
+        }
+
+        [[nodiscard]] vk::ImageSubresourceRange getSubresourceRange() const noexcept
+        {
+            return vk::ImageSubresourceRange()
+                .setAspectMask(aspectFlags)
+                .setBaseArrayLayer(0)
+                .setLayerCount(1)
+                .setBaseMipLevel(0)
+                .setLevelCount(levelCount);
+        }
     };
 }

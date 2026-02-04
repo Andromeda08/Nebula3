@@ -209,6 +209,9 @@ add_executable(Nebula3
     Nebula/Scene/Types/Light.hpp
     Nebula/Scene/LightSystem.hpp
     Nebula/Scene/LightSystem.cpp
+    Nebula/Scene/Voxel/vxlRenderPath.hpp
+    Nebula/Scene/Voxel/vxlRenderPath.cpp
+    Nebula/Scene/Voxel/VoxelScene.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
