@@ -43,7 +43,9 @@ public:
         auto camera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 0.0f, 5.0f));
         addCamera(std::move(camera), true);
 
-        mLights->addLight({ glm::vec3(0.0f, 25.0f, 0.0f) });
+        mLights->addLight({
+            .position = glm::vec3(0.0f, 25.0f, 0.0f),
+        });
 
         generateTerrainVoxelData();
 

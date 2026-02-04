@@ -27,7 +27,7 @@ struct Light
     float       intensity   = 10000.0f;
     bool        enabled     = true;
     LightType   type        = LightType::Point;
-    std::string name        = "UnknownLight";
+    std::string name        = "Light";
 };
 
 struct alignas(16) GPULightData
