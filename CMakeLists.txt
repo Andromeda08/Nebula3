@@ -140,7 +140,7 @@ add_executable(Nebula3
     Nebula/Scene/Types/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
     Nebula/Scene/Scene.hpp
-    Nebula/Scene/Types/LightParameters.hpp
+    Nebula/Scene/Types/Light.hpp
     Nebula/Scene/SceneConfiguration.hpp
     Nebula/Scene/Scene.cpp
     Nebula/Scene/Components/SceneInfoComponent.hpp
@@ -206,6 +206,9 @@ add_executable(Nebula3
     Nebula/Scene/Voxel/VoxelData.hpp
     Nebula/Scene/Voxel/Features/FoliageGenerator.cpp
     Nebula/Scene/Voxel/Features/PillarGenerator.hpp
+    Nebula/Scene/Types/Light.hpp
+    Nebula/Scene/LightSystem.hpp
+    Nebula/Scene/LightSystem.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

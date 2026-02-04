@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LightSystem.hpp"
 #include "TextureManager.hpp"
 #include "Camera/ICamera.hpp"
 #include "Core/Macro.hpp"
@@ -33,6 +34,8 @@ public:
     virtual ~Scene() = default;
 
     virtual void registerUIComponents(UserInterface* pUserInterface) const noexcept;
+
+    virtual void preFrame() noexcept;
 
     virtual void onEvent(const SDL_Event& event) const noexcept;
 
@@ -70,6 +73,8 @@ private:
 
     std::vector<UPtr<ICamera>>          mCameras;
     ICamera*                            mActiveCamera;
+
+    UPtr<LightSystem>                        mLights;
 
     std::string                         mName;
 };

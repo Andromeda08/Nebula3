@@ -21,13 +21,20 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         });
     }
 
+    // Light system
+    mLights = makeUnique<LightSystem>(mRHI);
+
     /* Scene Descriptor */
     {
         mSceneDescriptor = mRHI->createDescriptor({
             .bindings = {
-                vk::DescriptorSetLayoutBinding{
+                vk::DescriptorSetLayoutBinding {
                     0, vk::DescriptorType::eUniformBuffer, 1,
-                    vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+                    vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+                },
+                vk::DescriptorSetLayoutBinding {
+                    1, vk::DescriptorType::eStorageBuffer, 1,
+                    vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
                 },
             },
             .setCount = 2,
@@ -37,7 +44,8 @@ Scene::Scene(const SceneCreateInfo& createInfo)
         for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
         {
             const auto descriptorWrite = RHI::DescriptorWrite()
-                .writeUniformBuffer(0, mCameraUniformBuffers[i]);
+                .writeUniformBuffer(0, mCameraUniformBuffers[i])
+                .writeStorageBuffer(1, mLights->getDataBuffer());
             mSceneDescriptor->write(i, descriptorWrite);
         }
     }
@@ -45,6 +53,11 @@ Scene::Scene(const SceneCreateInfo& createInfo)
 
 void Scene::registerUIComponents(UserInterface* pUserInterface) const noexcept
 {
+}
+
+void Scene::preFrame() noexcept
+{
+    mLights->upload();
 }
 
 void Scene::onEvent(const SDL_Event& event) const noexcept

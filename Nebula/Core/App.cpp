@@ -4,7 +4,7 @@
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "RenderPass/HelloTrianglePass.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
-#include "../Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
+#include "Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
@@ -29,10 +29,10 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>();
 
-    mRenderGraphContext = rg::RenderGraphContext::create({
-        .rhi = mVulkanRHI,
-    });
-    mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
+    // mRenderGraphContext = rg::RenderGraphContext::create({
+    //     .rhi = mVulkanRHI,
+    // });
+    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
     mScene = makeUnique<VoxelScene>(SceneCreateInfo{
         .rhi  = mVulkanRHI,
@@ -68,6 +68,8 @@ void App::run_renderPathLoop()
     {
         const float dt = mDeltaTime.getDeltaTime();
         // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
+
+        mScene->preFrame();
 
         // Input
         SDL_Event event;

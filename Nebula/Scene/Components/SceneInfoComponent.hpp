@@ -14,4 +14,5 @@ public:
 
 private:
     Scene* mScene;
+    std::size_t mLightIndex = 0;
 };
