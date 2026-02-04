@@ -29,6 +29,7 @@ set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
+    Nebula/Impl/pch.hpp
     Nebula/Core/Configuration.hpp
     Nebula/VulkanRHI/RHIConfiguration.hpp
     Nebula/Core/AppSpecification.hpp
@@ -52,7 +53,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/VulkanRHI.cpp
     Nebula/Core/Util.hpp
     Nebula/Impl/stb.impl.cpp
-    Nebula/Impl/std_macos.pch.hpp
     Nebula/Impl/vma.impl.cpp
     Nebula/VulkanRHI/Device.cpp
     Nebula/VulkanRHI/Swapchain.hpp
@@ -243,5 +243,5 @@ target_compile_definitions(Nebula3 PUBLIC
 )
 
 target_precompile_headers(Nebula3 PUBLIC
-    Nebula/Impl/std_macos.pch.hpp
+    Nebula/Impl/pch.hpp
 )

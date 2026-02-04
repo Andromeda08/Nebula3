@@ -1,5 +1,8 @@
 #include "TerrainGenerator.hpp"
 
+#include "Core/Random.hpp"
+#include "Core/Ranges.hpp"
+
 namespace vxl
 {
     TerrainGenerator::TerrainGenerator(const TerrainGeneratorControl& control)

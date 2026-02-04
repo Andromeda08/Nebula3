@@ -2,6 +2,8 @@
 
 #include <print>
 
+#include "Core/Ranges.hpp"
+
 namespace RHI
 {
     #pragma region "DescriptorWriteInfo"

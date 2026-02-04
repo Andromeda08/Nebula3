@@ -5,6 +5,7 @@
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
+#include "Types/Light.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/Frame.hpp"
 
@@ -69,5 +70,6 @@ private:
 
     std::vector<UPtr<ICamera>>          mCameras;
     ICamera*                            mActiveCamera;
+
     std::string                         mName;
 };

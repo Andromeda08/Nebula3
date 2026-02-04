@@ -80,7 +80,7 @@ public:
 private:
     void generateTerrainVoxelData() noexcept
     {
-        auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 128, true });
+        auto terrainGenerator = vxl::TerrainGenerator({ 1024, 24, 128, true });
         terrainGenerator.addGenerator<vxl::PillarGenerator>(64);
         terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
             .patchCount             = 96,

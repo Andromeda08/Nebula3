@@ -1,6 +1,7 @@
 #include "Device.hpp"
 
 #include "Texture.hpp"
+#include "Core/Ranges.hpp"
 
 namespace RHI
 {

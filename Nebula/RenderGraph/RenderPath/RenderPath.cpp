@@ -1,6 +1,7 @@
 #include "RenderPath.hpp"
 
 #include "PassFactory.hpp"
+#include "Core/Ranges.hpp"
 
 namespace rg
 {
