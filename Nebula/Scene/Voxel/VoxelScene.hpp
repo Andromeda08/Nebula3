@@ -43,6 +43,8 @@ public:
         auto camera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 0.0f, 5.0f));
         addCamera(std::move(camera), true);
 
+        mLights->addLight({ glm::vec3(0.0f, 25.0f, 0.0f) });
+
         generateTerrainVoxelData();
 
         createForwardPass();
@@ -80,10 +82,9 @@ public:
 private:
     void generateTerrainVoxelData() noexcept
     {
-        auto terrainGenerator = vxl::TerrainGenerator({ 1024, 24, 128, true });
-        terrainGenerator.addGenerator<vxl::PillarGenerator>(64);
+        auto terrainGenerator = vxl::TerrainGenerator({ 128, 24, 96, true });
         terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
-            .patchCount             = 96,
+            .patchCount             = 12,
             .patchRadius            = 12,
             .radiusVariance         = 3,
             .density                = 0.65f,

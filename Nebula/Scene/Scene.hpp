@@ -61,8 +61,9 @@ protected:
 
     std::vector<UPtr<Geometry>>         mGeometries;
 
-    SPtr<RHI::Descriptor>               mSceneDescriptor;
+    UPtr<LightSystem>                   mLights;
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUniformBuffers;
+    SPtr<RHI::Descriptor>               mSceneDescriptor;
 
     UPtr<TextureManager>                mTextureManager;
 
@@ -73,8 +74,6 @@ private:
 
     std::vector<UPtr<ICamera>>          mCameras;
     ICamera*                            mActiveCamera;
-
-    UPtr<LightSystem>                        mLights;
 
     std::string                         mName;
 };
