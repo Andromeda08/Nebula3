@@ -33,12 +33,14 @@ public:
     constexpr static float    sSSAORadius     = 0.3f;
 
     vxlPass                 mSSAOPass;
-    vxlPass                 mSSAO_BlurPass;
     SPtr<RHI::Image>        mSSAOBuffer;        // Attachment 0
-    SPtr<RHI::Image>        mSSAO_BlurBuffer;   // Attachment 0
     SPtr<RHI::Image>        mSSAONoise;
     SPtr<RHI::Buffer>       mSSAOKernel;
     SPtr<RHI::Descriptor>   mSSAODescriptor;
+
+    vxlPass                 mSSAO_BlurPass;
+    SPtr<RHI::Image>        mSSAO_BlurBuffer;   // Attachment 0
+    SPtr<RHI::Descriptor>   mSSAO_BlurDescriptor;
 
     // Lighting Pass
     vxlPass                 mLightingPass;
