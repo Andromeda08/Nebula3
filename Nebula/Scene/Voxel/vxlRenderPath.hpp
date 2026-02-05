@@ -28,8 +28,17 @@ public:
     SPtr<RHI::Image>        mDepthImage;        // Depth Attachment
 
     // Ambient Occlusion
+    constexpr static uint32_t sSSAOKernelSize = 64;
+    constexpr static uint32_t sSSAONoiseSize  = 8;
+    constexpr static float    sSSAORadius     = 0.3f;
+
     vxlPass                 mSSAOPass;
-    SPtr<RHI::Image>        mAOBuffer;          // Attachment 0
+    vxlPass                 mSSAO_BlurPass;
+    SPtr<RHI::Image>        mSSAOBuffer;        // Attachment 0
+    SPtr<RHI::Image>        mSSAO_BlurBuffer;   // Attachment 0
+    SPtr<RHI::Image>        mSSAONoise;
+    SPtr<RHI::Buffer>       mSSAOKernel;
+    SPtr<RHI::Descriptor>   mSSAODescriptor;
 
     // Lighting Pass
     vxlPass                 mLightingPass;
@@ -50,6 +59,12 @@ private:
     void create_GBufferPass() noexcept;
 
     void execute_GBufferPass(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept;
+
+    void resources_SSAOPass() noexcept;
+
+    void create_SSAOPass() noexcept;
+
+    void execute_SSAOPass(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept;
 
     void execute_BlitToSwapchain(RHI::Image* pFinalImage, const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 };

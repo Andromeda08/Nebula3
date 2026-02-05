@@ -4,7 +4,7 @@
 // ========================================
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inUv;
+layout (location = 2) in vec2 inUV;
 
 // Instance Attributes
 // ========================================
@@ -13,9 +13,9 @@ layout (location = 7) in vec4 inColor;
 
 // Output Attributes
 // ========================================
-layout (location = 0) out vec4 outWorldPosition;
-layout (location = 1) out vec4 outWorldNormal;
-layout (location = 2) out vec2 outUv;
+layout (location = 0) out vec4 outViewPosition;
+layout (location = 1) out vec4 outViewNormal;
+layout (location = 2) out vec2 outUV;
 layout (location = 3) out vec4 outColor;
 
 // Bound Resources
@@ -32,11 +32,15 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 
 void main()
 {
-    vec3 normal = mat3(inModel) * inNormal;
+    mat4 MV = camera.view * inModel;
 
-    outWorldPosition = inModel * vec4(inPosition, 1.0);
-    outWorldNormal   = vec4(normal, 0.0);
-    outUv            = inUv;
-    outColor         = inColor;
-    gl_Position     = camera.proj * camera.view * outWorldPosition;
+    vec4 viewPos = MV * vec4(inPosition, 1.0);
+    outViewPosition = viewPos;
+
+    mat3 normalMatrix = transpose(inverse(mat3(MV)));
+    outViewNormal = vec4(normalMatrix * inNormal, 0.0);
+
+    outUV       = inUV;
+    outColor    = inColor;
+    gl_Position = camera.proj * viewPos;
 }

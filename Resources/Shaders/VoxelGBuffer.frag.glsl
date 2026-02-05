@@ -2,9 +2,9 @@
 
 // Input Attributes
 // ========================================
-layout (location = 0) in vec4 inWorldPosition;
-layout (location = 1) in vec4 inWorldNormal;
-layout (location = 2) in vec2 inUv;
+layout (location = 0) in vec4 inViewPosition;
+layout (location = 1) in vec4 inViewNormal;
+layout (location = 2) in vec2 inUV;
 layout (location = 3) in vec4 inColor;
 
 // Input Attributes
@@ -25,9 +25,15 @@ layout (set = 0, binding = 0) uniform CameraUniform {
     float farPlane;
 } camera;
 
+float linearDepth(float depth)
+{
+    return (camera.nearPlane * camera.farPlane) /
+        (camera.farPlane - depth * (camera.farPlane - camera.nearPlane));
+}
+
 void main()
 {
-    outPosition = inWorldPosition;
-    outNormal   = inWorldNormal;
-    outAlbedo   = vec4(inColor.rgb, 1.0);
+    outPosition = vec4(inViewPosition.xyz, linearDepth(gl_FragCoord.z));
+    outNormal   = vec4(normalize(inViewNormal.xyz), 1.0);
+    outAlbedo   = inColor;
 }

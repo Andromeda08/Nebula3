@@ -75,11 +75,11 @@ void FlyingCamera::onUpdate() noexcept
     }
     if (mKeyState.up)
     {
-        mEye += (mSpeed / 2.0f) * mUp;
+        mEye -= (mSpeed / 2.0f) * mUp;
     }
     if (mKeyState.down)
     {
-        mEye -= (mSpeed / 2.0f) * mUp;
+        mEye += (mSpeed / 2.0f) * mUp;
     }
 }
 
@@ -95,10 +95,12 @@ glm::mat4 FlyingCamera::view() const
 
 glm::mat4 FlyingCamera::projection() const
 {
-    return glm::perspective(
+    auto proj = glm::perspective(
         glm::radians(mFov),
         static_cast<float>(mSize.x) / static_cast<float>(mSize.y),
         mNear, mFar);
+    proj[1][1] *= -1.0f;
+    return proj;
 }
 
 CameraData FlyingCamera::getCameraData() const
@@ -161,7 +163,7 @@ void FlyingCamera::handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noe
 
     const glm::vec3 newOrientation = glm::rotate(
         mOrientation,
-        glm::radians(-rotX),
+        glm::radians(rotX),
         glm::normalize(glm::cross(mOrientation, mUp))
     );
 
