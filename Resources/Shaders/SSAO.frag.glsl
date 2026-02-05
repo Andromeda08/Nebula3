@@ -33,21 +33,22 @@ layout (set = 1, binding = 3) uniform sampler2D uNormal;
 
 void main()
 {
-    vec3 fragPos = texture(uPositionDepth, inUV).rgb;
+    vec2 uv = inUV;
+    uv.y = 1.0 - uv.y;
 
+    vec3 fragPos = texture(uPositionDepth, uv).rgb;
     if (fragPos.z >= 0.0)
     {
         outColor = 1.0;
         return;
     }
 
-    vec3 normal = normalize(texture(uNormal, inUV).rgb);
+    vec3 normal = normalize(texture(uNormal, uv).rgb);
 
     ivec2 texDim = textureSize(uPositionDepth, 0);
     ivec2 noiseDim = textureSize(SSAO_Noise, 0);
-    vec2 noiseScale = vec2(float(texDim.x) / float(noiseDim.x),
-    float(texDim.y) / float(noiseDim.y));
-    vec3 randomVec = texture(SSAO_Noise, inUV * noiseScale).xyz * 2.0 - 1.0;
+    vec2 noiseScale = vec2(float(texDim.x) / float(noiseDim.x), float(texDim.y) / float(noiseDim.y));
+    vec3 randomVec = texture(SSAO_Noise, uv * noiseScale).xyz * 2.0 - 1.0;
 
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
