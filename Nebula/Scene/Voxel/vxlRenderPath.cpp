@@ -10,15 +10,22 @@ vxlRenderPath::vxlRenderPath(const SPtr<RHI::VulkanRHI>& rhi, VoxelScene* pScene
     mRenderResolution = { mRenderExtent.width, mRenderExtent.height };
 
     mGBuffer = Voxel_GBufferPass::create({
-        .resolution = mRenderExtent,
+        .resolution = mRenderResolution,
         .pScene     = mScene,
         .rhi        = mRHI,
     });
 
     mSSAO = SSAOPass::create({
         .useBlur    = true,
-        .resolution = { mRenderResolution.width / 2, mRenderResolution.height / 2 },
+        //.resolution = { mRenderResolution.width / 2, mRenderResolution.height / 2 },
+        .resolution = mRenderResolution,
         .input      = { mGBuffer->getPosition(), mGBuffer->getNormal(), mScene->mSceneDescriptor },
+        .rhi        = mRHI,
+    });
+
+    mLightingPass = LightingPass::create({
+        .resolution = mRenderResolution,
+        .input      = { mGBuffer->getPosition(), mGBuffer->getNormal(), mGBuffer->getAlbedo(), mScene->mSceneDescriptor, mSSAO->getResult() },
         .rhi        = mRHI,
     });
 }
@@ -29,9 +36,10 @@ void vxlRenderPath::execute(const RHI::CommandList* commandList, const RHI::Fram
 
     mGBuffer->execute(commandList, frameData);
     mSSAO->execute(commandList, frameData);
+    mLightingPass->execute(commandList, frameData);
 
     // Blit final image to swapchain
-    execute_BlitToSwapchain(mSSAO->getResult().get(), commandList, frameData);
+    execute_BlitToSwapchain(mLightingPass->getResult().get(), commandList, frameData);
 
     commandList->endLabel();
 }

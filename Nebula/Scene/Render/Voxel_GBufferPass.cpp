@@ -5,9 +5,8 @@
 #include "Scene/Voxel/VoxelScene.hpp"
 
 Voxel_GBufferPass::Voxel_GBufferPass(const GBuffer_Params& params)
-: mRenderResolution(params.resolution)
+: RenderPass({ params.resolution, params.rhi, "Voxel_GBuffer" })
 , mScene(params.pScene)
-, mRHI(params.rhi)
 {
     createResources();
     createPipeline();
@@ -18,17 +17,11 @@ UPtr<Voxel_GBufferPass> Voxel_GBufferPass::create(const GBuffer_Params& params) 
     return makeUnique<Voxel_GBufferPass>(params);
 }
 
-void Voxel_GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+void Voxel_GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     pCommandList->beginLabel("Voxel_GBufferPass");
 
-    const auto viewport = vk::Viewport()
-        .setX(0.0f).setY(0)
-        .setWidth(mRenderResolution.width).setHeight(mRenderResolution.height)
-        .setMinDepth(0.0f).setMaxDepth(1.0f);
-    const auto scissor = getRenderArea();
-    pCommandList->getHandle().setViewport(0, viewport);
-    pCommandList->getHandle().setScissor(0, scissor);
+    setScissorViewport(pCommandList);
 
     // Barriers
     RHI::Barrier()
@@ -67,13 +60,6 @@ const SPtr<RHI::Image>& Voxel_GBufferPass::getNormal() const noexcept
 const SPtr<RHI::Image>& Voxel_GBufferPass::getAlbedo() const noexcept
 {
     return mAlbedoBuffer;
-}
-
-vk::Rect2D Voxel_GBufferPass::getRenderArea() const noexcept
-{
-    return vk::Rect2D()
-        .setExtent(mRenderResolution)
-        .setOffset({ 0, 0 });
 }
 
 void Voxel_GBufferPass::createResources() noexcept

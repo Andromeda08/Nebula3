@@ -5,6 +5,15 @@
 #include "Core/Ranges.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
+struct GPULightData
+{
+    glm::vec4   position;
+    glm::vec4   color;
+    float       intensity;
+    int32_t     enabled;
+    int32_t     _p0, _p1;
+};
+
 LightSystem::LightSystem(const SPtr<RHI::VulkanRHI>& rhi, const std::vector<Light>& initialLights)
 : mRHI(rhi)
 {
@@ -14,17 +23,20 @@ LightSystem::LightSystem(const SPtr<RHI::VulkanRHI>& rhi, const std::vector<Ligh
         .label = "LightsDataBuffer",
     });
 
-    for (const auto& [i, light] : nbl::enumerate(initialLights))
+    if (!initialLights.empty())
     {
-        if (i >= sMaxLights)
+        for (const auto& [i, light] : nbl::enumerate(initialLights))
         {
-            break;
+            if (i >= sMaxLights)
+            {
+                break;
+            }
+            mLights[i]   = light;
+            mValidity[i] = true;
+            mUploadQueue.push_back(i);
         }
-        mLights[i]   = light;
-        mValidity[i] = true;
-        mUploadQueue.push_back(i);
+        upload();
     }
-    upload();
 }
 
 uint64_t LightSystem::addLight(const Light& light) noexcept
@@ -39,7 +51,7 @@ uint64_t LightSystem::addLight(const Light& light) noexcept
     const auto index = std::distance(std::begin(mValidity), it);
 
     mValidity[index] = true;
-    mLights[index]   = light;
+    mLights[index]   = Light(light);
     if (light.name == "Light")
     {
         mLights[index].name = std::format("Light #{}", index);
@@ -66,17 +78,22 @@ void LightSystem::upload() noexcept
     });
 
     // Prepare data and copy regions
-    std::vector<GPULightData>    data(mUploadQueue.size());
+    std::vector<GPULightData>    data;
     std::vector<vk::BufferCopy2> regions;
     for (const auto& [uploadQueueIndex, lightIndex] : nbl::enumerate(mUploadQueue))
     {
         const auto region = vk::BufferCopy2()
-                            .setSrcOffset(uploadQueueIndex * elementSize)
-                            .setDstOffset(lightIndex * elementSize)
-                            .setSize(elementSize);
+            .setSrcOffset(uploadQueueIndex * elementSize)
+            .setDstOffset(lightIndex * elementSize)
+            .setSize(elementSize);
 
         regions.push_back(region);
-        data.push_back(GPULightData::fromLight(mLights[lightIndex]));
+        data.push_back({
+            .position = glm::vec4(mLights[lightIndex].position, 1.0f),
+            .color = glm::vec4(mLights[lightIndex].color, 1.0f),
+            .intensity = mLights[lightIndex].intensity,
+            .enabled = mLights[lightIndex].enabled ? 1 : 0,
+        });
     }
 
     // Set staging data then copy to LightsBuffer
@@ -84,13 +101,13 @@ void LightSystem::upload() noexcept
 
     mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
         const auto copyInfo = vk::CopyBufferInfo2()
-                              .setSrcBuffer(stagingBuffer->getHandle())
-                              .setDstBuffer(mLightsBuffer->getHandle())
-                              .setRegions(regions);
+            .setSrcBuffer(stagingBuffer->getHandle())
+            .setDstBuffer(mLightsBuffer->getHandle())
+            .setRegions(regions);
         pCommandList->getHandle().copyBuffer2(copyInfo);
     });
 
-    spdlog::debug("[Light System] Uploaded {} light(s).", mUploadQueue.size());
+    // spdlog::debug("[Light System] Uploaded {} light(s).", mUploadQueue.size());
     mUploadQueue.clear();
 }
 
@@ -102,6 +119,11 @@ uint64_t LightSystem::getCount() const noexcept
 const SPtr<RHI::Buffer>& LightSystem::getDataBuffer() const noexcept
 {
     return mLightsBuffer;
+}
+
+void LightSystem::queueUpdate(const int32_t lightIndex) noexcept
+{
+    mUploadQueue.push_back(lightIndex);
 }
 
 std::set<uint64_t> LightSystem::getValidIndices() const noexcept

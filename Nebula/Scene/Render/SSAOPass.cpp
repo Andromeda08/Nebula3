@@ -5,10 +5,9 @@
 #include "VulkanRHI/Barrier.hpp"
 
 SSAOPass::SSAOPass(const SSAO_Params& params)
-: mInput(params.input)
-, mInternalResolution(params.resolution)
+: RenderPass({ params.resolution, params.rhi, "SSAO" })
+, mInput(params.input)
 , mRunBlurPass(params.useBlur)
-, mRHI(params.rhi)
 {
     createKernel();
     createNoiseTexture();
@@ -22,17 +21,11 @@ UPtr<SSAOPass> SSAOPass::create(const SSAO_Params& params) noexcept
     return makeUnique<SSAOPass>(params);
 }
 
-void SSAOPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+void SSAOPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     pCommandList->beginLabel("Screen-Space AO");
 
-    const auto viewport = vk::Viewport()
-        .setX(0.0f).setY(0)
-        .setWidth(mInternalResolution.width).setHeight(mInternalResolution.height)
-        .setMinDepth(0.0f).setMaxDepth(1.0f);
-    const auto scissor = getRenderArea();
-    pCommandList->getHandle().setViewport(0, viewport);
-    pCommandList->getHandle().setScissor(0, scissor);
+    setScissorViewport(pCommandList);
 
     execute_SSAO(pCommandList, frameData);
 
@@ -57,13 +50,6 @@ const SPtr<RHI::Image>& SSAOPass::getSSAOResult() const noexcept
 const SPtr<RHI::Image>& SSAOPass::getBlurredResult() const noexcept
 {
     return mBlur_Result;
-}
-
-vk::Rect2D SSAOPass::getRenderArea() const noexcept
-{
-    return vk::Rect2D()
-        .setExtent({ mInternalResolution.width, mInternalResolution.height })
-        .setOffset({ 0, 0 });
 }
 
 void SSAOPass::createKernel() noexcept
@@ -138,7 +124,7 @@ void SSAOPass::createResources_SSAO() noexcept
 {
     using enum vk::ImageUsageFlagBits;
     mSSAO_Result = mRHI->createImage({
-        .extent        = { mInternalResolution.width, mInternalResolution.height },
+        .extent        = { mRenderResolution.width, mRenderResolution.height },
         .format        = vk::Format::eR32Sfloat,
         .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
         .createSampler = true,
@@ -197,7 +183,7 @@ void SSAOPass::createResources_Blur() noexcept
 {
     using enum vk::ImageUsageFlagBits;
     mBlur_Result = mRHI->createImage({
-        .extent        = { mInternalResolution.width, mInternalResolution.height },
+        .extent        = { mRenderResolution.width, mRenderResolution.height },
         .format        = vk::Format::eR32Sfloat,
         .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
         .createSampler = true,

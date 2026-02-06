@@ -2,16 +2,11 @@
 
 #include <VulkanRHI/VulkanRHI.hpp>
 
+#include "Scene/Render/LightingPass.hpp"
 #include "Scene/Render/SSAOPass.hpp"
 #include "Scene/Render/Voxel_GBufferPass.hpp"
 
 class VoxelScene;
-
-struct vxlPass
-{
-    SPtr<RHI::GraphicsPipeline> pipeline;
-    SPtr<RHI::RenderPass>       renderPass;
-};
 
 class vxlRenderPath
 {
@@ -24,6 +19,7 @@ public:
     vk::Extent2D            mRenderExtent;
 
     UPtr<Voxel_GBufferPass> mGBuffer;
+    UPtr<LightingPass>      mLightingPass;
     UPtr<SSAOPass>          mSSAO;
 
     VoxelScene*             mScene;

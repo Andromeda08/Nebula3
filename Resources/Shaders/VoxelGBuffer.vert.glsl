@@ -40,7 +40,12 @@ void main()
     mat3 normalMatrix = transpose(inverse(mat3(MV)));
     outViewNormal = vec4(normalMatrix * inNormal, 0.0);
 
-    outUV       = inUV;
+//    outViewPosition = inModel * vec4(inPosition, 1.0);
+//
+//    mat3 mNormal = transpose(inverse(mat3(inModel)));
+//    outViewNormal = vec4(mNormal * normalize(inNormal), 0.0);
+
+    outUV       = vec2(inUV.x, 1.0 - inUV.y);
     outColor    = inColor;
     gl_Position = camera.proj * viewPos;
 }

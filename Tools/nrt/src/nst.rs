@@ -52,15 +52,13 @@ fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
 }
 
 fn collect_shaders(params: &NSTParams) -> Vec<std::path::PathBuf> {
-    let excluded_extensions = HashSet::from(["inc", "h"]);
+    // let excluded_extensions = HashSet::from([]);
     let mut result: Vec<std::path::PathBuf> = vec!();
     for entry in glob::glob(format!("{0}/**/*.glsl", params.src.to_str().unwrap()).as_str()).expect("Failed to read glob pattern") {
         if let Ok(path) = entry {
             // Ignore include types
-            let file_name = String::from(path.file_name().unwrap().to_str().unwrap());
-            if excluded_extensions.iter().all(|x| !file_name.contains(x)) {
-                result.push(path);
-            }
+            // let file_name = String::from(path.file_name().unwrap().to_str().unwrap());
+            result.push(path);
         }
     }
     result

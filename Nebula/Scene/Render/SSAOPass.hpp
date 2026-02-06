@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RenderPass.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 struct SSAO_Input
@@ -21,14 +22,16 @@ struct SSAO_Params
 };
 
 // Screen-Space Ambient Occlusion
-class SSAOPass
+class SSAOPass : public RenderPass
 {
 public:
     explicit SSAOPass(const SSAO_Params& params);
 
     [[nodiscard]] static UPtr<SSAOPass> create(const SSAO_Params& params) noexcept;
 
-    void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+    ~SSAOPass() override = default;
+
+    void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
     // Get the current SSAO result image (depending on mRunBlurPass)
     [[nodiscard]] const SPtr<RHI::Image>& getResult() const noexcept;
@@ -40,8 +43,6 @@ public:
     [[nodiscard]] const SPtr<RHI::Image>& getBlurredResult() const noexcept;
 
 private:
-    [[nodiscard]] vk::Rect2D getRenderArea() const noexcept;
-
     void createKernel() noexcept;
     void createNoiseTexture() noexcept;
 
@@ -56,7 +57,6 @@ private:
     constexpr static float    sRadius     = 0.5f;
 
     SSAO_Input              mInput;
-    Size2D                  mInternalResolution;
     bool                    mRunBlurPass;
 
     // SSAO Pass
@@ -76,6 +76,4 @@ private:
     SPtr<RHI::Pipeline>     mBlur_Pipeline;
     SPtr<RHI::RenderPass>   mBlur_RenderPass;
     SPtr<RHI::Descriptor>   mBlur_Descriptor;
-
-    SPtr<RHI::VulkanRHI>    mRHI;
 };

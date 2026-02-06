@@ -36,6 +36,8 @@ public:
 
     [[nodiscard]] const SPtr<RHI::Buffer>& getDataBuffer() const noexcept;
 
+    void queueUpdate(int32_t lightIndex) noexcept;
+
 private:
     [[nodiscard]] std::set<uint64_t> getValidIndices() const noexcept;
 

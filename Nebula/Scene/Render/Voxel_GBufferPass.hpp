@@ -1,25 +1,26 @@
 #pragma once
 
+#include "RenderPass.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 class VoxelScene;
 
 struct GBuffer_Params
 {
-    vk::Extent2D            resolution;
+    Size2D                  resolution;
     VoxelScene*             pScene;
     SPtr<RHI::VulkanRHI>    rhi;
 };
 
 // G-Buffer Pass for the Voxel scene
-class Voxel_GBufferPass
+class Voxel_GBufferPass : public RenderPass
 {
 public:
     explicit Voxel_GBufferPass(const GBuffer_Params& params);
 
     [[nodiscard]] static UPtr<Voxel_GBufferPass> create(const GBuffer_Params& params) noexcept;
 
-    void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+    void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
     [[nodiscard]] const SPtr<RHI::Image>& getPosition() const noexcept;
 
@@ -28,12 +29,9 @@ public:
     [[nodiscard]] const SPtr<RHI::Image>& getAlbedo() const noexcept;
 
 private:
-    [[nodiscard]] vk::Rect2D getRenderArea() const noexcept;
-
     void createResources() noexcept;
     void createPipeline()  noexcept;
 
-    vk::Extent2D            mRenderResolution;
     VoxelScene*             mScene;
 
     SPtr<RHI::Image>        mPositionDepthBuffer;
@@ -43,6 +41,4 @@ private:
 
     SPtr<RHI::Pipeline>     mPipeline;
     SPtr<RHI::RenderPass>   mRenderPass;
-
-    SPtr<RHI::VulkanRHI>    mRHI;
 };

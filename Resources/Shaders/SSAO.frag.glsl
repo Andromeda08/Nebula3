@@ -34,7 +34,7 @@ layout (set = 1, binding = 3) uniform sampler2D uNormal;
 void main()
 {
     vec2 uv = inUV;
-    uv.y = 1.0 - uv.y;
+    // uv.y = 1.0 - uv.y;
 
     vec3 fragPos = texture(uPositionDepth, uv).rgb;
     if (fragPos.z >= 0.0)

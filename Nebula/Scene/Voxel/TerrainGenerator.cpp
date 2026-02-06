@@ -32,7 +32,7 @@ namespace vxl
                     VoxelData voxel = {
                         .position = glm::vec3(x, value, y),
                         .scale    = glm::vec3(1.0f),
-                        .color    = glm::vec3(xPercent, 0.0f, yPercent),
+                        .color    = glm::vec3(0.5f), //glm::vec3(xPercent, 0.0f, yPercent),
                     };
                     mVoxels.push_back(voxel);
                     mVoxels.append_range(fillGaps({ pos.x, value, pos.y }));

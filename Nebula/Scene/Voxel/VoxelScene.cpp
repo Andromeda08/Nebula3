@@ -24,12 +24,10 @@ VoxelScene::VoxelScene(const SceneCreateInfo& createInfo)
     mRHI->immediate_uploadToBuffer(mIndexBuffer.get(), mCube->getIndices().data(), indexSize);
 
     const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
-    auto camera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 0.0f, 5.0f));
+    auto camera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
     addCamera(std::move(camera), true);
 
-    mLights->addLight({
-        .position = glm::vec3(0.0f, 25.0f, 0.0f),
-    });
+    mLights->addLight({});
 
     generateTerrainVoxelData();
 
@@ -76,7 +74,7 @@ void VoxelScene::render(const RHI::CommandList* commandList, const RHI::FrameDat
 
 void VoxelScene::generateTerrainVoxelData() noexcept
 {
-    auto terrainGenerator = vxl::TerrainGenerator({ 128, 24, 96, true });
+    auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 96, true });
     terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
         .patchCount             = 12,
         .patchRadius            = 12,

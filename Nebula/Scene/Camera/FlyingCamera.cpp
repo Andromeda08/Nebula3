@@ -75,11 +75,11 @@ void FlyingCamera::onUpdate() noexcept
     }
     if (mKeyState.up)
     {
-        mEye -= (mSpeed / 2.0f) * mUp;
+        mEye += (mSpeed / 2.0f) * mUp;
     }
     if (mKeyState.down)
     {
-        mEye += (mSpeed / 2.0f) * mUp;
+        mEye -= (mSpeed / 2.0f) * mUp;
     }
 }
 
@@ -163,7 +163,7 @@ void FlyingCamera::handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noe
 
     const glm::vec3 newOrientation = glm::rotate(
         mOrientation,
-        glm::radians(rotX),
+        glm::radians(-rotX),
         glm::normalize(glm::cross(mOrientation, mUp))
     );
 

@@ -54,11 +54,19 @@ void SceneInfoComponent::draw()
 
         auto& light = lights->mLights[mLightIndex];
         const auto posLabel = toString(light.type);
+
         ImGui::InputText("Name", &light.name);
-        ImGui::InputFloat3(posLabel.data(), glm::value_ptr(light.position));
-        ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
-        ImGui::InputFloat("Intensity", &light.intensity);
-        ImGui::Checkbox("Enabled", &light.enabled);
+
+        bool changed = false;
+        changed |= ImGui::InputFloat3(posLabel.data(), glm::value_ptr(light.position));
+        changed |= ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
+        changed |= ImGui::InputFloat("Intensity", &light.intensity);
+        changed |= ImGui::Checkbox("Enabled", &light.enabled);
+
+        if (changed)
+        {
+            lights->queueUpdate(mLightIndex);
+        }
     }
 
     ImGui::End();
