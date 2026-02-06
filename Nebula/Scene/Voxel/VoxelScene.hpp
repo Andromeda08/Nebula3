@@ -28,6 +28,7 @@ private:
     void createForwardPass() noexcept;
 
     friend class vxlRenderPath;
+    friend class Voxel_GBufferPass;
 
     UPtr<vxlRenderPath>                         mRenderPath;
 

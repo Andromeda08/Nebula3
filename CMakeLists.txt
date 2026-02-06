@@ -214,6 +214,8 @@ add_executable(Nebula3
     Nebula/Scene/Voxel/VoxelScene.cpp
     Nebula/Scene/Render/SSAOPass.hpp
     Nebula/Scene/Render/SSAOPass.cpp
+    Nebula/Scene/Render/Voxel_GBufferPass.hpp
+    Nebula/Scene/Render/Voxel_GBufferPass.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

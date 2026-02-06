@@ -43,6 +43,11 @@ public:
 
     virtual void render(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept;
 
+    [[nodiscard]] const SPtr<RHI::Descriptor>& getSceneDescriptor() const noexcept
+    {
+        return mSceneDescriptor;
+    }
+
 protected:
     /**
      * Add a new Camera to the scene.
