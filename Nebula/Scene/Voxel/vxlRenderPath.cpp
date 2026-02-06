@@ -13,8 +13,12 @@ vxlRenderPath::vxlRenderPath(const SPtr<RHI::VulkanRHI>& rhi, VoxelScene* pScene
     resources_GBufferPass();
     create_GBufferPass();
 
-    resources_SSAOPass();
-    create_SSAOPass();
+    mSSAO = SSAOPass::create({
+        .useBlur    = true,
+        .resolution = { mRenderResolution.width / 2, mRenderResolution.height / 2 },
+        .input      = { mPositionBuffer, mNormalBuffer, mScene->mSceneDescriptor },
+        .rhi        = mRHI,
+    });
 }
 
 void vxlRenderPath::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
@@ -35,10 +39,10 @@ void vxlRenderPath::execute(const RHI::CommandList* commandList, const RHI::Fram
 
     execute_GBufferPass(commandList, frameData);
 
-    execute_SSAOPass(commandList, frameData);
+    mSSAO->execute(commandList, frameData);
 
     // Blit final image to swapchain
-    execute_BlitToSwapchain(mSSAO_BlurBuffer.get(), commandList, frameData);
+    execute_BlitToSwapchain(mSSAO->getResult().get(), commandList, frameData);
 
     commandList->endLabel();
 }
@@ -178,215 +182,6 @@ void vxlRenderPath::execute_GBufferPass(const RHI::CommandList* commandList, con
 }
 
 #pragma endregion
-
-void vxlRenderPath::resources_SSAOPass() noexcept
-{
-    using enum vk::ImageUsageFlagBits;
-
-    // Kernel generation
-    std::vector<glm::vec4> kernel(sSSAOKernelSize);
-    for (auto i = 0; i < sSSAOKernelSize; i++)
-    {
-        glm::vec3 sample = {
-            Random::unit() * 2.0f / 1.0f,
-            Random::unit() * 2.0f / 1.0f,
-            Random::unit(),
-        };
-        sample = glm::normalize(sample);
-        sample *= Random::unit();
-        float scale = static_cast<float>(i) / static_cast<float>(sSSAOKernelSize);
-        scale = glm::mix(0.1f, 1.0f, scale * scale);
-        kernel[i] = glm::vec4(sample * scale, 0.0f);
-    }
-
-    mSSAOKernel = mRHI->createBuffer({ sSSAOKernelSize * sizeof(glm::vec4), RHI::BufferType::Uniform, "SSAO-Kernel" });
-    mSSAOKernel->setData(kernel.data(), sSSAOKernelSize * sizeof(glm::vec4));
-
-    // Noise texture generation
-    std::vector<glm::vec4> noise(sSSAONoiseSize * sSSAONoiseSize);
-    for (auto i = 0; i < noise.size(); i++)
-    {
-        noise[i] = glm::vec4 {
-            Random::unit() * 2.0f - 1.0f,
-            Random::unit() * 2.0f - 1.0f,
-            0.0f,
-            0.0f,
-        };
-    }
-
-    const auto noiseStaging = mRHI->createBuffer({ noise.size() * sizeof(glm::vec4), RHI::BufferType::Staging, "SSAO-Noise-Staging" });
-    noiseStaging->setData(noise.data(), noise.size() * sizeof(glm::vec4));
-
-    mSSAONoise = mRHI->createImage({
-        .extent = { sSSAONoiseSize, sSSAONoiseSize },
-        .format = vk::Format::eR32G32B32A32Sfloat,
-        .usageFlags = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
-        .createSampler = true,
-        .debugName = "vxlSSAO_Noise",
-    });
-
-    mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
-        RHI::Barrier().addImageBarrier({
-             .dstUsage = RHI::ImageUsage::TransferDst,
-             .image = mSSAONoise,
-         }).insert(pCommandList);
-
-        pCommandList->copyBufferToImage({
-           .pSrcBuffer = noiseStaging.get(),
-           .pDstImage  = mSSAONoise.get(),
-       });
-
-        RHI::Barrier().addImageBarrier({
-             .dstUsage = RHI::ImageUsage::ShaderReadOnly,
-             .image = mSSAONoise,
-         }).insert(pCommandList);
-    });
-
-    // SSAO Render Targets
-    mSSAOBuffer = mRHI->createImage({
-        //.extent        = { mRenderExtent.width / 2, mRenderExtent.height / 2 },
-        .extent        = mRenderExtent,
-        .format        = vk::Format::eR32Sfloat,
-        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
-        .debugName     = "vxlSSAO_Buffer",
-    });
-    mSSAO_BlurBuffer = mRHI->createImage({
-        .extent        = mRenderExtent,
-        .format        = vk::Format::eR32Sfloat,
-        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
-        .debugName     = "vxlSSAO_BlurBuffer",
-    });
-
-    // SSAO Descriptor Set
-    {
-        mSSAODescriptor = mRHI->createDescriptor({
-            .bindings = {
-                vk::DescriptorSetLayoutBinding { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },
-                vk::DescriptorSetLayoutBinding { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-                vk::DescriptorSetLayoutBinding { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-                vk::DescriptorSetLayoutBinding { 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            },
-            .setCount = 1,
-            .debugName = "vxlSSAO_Descriptor",
-        });
-
-        const auto descriptorWrite = RHI::DescriptorWrite()
-            .writeUniformBuffer(0, mSSAOKernel)
-            .writeCombinedImageSampler(1, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mSSAONoise)
-            .writeCombinedImageSampler(2, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mPositionBuffer)
-            .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mNormalBuffer);
-        mSSAODescriptor->write(0, descriptorWrite);
-    }
-
-    // SSAO Blur Descriptor Set
-    {
-        mSSAO_BlurDescriptor = mRHI->createDescriptor({
-            .bindings = {
-                vk::DescriptorSetLayoutBinding { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            },
-            .setCount = 1,
-            .debugName = "vxlSSAO_Blur_Descriptor",
-        });
-
-        const auto descriptorWrite = RHI::DescriptorWrite()
-            .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mSSAOBuffer);
-        mSSAO_BlurDescriptor->write(0, descriptorWrite);
-    }
-}
-
-void vxlRenderPath::create_SSAOPass() noexcept
-{
-    mSSAOPass.renderPass = mRHI->createRenderPass({
-        .renderArea = getRenderArea(),
-        .colorAttachments = {
-            RHI::Attachment {
-                .image = mSSAOBuffer->getImage(),
-                .attachmentInfo = vk::RenderingAttachmentInfo()
-                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
-                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                    .setImageView(mSSAOBuffer->getImageView())
-                    .setLoadOp(vk::AttachmentLoadOp::eClear)
-                    .setStoreOp(vk::AttachmentStoreOp::eStore)
-            },
-        },
-        .label = "vxlSSAO-Pass",
-    });
-
-    const auto ssao_pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-        .addDescriptorSetLayout(mScene->mSceneDescriptor->getLayout())
-        .addDescriptorSetLayout(mSSAODescriptor->getLayout())
-        .setStateInfo(RHI::GraphicsPipelineStateInfo()
-            .setCullMode(vk::CullModeFlagBits::eNone)
-            .addDefaultAttachmentStates(1))
-        .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/SSAO.frag.spv", vk::ShaderStageFlagBits::eFragment })
-        .addColorAttachmentFormat(mSSAOBuffer->getProperties().format)
-        .setDebugName("Voxel-SSAO-Pipeline");
-
-    mSSAOPass.pipeline = mRHI->createGraphicsPipeline(ssao_pipelineCreateInfo);
-
-    mSSAO_BlurPass.renderPass = mRHI->createRenderPass({
-        .renderArea = getRenderArea(),
-        .colorAttachments = {
-            RHI::Attachment {
-                .image = mSSAO_BlurBuffer->getImage(),
-                .attachmentInfo = vk::RenderingAttachmentInfo()
-                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
-                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                    .setImageView(mSSAO_BlurBuffer->getImageView())
-                    .setLoadOp(vk::AttachmentLoadOp::eClear)
-                    .setStoreOp(vk::AttachmentStoreOp::eStore)
-            },
-        },
-        .label = "vxlSSAO_Blur-RenderPass",
-    });
-
-    const auto ssao_blur_pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-        .addDescriptorSetLayout(mSSAO_BlurDescriptor->getLayout())
-        .setStateInfo(RHI::GraphicsPipelineStateInfo()
-            .setCullMode(vk::CullModeFlagBits::eNone)
-            .addDefaultAttachmentStates(1))
-        .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/SSAO_Blur.frag.spv", vk::ShaderStageFlagBits::eFragment })
-        .addColorAttachmentFormat(mSSAO_BlurBuffer->getProperties().format)
-        .setDebugName("Voxel-SSAO_Blur-Pipeline");
-
-    mSSAO_BlurPass.pipeline = mRHI->createGraphicsPipeline(ssao_blur_pipelineCreateInfo);
-}
-
-void vxlRenderPath::execute_SSAOPass(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
-{
-    const auto& [pipeline, renderPass] = mSSAOPass;
-    commandList->beginLabel("vxlSSAOPass");
-    // Barriers
-    const auto barrier = RHI::Barrier()
-        .addBarrier(mSSAOBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
-        .addBarrier(mSSAONoise->getBarrier(RHI::ImageUsage::ShaderReadOnly))
-        .addBarrier(mPositionBuffer->getBarrier(RHI::ImageUsage::ShaderReadOnly))
-        .addBarrier(mNormalBuffer->getBarrier(RHI::ImageUsage::ShaderReadOnly));
-    barrier.insert(commandList);
-
-    // RenderPass
-    renderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        pipeline->bind(commandBuffer);
-        pipeline->bindDescriptorSets(commandBuffer, {
-            mScene->mSceneDescriptor->getSet(frameData.currentFrame),
-            mSSAODescriptor->getSet(0),
-        });
-
-        commandBuffer.draw(3, 1, 0, 0);
-    });
-
-    commandList->beginLabel("vxlSSAO_BlurPass");
-    // Blur Pass
-    mSSAO_BlurPass.renderPass->execute(commandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mSSAO_BlurPass.pipeline->bind(commandBuffer);
-        mSSAO_BlurPass.pipeline->bindDescriptorSet(commandBuffer, mSSAO_BlurDescriptor->getSet(0));
-        commandBuffer.draw(3, 1, 0, 0);
-    });
-    commandList->endLabel();
-    commandList->endLabel();
-}
 
 void vxlRenderPath::execute_BlitToSwapchain(RHI::Image* pFinalImage, const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
 {
