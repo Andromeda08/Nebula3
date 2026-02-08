@@ -49,6 +49,7 @@ void LightingPass::createResources() noexcept
         .extent        = mRenderResolution,
         .format        = vk::Format::eR32G32B32A32Sfloat,
         .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
+        .createSampler = true,
         .debugName     = "Lighting_Output",
     });
 

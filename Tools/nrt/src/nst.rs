@@ -61,6 +61,11 @@ fn collect_shaders(params: &NSTParams) -> Vec<std::path::PathBuf> {
             result.push(path);
         }
     }
+    for entry in glob::glob(format!("{0}/**/*.hlsl", params.src.to_str().unwrap()).as_str()).expect("Failed to read glob pattern") {
+        if let Ok(path) = entry {
+            result.push(path);
+        }
+    }
     result
 }
 
@@ -68,6 +73,7 @@ fn compile_shaders(params: &NSTParams, shaders: &Vec<std::path::PathBuf>) -> i32
     let mut compiled = 0;
     for shader in shaders {
         let mut cmd = std::process::Command::new("glslangValidator");
+        cmd.arg("-e").arg("main");
         cmd.arg("-o").arg(format!("{0}/{1}.spv", params.bin_dir.to_str().unwrap(), shader.file_stem().unwrap().to_str().unwrap()));
         cmd.arg("-V").arg(shader.to_str().unwrap());
         cmd.arg("--target-env").arg("vulkan1.4");

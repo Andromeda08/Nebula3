@@ -2,6 +2,7 @@
 
 #include <VulkanRHI/VulkanRHI.hpp>
 
+#include "Scene/Render/FXAAPass.hpp"
 #include "Scene/Render/LightingPass.hpp"
 #include "Scene/Render/SSAOPass.hpp"
 #include "Scene/Render/Voxel_GBufferPass.hpp"
@@ -19,8 +20,9 @@ public:
     vk::Extent2D            mRenderExtent;
 
     UPtr<Voxel_GBufferPass> mGBuffer;
-    UPtr<LightingPass>      mLightingPass;
     UPtr<SSAOPass>          mSSAO;
+    UPtr<LightingPass>      mLightingPass;
+    UPtr<FXAAPass>          mFXAA;
 
     VoxelScene*             mScene;
     SPtr<RHI::VulkanRHI>    mRHI;

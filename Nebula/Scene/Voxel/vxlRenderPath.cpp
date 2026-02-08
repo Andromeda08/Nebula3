@@ -28,6 +28,12 @@ vxlRenderPath::vxlRenderPath(const SPtr<RHI::VulkanRHI>& rhi, VoxelScene* pScene
         .input      = { mGBuffer->getPosition(), mGBuffer->getNormal(), mGBuffer->getAlbedo(), mScene->mSceneDescriptor, mSSAO->getResult() },
         .rhi        = mRHI,
     });
+
+    mFXAA = FXAAPass::create({
+        .resolution = mRenderResolution,
+        .input      = { mLightingPass->getResult() },
+        .rhi        = mRHI,
+    });
 }
 
 void vxlRenderPath::execute(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
@@ -37,9 +43,10 @@ void vxlRenderPath::execute(const RHI::CommandList* commandList, const RHI::Fram
     mGBuffer->execute(commandList, frameData);
     mSSAO->execute(commandList, frameData);
     mLightingPass->execute(commandList, frameData);
+    mFXAA->execute(commandList, frameData);
 
     // Blit final image to swapchain
-    execute_BlitToSwapchain(mLightingPass->getResult().get(), commandList, frameData);
+    execute_BlitToSwapchain(mFXAA->getResult().get(), commandList, frameData);
 
     commandList->endLabel();
 }

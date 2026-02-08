@@ -219,6 +219,8 @@ add_executable(Nebula3
     Nebula/Scene/Render/LightingPass.hpp
     Nebula/Scene/Render/LightingPass.cpp
     Nebula/Scene/Render/RenderPass.hpp
+    Nebula/Scene/Render/FXAAPass.hpp
+    Nebula/Scene/Render/FXAAPass.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
