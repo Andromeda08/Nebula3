@@ -2,7 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "VulkanRHI/Device.hpp"
+#include "Core/Macro.hpp"
+#include "RHI/RHI.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
 namespace RHI
@@ -22,7 +23,7 @@ namespace RHI
         bool               singleTimeSubmit = false;
     };
 
-    class CommandList
+    class CommandList : RHI2::CommandList
     {
     public:
         nbl_DISABLE_COPY(CommandList);
@@ -31,18 +32,40 @@ namespace RHI
         nbl_CTOR(CommandList);
 
         // ❗(Lifetime) mCommandBuffer is freed by VulkanCommandPool::free();
-        ~CommandList() = default;
+        ~CommandList() override = default;
 
-        void begin();
-        void end();
+        void begin() noexcept override;
+        void end() noexcept override;
 
-        void beginLabel(const std::array<float, 3>& color, const std::string& name) const;
-        void beginLabel(const std::string& name) const;
-        void endLabel() const;
+        void beginLabel(std::string_view label) const noexcept override;
+        void beginLabel(std::string_view label, const std::array<float, 3>& color) const noexcept override;
+        void endLabel() const noexcept override;
 
-        void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;
+        void copyBufferToImage(const RHI2::BufferImageCopyInfo& copyInfo) const noexcept override;
 
         [[nodiscard]] vk::CommandBuffer getHandle() const noexcept { return mCommandBuffer; }
+
+        void copyBuffer(const RHI2::CopyBufferInfo& copyInfo) const noexcept override;
+
+        void setScissor(const RHI2::Rect2D& scissor) const noexcept override;
+
+        void setViewport(const RHI2::Viewport& viewport) const noexcept override;
+
+        void beginRendering() const noexcept override;
+
+        void endRendering() const noexcept override;
+
+        void bindPipeline(Pipeline* pPipeline) const noexcept override;
+
+        void draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const noexcept override;
+
+        void drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) const noexcept override;
+
+        void bindVertexBuffers(uint32_t firstBinding, const std::vector<Buffer*>& buffers, const std::vector<RHI2::DeviceSize>& offsets) const noexcept override;
+
+        void bindIndexBuffer(Buffer* pBuffer, RHI2::DeviceSize offset, RHI2::IndexType indexType) const noexcept override;
+
+        void insertBarrier(const RHI2::DependencyInfo& dependencyInfo) const noexcept override;
 
     private:
         vk::CommandBuffer   mCommandBuffer;

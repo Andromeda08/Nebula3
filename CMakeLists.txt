@@ -3,6 +3,10 @@ project(Nebula3)
 
 set(CMAKE_CXX_STANDARD 23)
 
+if (APPLE)
+    enable_language(OBJCXX)
+endif ()
+
 find_package(Vulkan REQUIRED)
 
 # Shader Tools
@@ -27,8 +31,13 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
+set(macOS_FILES "")
+if (APPLE)
+    list(APPEND macOS_FILES "Nebula/Window/SDLWindow.mm" "Nebula/Impl/metal-cpp.impl.cpp")
+endif ()
+
 add_executable(Nebula3
-    ${IMGUI_FILES} ${IMNODES_FILES}
+    ${IMGUI_FILES} ${IMNODES_FILES} ${macOS_FILES}
     Nebula/Impl/pch.hpp
     Nebula/Core/Configuration.hpp
     Nebula/VulkanRHI/RHIConfiguration.hpp
@@ -221,6 +230,7 @@ add_executable(Nebula3
     Nebula/Scene/Render/RenderPass.hpp
     Nebula/Scene/Render/FXAAPass.hpp
     Nebula/Scene/Render/FXAAPass.cpp
+    Nebula/RHI/RHI.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -260,3 +270,14 @@ target_compile_definitions(Nebula3 PUBLIC
 target_precompile_headers(Nebula3 PUBLIC
     Nebula/Impl/pch.hpp
 )
+
+if (APPLE)
+    target_link_libraries(Nebula3 PUBLIC
+        "-framework Metal"
+        "-framework Foundation"
+        "-framework QuartzCore"
+    )
+    target_include_directories(Nebula3 PUBLIC
+        External/metal-cpp/SingleHeader
+    )
+endif ()

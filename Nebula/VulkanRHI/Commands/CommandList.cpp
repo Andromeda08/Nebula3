@@ -1,7 +1,9 @@
 #include "CommandList.hpp"
 
+#include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Image.hpp"
+#include "VulkanRHI/Rendering/Pipeline.hpp"
 
 namespace RHI
 {
@@ -12,7 +14,7 @@ namespace RHI
     {
     }
 
-    void CommandList::begin()
+    void CommandList::begin() noexcept
     {
         assert(!mIsRecording);
         mIsRecording = true;
@@ -26,7 +28,7 @@ namespace RHI
         mCommandBuffer.begin(beginInfo);
     }
 
-    void CommandList::end()
+    void CommandList::end() noexcept
     {
         assert(mIsRecording);
         mIsRecording = false;
@@ -34,32 +36,32 @@ namespace RHI
         mCommandBuffer.end();
     }
 
-    void CommandList::beginLabel(const std::array<float, 3>& color, const std::string& name) const
+    void CommandList::beginLabel(std::string_view label) const noexcept
     {
         if (!mDebug)
         {
             return;
         }
 
-        const auto label = vk::DebugUtilsLabelEXT()
+        const auto debugLabel = vk::DebugUtilsLabelEXT()
+            .setPLabelName(label.data());
+        mCommandBuffer.beginDebugUtilsLabelEXT(debugLabel);
+    }
+
+    void CommandList::beginLabel(std::string_view label, const std::array<float, 3>& color) const noexcept
+    {
+        if (!mDebug)
+        {
+            return;
+        }
+
+        const auto debugLabel = vk::DebugUtilsLabelEXT()
             .setColor({ color[0], color[1], color[2], 1.0f })
-            .setPLabelName(name.c_str());
-        mCommandBuffer.beginDebugUtilsLabelEXT(label);
+            .setPLabelName(label.data());
+        mCommandBuffer.beginDebugUtilsLabelEXT(debugLabel);
     }
 
-    void CommandList::beginLabel(const std::string& name) const
-    {
-        if (!mDebug)
-        {
-            return;
-        }
-
-        const auto label = vk::DebugUtilsLabelEXT()
-            .setPLabelName(name.c_str());
-        mCommandBuffer.beginDebugUtilsLabelEXT(label);
-    }
-
-    void CommandList::endLabel() const
+    void CommandList::endLabel() const noexcept
     {
         if (!mDebug)
         {
@@ -69,7 +71,7 @@ namespace RHI
         mCommandBuffer.endDebugUtilsLabelEXT();
     }
 
-    void CommandList::copyBufferToImage(const BufferImageCopyInfo& copyInfo) const
+    void CommandList::copyBufferToImage(const RHI2::BufferImageCopyInfo& copyInfo) const noexcept
     {
         const auto imageProperties = copyInfo.pDstImage->getProperties();
         const auto copyRegion = vk::BufferImageCopy2()
@@ -86,5 +88,74 @@ namespace RHI
             .setRegions(copyRegion);
 
         mCommandBuffer.copyBufferToImage2(copyBufferToImageInfo);
+    }
+
+    void CommandList::copyBuffer(const RHI2::CopyBufferInfo& copyInfo) const noexcept
+    {
+        mCommandBuffer.copyBuffer2(copyInfo.vk());
+    }
+
+    void CommandList::setScissor(const RHI2::Rect2D& scissor) const noexcept
+    {
+        mCommandBuffer.setScissor(0, scissor.vk());
+    }
+
+    void CommandList::setViewport(const RHI2::Viewport& viewport) const noexcept
+    {
+        mCommandBuffer.setViewport(0, viewport.vk());
+    }
+
+    void CommandList::beginRendering() const noexcept
+    {
+        // TODO: no-op for now
+    }
+
+    void CommandList::endRendering() const noexcept
+    {
+        mCommandBuffer.endRendering();
+    }
+
+    void CommandList::bindPipeline(Pipeline* pPipeline) const noexcept
+    {
+        mCommandBuffer.bindPipeline(pPipeline->getBindPoint(), pPipeline->getHandle());
+    }
+
+    void CommandList::draw(const uint32_t vertexCount, const uint32_t instanceCount, const uint32_t firstVertex,
+        const uint32_t firstInstance) const noexcept
+    {
+        mCommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void CommandList::drawIndexed(const uint32_t indexCount, const uint32_t instanceCount, const uint32_t firstIndex,
+        const uint32_t vertexOffset, const uint32_t firstInstance) const noexcept
+    {
+        mCommandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
+    void CommandList::bindVertexBuffers(const uint32_t firstBinding, const std::vector<Buffer*>& buffers,
+        const std::vector<RHI2::DeviceSize>& offsets) const noexcept
+    {
+        std::vector<vk::Buffer> bufferHandles;
+        for (const auto* pBuffer : buffers)
+        {
+            bufferHandles.push_back(pBuffer->getHandle());
+        }
+        mCommandBuffer.bindVertexBuffers(firstBinding, buffers.size(), bufferHandles.data(), offsets.data());
+    }
+
+    void CommandList::bindIndexBuffer(Buffer* pBuffer, const RHI2::DeviceSize offset,
+        const RHI2::IndexType indexType) const noexcept
+    {
+        mCommandBuffer.bindIndexBuffer(pBuffer->getHandle(), offset, to_vk(indexType));
+    }
+
+    void CommandList::insertBarrier(const RHI2::DependencyInfo& dependencyInfo) const noexcept
+    {
+        auto dependencies = Barrier();
+        for (const auto& [pImage, dstUsage] : dependencyInfo.imageMemoryBarriers)
+        {
+            dependencies.addBarrier(pImage->getBarrier(dstUsage));
+        }
+        dependencies.insert(mCommandBuffer);
     }
 }

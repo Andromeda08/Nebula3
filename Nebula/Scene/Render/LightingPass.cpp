@@ -26,13 +26,14 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
         .addBarrier(mInput.ssao->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .insert(pCommandList);
 
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSets(commandBuffer, {
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmdList) -> void {
+        cmdList->bindPipeline(mPipeline.get());
+        // TODO: RHI::CommandList::bindDescriptorSets
+        mPipeline->bindDescriptorSets(cmdList->getHandle(), {
             mInput.sceneDescriptor->getSet(frameData.currentFrame),
             mDescriptor->getSet(0),
         });
-        commandBuffer.draw(3, 1, 0, 0);
+        cmdList->draw(3, 1, 0, 0);
     });
     pCommandList->endLabel();
 }

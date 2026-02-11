@@ -85,6 +85,8 @@ namespace RHI
             return mPipelineLayout;
         }
 
+        [[nodiscard]] vk::PipelineBindPoint getBindPoint() const noexcept { return mBindPoint; }
+
     protected:
         vk::Pipeline            mPipeline;
         vk::PipelineLayout      mPipelineLayout;

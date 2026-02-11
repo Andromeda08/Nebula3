@@ -2,10 +2,12 @@
 
 #include <ranges>
 
+#include "VulkanRHI/Commands/CommandList.hpp"
+
 namespace RHI
 {
     RenderPass::RenderPass(const RenderPassCreateInfo& createInfo)
-    : mRenderArea(createInfo.renderArea)
+    : mRenderArea(createInfo.renderArea.vk())
     , mColorAttachments(createInfo.colorAttachments)
     , mDepthAttachment(createInfo.depthAttachment)
     {
@@ -26,6 +28,14 @@ namespace RHI
         commandList.beginRendering(&mRenderingInfo);
         lambda(commandList);
         commandList.endRendering();
+    }
+
+    void RenderPass::execute(const CommandList* pCommandList, const std::function<void(const CommandList*)>& lambda) const
+    {
+        // TODO: Handleless begin rendering
+        pCommandList->getHandle().beginRendering(mRenderingInfo);
+        lambda(pCommandList);
+        pCommandList->endRendering();
     }
 
     void RenderPass::setColorAttachment(const uint32_t index, const Attachment& attachment)

@@ -241,13 +241,14 @@ void SSAOPass::execute_SSAO(const RHI::CommandList* pCommandList, const RHI::Fra
         .addBarrier(mInput.normalBuffer->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .insert(pCommandList);
 
-    mSSAO_RenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mSSAO_Pipeline->bind(commandBuffer);
-        mSSAO_Pipeline->bindDescriptorSets(commandBuffer, {
+    mSSAO_RenderPass->execute(pCommandList, [&](const RHI::CommandList* cmdList) -> void {
+        cmdList->bindPipeline(mSSAO_Pipeline.get());
+        // TODO: RHI::CommandList::bindDescriptorSets
+        mSSAO_Pipeline->bindDescriptorSets(cmdList->getHandle(), {
             mInput.sceneDescriptor->getSet(frameData.currentFrame),
             mSSAO_Descriptor->getSet(0),
         });
-        commandBuffer.draw(3, 1, 0, 0);
+        cmdList->draw(3, 1, 0, 0);
     });
     pCommandList->endLabel();
 }
@@ -255,10 +256,11 @@ void SSAOPass::execute_SSAO(const RHI::CommandList* pCommandList, const RHI::Fra
 void SSAOPass::execute_Blur(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
 {
     pCommandList->beginLabel("SSAO_Blur_Pass");
-    mBlur_RenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mBlur_Pipeline->bind(commandBuffer);
-        mBlur_Pipeline->bindDescriptorSet(commandBuffer, mBlur_Descriptor->getSet(0));
-        commandBuffer.draw(3, 1, 0, 0);
+    mBlur_RenderPass->execute(pCommandList, [&](const RHI::CommandList* cmdList) -> void {
+        cmdList->bindPipeline(mBlur_Pipeline.get());
+        // TODO: RHI::CommandList::bindDescriptorSets
+        mBlur_Pipeline->bindDescriptorSet(cmdList->getHandle(), mBlur_Descriptor->getSet(0));
+        cmdList->draw(3, 1, 0, 0);
     });
     pCommandList->endLabel();
 }

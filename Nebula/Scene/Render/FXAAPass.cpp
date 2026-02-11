@@ -17,11 +17,13 @@ void FXAAPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameDat
 {
     const PushConstant pushConstant { 1.0f / static_cast<float>(mRenderResolution.width), 1.0f / static_cast<float>(mRenderResolution.height), 0.0f, 0.0f };
 
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) {
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSet(commandBuffer, mDescriptor->getSet(0));
-        mPipeline->pushConstants(commandBuffer, &pushConstant);
-        commandBuffer.draw(3, 1, 0, 0);
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList*  cmdList) {
+        cmdList->bindPipeline(mPipeline.get());
+        // TODO: RHI::CommandList::bindDescriptorSets?
+        mPipeline->bindDescriptorSet(cmdList->getHandle(), mDescriptor->getSet(0));
+        // TODO: RHI::CommandList::pushConstants?
+        mPipeline->pushConstants(cmdList->getHandle(), &pushConstant);
+        cmdList->draw(3, 1, 0, 0);
     });
 }
 
@@ -68,7 +70,7 @@ void FXAAPass::createPipeline() noexcept
                     .setStoreOp(vk::AttachmentStoreOp::eStore)
             },
         },
-        .label = "Lighting_RenderPass",
+        .label = "FXAA_RenderPass",
     });
 
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()

@@ -32,16 +32,18 @@ void Voxel_GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI:
         .insert(pCommandList);
 
     // RenderPass
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSet(commandBuffer, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
-        mPipeline->pushConstants(commandBuffer, &mScene->mParams);
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmdList) -> void {
+        cmdList->bindPipeline(mPipeline.get());
 
-        static constexpr vk::DeviceSize offsets[2] = { 0, 0 };
-        const std::array vertexBuffers{ mScene->mVertexBuffer->getHandle(), mScene->mInstanceBuffer->getHandle() };
-        commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
-        commandBuffer.bindIndexBuffer(mScene->mIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-        commandBuffer.drawIndexed(mScene->mCube->indexCount(), mScene->mInstanceData.size(), 0, 0, 0);
+        // TODO: RHI param instead of vk handle
+        mPipeline->bindDescriptorSet(cmdList->getHandle(), mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+        mPipeline->pushConstants(cmdList->getHandle(), &mScene->mParams);
+
+        static std::vector<RHI2::DeviceSize> offsets = { 0, 0 };
+        const std::vector vertexBuffers{ mScene->mVertexBuffer.get(), mScene->mInstanceBuffer.get() };
+        cmdList->bindVertexBuffers(0, vertexBuffers, offsets);
+        cmdList->bindIndexBuffer(mScene->mIndexBuffer.get(), 0, RHI2::IndexType::Uint32);
+        cmdList->drawIndexed(mScene->mCube->indexCount(), mScene->mInstanceData.size(), 0, 0, 0);
     });
 
     pCommandList->endLabel();

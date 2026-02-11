@@ -8,6 +8,7 @@
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Core/Platform.hpp"
 #include "Detail/ImageTraits.hpp"
 
 namespace RHI
@@ -22,7 +23,7 @@ namespace RHI
 
         vk::Format            prefFormat      = vk::Format::eB8G8R8A8Unorm;
         vk::ColorSpaceKHR     prefColorSpace  = vk::ColorSpaceKHR::eSrgbNonlinear;
-        vk::PresentModeKHR    prefPresentMode = vk::PresentModeKHR::eMailbox;
+        vk::PresentModeKHR    prefPresentMode = platform::isApple ? vk::PresentModeKHR::eImmediate : vk::PresentModeKHR::eMailbox;
     };
 
     struct SwapchainProperties

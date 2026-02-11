@@ -36,7 +36,7 @@ namespace rg
     {
         for (const auto& [i, pass] : nbl::enumerate(old_mPasses))
         {
-            pCommandList->beginLabel(old_mLabels[i].color, old_mLabels[i].name);
+            pCommandList->beginLabel(old_mLabels[i].name, old_mLabels[i].color);
 
             if (old_mBarriers.contains(i))
             {

@@ -177,7 +177,11 @@ namespace RHI
         auto privateCreateInfo = RenderPassCreateInfo(createInfo);
         if (createInfo.renderArea.extent.width == 0 && createInfo.renderArea.extent.height == 0)
         {
-            privateCreateInfo.renderArea = mSwapchain->getProperties().area;
+            // TODO: Conversion from VK to RHI
+            const auto area = mSwapchain->getProperties().area;
+            privateCreateInfo.renderArea = RHI2::Rect2D()
+                .setOffset({ area.offset.x, area.offset.y })
+                .setExtent({ area.extent.width, area.extent.height });
         }
         return RenderPass::create(privateCreateInfo);
     }

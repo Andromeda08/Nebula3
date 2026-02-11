@@ -26,8 +26,9 @@ namespace Molecule
             .writeCombinedImageSamplerInfos(0, std::span{&imageInfo, 1});
         mDescriptor->writeAll(descriptorWrite);
 
+        const auto area = mRHI->getSwapchain()->getProperties().area;
         mRenderPass = mRHI->createRenderPass({
-            .renderArea = mRHI->getSwapchain()->getProperties().area,
+            .renderArea = RHI2::Rect2D().setOffset({ area.offset.x, area.offset.y }).setExtent({ area.extent.width, area.extent.height }),
             .colorAttachments = { RHI::Attachment {
                 .image = mRHI->getSwapchain()->getImage(0),
                 .attachmentInfo = vk::RenderingAttachmentInfo()

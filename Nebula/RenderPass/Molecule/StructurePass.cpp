@@ -25,8 +25,9 @@ namespace Molecule
              barrier.insert(commandList);
         });
 
+        const auto area = mRHI->getSwapchain()->getProperties().area;
         mRenderPass = mRHI->createRenderPass({
-            .renderArea = mRHI->getSwapchain()->getProperties().area,
+            .renderArea = RHI2::Rect2D().setOffset({ area.offset.x, area.offset.y }).setExtent({ area.extent.width, area.extent.height }),
             .colorAttachments = {
                 RHI::Attachment {
                     .image = mRHI->getSwapchain()->getImage(0),

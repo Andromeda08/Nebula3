@@ -20,8 +20,9 @@ public:
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
         };
+        const auto area = rhi->getSwapchain()->getProperties().area;
         mRenderPass = rhi->createRenderPass({
-            .renderArea       = rhi->getSwapchain()->getProperties().area,
+            .renderArea       = RHI2::Rect2D().setOffset({ area.offset.x, area.offset.y }).setExtent({ area.extent.width, area.extent.height }),
             .colorAttachments = { attachment },
             .label            = "HelloTriangle",
         });
