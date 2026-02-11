@@ -20,6 +20,10 @@ add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL)
 add_subdirectory(External/spdlog)
 
+add_subdirectory(External/spirv-cross)
+
+add_subdirectory(Test)
+
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
     ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
@@ -31,7 +35,9 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
-set(macOS_FILES "")
+set(macOS_FILES
+    Nebula/MetalRHI/MetalRHI.cpp
+    Nebula/MetalRHI/MetalRHI.hpp)
 if (APPLE)
     list(APPEND macOS_FILES "Nebula/Window/SDLWindow.mm" "Nebula/Impl/metal-cpp.impl.cpp")
 endif ()
@@ -246,6 +252,7 @@ target_include_directories(Nebula3 PUBLIC
     External/gemmi/include
     External/SDL/include
     External/spdlog/include
+    External/spirv-cross
     ${Vulkan_INCLUDE_DIRS}
 )
 
@@ -257,6 +264,9 @@ target_link_libraries(Nebula3 PUBLIC
     GPUOpen::VulkanMemoryAllocator
     SDL3-static
     spdlog::spdlog
+    spirv-cross-core
+    spirv-cross-glsl
+    spirv-cross-msl
 )
 
 target_compile_definitions(Nebula3 PUBLIC
