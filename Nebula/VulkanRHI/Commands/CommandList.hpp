@@ -11,19 +11,13 @@ namespace RHI
     class Buffer;
     class Image;
 
-    struct BufferImageCopyInfo
-    {
-        Buffer* pSrcBuffer;
-        Image*  pDstImage;
-    };
-
     struct CommandListCreateInfo
     {
         vk::CommandBuffer  commandBuffer;
         bool               singleTimeSubmit = false;
     };
 
-    class CommandList : RHI2::CommandList
+    class CommandList : ICommandList
     {
     public:
         nbl_DISABLE_COPY(CommandList);
@@ -41,15 +35,15 @@ namespace RHI
         void beginLabel(std::string_view label, const std::array<float, 3>& color) const noexcept override;
         void endLabel() const noexcept override;
 
-        void copyBufferToImage(const RHI2::BufferImageCopyInfo& copyInfo) const noexcept override;
+        void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const noexcept override;
 
         [[nodiscard]] vk::CommandBuffer getHandle() const noexcept { return mCommandBuffer; }
 
-        void copyBuffer(const RHI2::CopyBufferInfo& copyInfo) const noexcept override;
+        void copyBuffer(const CopyBufferInfo& copyInfo) const noexcept override;
 
-        void setScissor(const RHI2::Rect2D& scissor) const noexcept override;
+        void setScissor(const Rect2D& scissor) const noexcept override;
 
-        void setViewport(const RHI2::Viewport& viewport) const noexcept override;
+        void setViewport(const Viewport& viewport) const noexcept override;
 
         void beginRendering() const noexcept override;
 
@@ -61,11 +55,11 @@ namespace RHI
 
         void drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) const noexcept override;
 
-        void bindVertexBuffers(uint32_t firstBinding, const std::vector<Buffer*>& buffers, const std::vector<RHI2::DeviceSize>& offsets) const noexcept override;
+        void bindVertexBuffers(uint32_t firstBinding, const std::vector<Buffer*>& buffers, const std::vector<DeviceSize>& offsets) const noexcept override;
 
-        void bindIndexBuffer(Buffer* pBuffer, RHI2::DeviceSize offset, RHI2::IndexType indexType) const noexcept override;
+        void bindIndexBuffer(Buffer* pBuffer, DeviceSize offset, IndexType indexType) const noexcept override;
 
-        void insertBarrier(const RHI2::DependencyInfo& dependencyInfo) const noexcept override;
+        void insertBarrier(const DependencyInfo& dependencyInfo) const noexcept override;
 
     private:
         vk::CommandBuffer   mCommandBuffer;

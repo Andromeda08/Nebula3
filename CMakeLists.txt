@@ -19,10 +19,9 @@ add_subdirectory(External/vma)
 add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL)
 add_subdirectory(External/spdlog)
-
 add_subdirectory(External/spirv-cross)
 
-add_subdirectory(Test)
+# add_subdirectory(Test)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -36,10 +35,16 @@ set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
 set(macOS_FILES
-    Nebula/MetalRHI/MetalRHI.cpp
-    Nebula/MetalRHI/MetalRHI.hpp)
+        Nebula/MetalRHI/MetalSwapchain.cpp
+        Nebula/MetalRHI/MetalSwapchain.hpp
+        Nebula/MetalRHI/MetalTexture.hpp
+        Nebula/MetalRHI/MetalTexture.cpp)
 if (APPLE)
-    list(APPEND macOS_FILES "Nebula/Window/SDLWindow.mm" "Nebula/Impl/metal-cpp.impl.cpp")
+    list(APPEND macOS_FILES
+        "Nebula/Impl/metal-cpp.impl.cpp"
+        "Nebula/MetalRHI/MetalRHI.hpp"
+        "Nebula/MetalRHI/MetalRHI.cpp"
+    )
 endif ()
 
 add_executable(Nebula3
@@ -56,7 +61,7 @@ add_executable(Nebula3
     Nebula/Core/App.cpp
     Nebula/Math/DeltaTime.hpp
     Nebula/Math/DeltaTime.cpp
-    Nebula/VulkanRHI/IWindow.hpp
+        Nebula/RHI/IWindow.hpp
     Nebula/Core/ToString.hpp
     Nebula/VulkanRHI/VulkanRHI.hpp
     Nebula/Math/Transform.hpp
@@ -262,7 +267,7 @@ target_link_libraries(Nebula3 PUBLIC
     glm::glm
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
-    SDL3-static
+    SDL3::SDL3
     spdlog::spdlog
     spirv-cross-core
     spirv-cross-glsl
@@ -275,6 +280,8 @@ target_compile_definitions(Nebula3 PUBLIC
     GLM_ENABLE_EXPERIMENTAL
     -DImTextureID=ImU64
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+    nbl_VulkanRHI
+    nbl_MetalRHI
 )
 
 target_precompile_headers(Nebula3 PUBLIC

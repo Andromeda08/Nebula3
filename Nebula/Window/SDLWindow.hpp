@@ -4,7 +4,8 @@
 
 #include "WindowCreateInfo.hpp"
 #include "Core/Macro.hpp"
-#include "VulkanRHI/IWindow.hpp"
+#include "RHI/RHI.hpp"
+#include "../RHI/IWindow.hpp"
 
 class SDLWindow : public RHI::IWindow
 {
@@ -27,16 +28,27 @@ public:
 
     // RHI Interface Implementation
 
-    vk::Extent2D getFramebufferSize() const override;
+    RHI::Extent2D getFramebufferSize() const override;
 
+    #ifdef nbl_VulkanRHI
     std::vector<const char*> getVulkanInstanceExtensions() const override;
 
     void createVulkanSurface(const vk::Instance& instance, vk::SurfaceKHR* pSurface) const override;
+    #endif
+
+    #ifdef nbl_MetalRHI
+    CA::MetalLayer* getMetalLayer() const override;
+    #endif
 
 private:
     float       mDisplayScaling  = 1.0f;
     Size2D      mWindowSize      = {};
     Size2D      mFramebufferSize = {};
-    SDL_Window* mWindow          = nullptr;
     std::string mTitle           = "Nebula3 Window";
+
+    #ifdef nbl_MetalRHI
+    SDL_MetalView mMetalView = nullptr;
+    #endif
+
+    SDL_Window* mWindow = nullptr;
 };

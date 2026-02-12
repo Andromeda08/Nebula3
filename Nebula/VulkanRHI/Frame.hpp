@@ -3,25 +3,11 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Core/Types.hpp"
+#include "RHI/RHI.hpp"
 
 namespace RHI
 {
     class Device;
-
-    struct FrameData
-    {
-        vk::Fence       waitFence;
-        vk::Semaphore   imageReadySemaphore;
-        vk::Semaphore   renderingFinishedSemaphore;
-        const uint64_t  currentFrame;
-        const uint32_t  acquiredIndex;
-    };
-
-    struct PresentSubmitInfo
-    {
-        const FrameData     frameData;
-        class CommandList*  pCommandList;
-    };
 
     struct FrameSync
     {

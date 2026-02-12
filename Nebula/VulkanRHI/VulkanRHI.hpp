@@ -11,7 +11,7 @@
 #include "Frame.hpp"
 #include "Image.hpp"
 #include "Instance.hpp"
-#include "IWindow.hpp"
+#include "../RHI/IWindow.hpp"
 #include "Raytracing.hpp"
 #include "Rendering.hpp"
 #include "Swapchain.hpp"

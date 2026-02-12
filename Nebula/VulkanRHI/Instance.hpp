@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IWindow.hpp"
+#include "../RHI/IWindow.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"

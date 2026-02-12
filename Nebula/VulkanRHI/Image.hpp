@@ -69,6 +69,7 @@ namespace RHI
         const vk::Image&        getImage()      const { return mImage; }
         const vk::ImageView&    getImageView()  const { return mImageView; }
         const vk::Sampler&      getSampler()    const { return mSampler; }
+
         const ImageProperties&  getProperties() const { return mProperties; }
         ImageState              getState()      const { return mState; }
 

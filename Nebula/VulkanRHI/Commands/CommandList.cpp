@@ -71,7 +71,7 @@ namespace RHI
         mCommandBuffer.endDebugUtilsLabelEXT();
     }
 
-    void CommandList::copyBufferToImage(const RHI2::BufferImageCopyInfo& copyInfo) const noexcept
+    void CommandList::copyBufferToImage(const BufferImageCopyInfo& copyInfo) const noexcept
     {
         const auto imageProperties = copyInfo.pDstImage->getProperties();
         const auto copyRegion = vk::BufferImageCopy2()
@@ -90,17 +90,17 @@ namespace RHI
         mCommandBuffer.copyBufferToImage2(copyBufferToImageInfo);
     }
 
-    void CommandList::copyBuffer(const RHI2::CopyBufferInfo& copyInfo) const noexcept
+    void CommandList::copyBuffer(const CopyBufferInfo& copyInfo) const noexcept
     {
         mCommandBuffer.copyBuffer2(copyInfo.vk());
     }
 
-    void CommandList::setScissor(const RHI2::Rect2D& scissor) const noexcept
+    void CommandList::setScissor(const Rect2D& scissor) const noexcept
     {
         mCommandBuffer.setScissor(0, scissor.vk());
     }
 
-    void CommandList::setViewport(const RHI2::Viewport& viewport) const noexcept
+    void CommandList::setViewport(const Viewport& viewport) const noexcept
     {
         mCommandBuffer.setViewport(0, viewport.vk());
     }
@@ -133,7 +133,7 @@ namespace RHI
     }
 
     void CommandList::bindVertexBuffers(const uint32_t firstBinding, const std::vector<Buffer*>& buffers,
-        const std::vector<RHI2::DeviceSize>& offsets) const noexcept
+        const std::vector<DeviceSize>& offsets) const noexcept
     {
         std::vector<vk::Buffer> bufferHandles;
         for (const auto* pBuffer : buffers)
@@ -143,13 +143,13 @@ namespace RHI
         mCommandBuffer.bindVertexBuffers(firstBinding, buffers.size(), bufferHandles.data(), offsets.data());
     }
 
-    void CommandList::bindIndexBuffer(Buffer* pBuffer, const RHI2::DeviceSize offset,
-        const RHI2::IndexType indexType) const noexcept
+    void CommandList::bindIndexBuffer(Buffer* pBuffer, const DeviceSize offset,
+        const IndexType indexType) const noexcept
     {
         mCommandBuffer.bindIndexBuffer(pBuffer->getHandle(), offset, to_vk(indexType));
     }
 
-    void CommandList::insertBarrier(const RHI2::DependencyInfo& dependencyInfo) const noexcept
+    void CommandList::insertBarrier(const DependencyInfo& dependencyInfo) const noexcept
     {
         auto dependencies = Barrier();
         for (const auto& [pImage, dstUsage] : dependencyInfo.imageMemoryBarriers)

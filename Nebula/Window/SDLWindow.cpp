@@ -1,7 +1,10 @@
 #include "SDLWindow.hpp"
 
+#include <metal/metal.hpp>
+#include <SDL3/SDL_metal.h>
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
+
 
 SDLWindow::SDLWindow(const WindowCreateInfo& createInfo)
 {
@@ -57,7 +60,7 @@ SDL_Window* SDLWindow::getHandle() const noexcept
     return mWindow;
 }
 
-vk::Extent2D SDLWindow::getFramebufferSize() const
+RHI::Extent2D SDLWindow::getFramebufferSize() const
 {
     return { mFramebufferSize.width, mFramebufferSize.height };
 }
@@ -76,4 +79,11 @@ void SDLWindow::createVulkanSurface(const vk::Instance& instance, vk::SurfaceKHR
         __builtin_debugtrap();
         exit(EXIT_FAILURE);
     }
+}
+
+CA::MetalLayer* SDLWindow::getMetalLayer() const
+{
+    const SDL_MetalView view = SDL_Metal_CreateView(mWindow);
+    auto* pLayer = static_cast<CA::MetalLayer*>(SDL_Metal_GetLayer(view));
+    return pLayer;
 }
