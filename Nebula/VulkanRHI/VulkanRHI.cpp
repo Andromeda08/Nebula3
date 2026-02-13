@@ -117,8 +117,6 @@ namespace RHI
         const auto result = mDevice->getGraphicsQueue().queue.presentKHR(presentInfo);
         exitOnAssert(result == vk::Result::eSuccess, "Failed to present image.");
 
-        mDevice->getGraphicsQueue().queue.waitIdle();
-
         mFrameSync->advanceCurrentFrame();
     }
 
