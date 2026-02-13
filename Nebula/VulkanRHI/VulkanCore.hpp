@@ -8,6 +8,39 @@
 #include <vector>
 #include <vulkan/vulkan.hpp>
 
+// Platform Specifics
+// ============================
+namespace RHI::Platform
+{
+    #ifdef __APPLE__
+    constexpr bool isApple = true;
+    #else
+    constexpr bool isApple = false;
+    #endif
+
+    // Get platform specific Vulkan Instance flags.
+    [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept
+    {
+        if constexpr (isApple)
+        {
+            return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+        }
+        return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+    }
+
+    // Get platform specific Vulkan Instance extensions.
+    [[nodiscard]] constexpr std::vector<const char*> getInstanceExtensions() noexcept
+    {
+        if constexpr (isApple)
+        {
+            return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
+        }
+        return {};
+    }
+}
+
+// Utility Functions
+// ============================
 namespace RHI
 {
     constexpr auto gVulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
@@ -36,25 +69,6 @@ namespace RHI
         QueueIndex      queueIndex;
         QueueType       queueType;
     };
-
-    namespace Platform
-    {
-        [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept
-        {
-            #ifdef __APPLE__
-            return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
-            #endif
-            return {};
-        }
-
-        [[nodiscard]] constexpr std::vector<const char*> getInstanceExtensions() noexcept
-        {
-            #ifdef __APPLE__
-            return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
-            #endif
-            return {};
-        }
-    }
 
     template <class T>
     bool evaluateSupport(const std::vector<T>& available, const std::vector<const char*>& requested)
