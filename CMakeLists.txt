@@ -221,6 +221,7 @@ add_executable(Nebula3
     Nebula/Scene/Render/RenderPass.hpp
     Nebula/Scene/Render/FXAAPass.hpp
     Nebula/Scene/Render/FXAAPass.cpp
+    Nebula/VulkanRHI/Common.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
