@@ -73,7 +73,7 @@ namespace RHI
             .setTimelineSemaphore(true)
             .setHostQueryReset(true)
             .setScalarBlockLayout(true)
-            .setDrawIndirectCount(Platform::getDrawIndirectCountSupported());
+            .setDrawIndirectCount(platform::getDrawIndirectCountSupported());
     });
 
     def_VulkanExt(Core13, "VulkanCore1.3", vk::PhysicalDeviceVulkan13Features, [&]() -> void {
