@@ -246,7 +246,7 @@ target_link_libraries(Nebula3 PUBLIC
     glm::glm
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
-    SDL3-static
+    SDL3::SDL3
     spdlog::spdlog
 )
 
