@@ -30,7 +30,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
     float farPlane;
 } camera;
 
-layout (set = 0, binding = 1) uniform LightUniform {
+layout (set = 0, binding = 1) readonly buffer LightUniform {
     GPULightData data[MAX_LIGHTS];
 } lights;
 
