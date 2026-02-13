@@ -3,7 +3,14 @@
 #include <cstdint>
 #include <nlohmann/json.hpp>
 
+#include "VulkanCore.hpp"
+
 constexpr uint64_t gFramesInFlight = 2;
+
+enum class RHIBackend
+{
+    Vulkan,
+};
 
 enum class RHIFeatureLevel
 {
@@ -19,9 +26,10 @@ namespace RHI::Platform
 {
     [[nodiscard]] constexpr RHIFeatureLevel getRHIFeatureLevel() noexcept
     {
-        #ifdef __APPLE__
-        return RHIFeatureLevel::Basic;
-        #endif
+        if constexpr (isApple)
+        {
+            return RHIFeatureLevel::Basic;
+        }
         return RHIFeatureLevel::Complete;
     }
 }
