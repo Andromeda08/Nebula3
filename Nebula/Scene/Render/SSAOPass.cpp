@@ -254,6 +254,11 @@ void SSAOPass::execute_SSAO(const RHI::CommandList* pCommandList, const RHI::Fra
 
 void SSAOPass::execute_Blur(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
 {
+    RHI::Barrier()
+        .addBarrier(mSSAO_Result->getBarrier(RHI::ImageUsage::ShaderReadOnly))
+        .addBarrier(mBlur_Result->getBarrier(RHI::ImageUsage::ColorAttachment))
+        .insert(pCommandList);
+
     pCommandList->beginLabel("SSAO_Blur_Pass");
     mBlur_RenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mBlur_Pipeline->bind(commandBuffer);

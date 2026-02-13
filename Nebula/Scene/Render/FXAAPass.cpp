@@ -1,5 +1,7 @@
 #include "FXAAPass.hpp"
 
+#include "VulkanRHI/Barrier.hpp"
+
 FXAAPass::FXAAPass(const FXAA_Params& params)
 : RenderPass({ params.resolution, params.rhi, "FXAA" })
 , mInput(params.input)
@@ -16,6 +18,11 @@ UPtr<FXAAPass> FXAAPass::create(const FXAA_Params& params) noexcept
 void FXAAPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     const PushConstant pushConstant { 1.0f / static_cast<float>(mRenderResolution.width), 1.0f / static_cast<float>(mRenderResolution.height), 0.0f, 0.0f };
+
+    RHI::Barrier()
+        .addBarrier(mInput.input->getBarrier(RHI::ImageUsage::ShaderReadOnly))
+        .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
+        .insert(pCommandList);
 
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) {
         mPipeline->bind(commandBuffer);
