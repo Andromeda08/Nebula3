@@ -173,7 +173,7 @@ void TextureManager::createDescriptor()
                 .setDescriptorType(vk::DescriptorType::eStorageImage)
                 .setStageFlags(vk::ShaderStageFlagBits::eFragment),
         },
-        .setCount = gFramesInFlight,
+        .setCount = RHI::gMaxConcurrentFrames,
         .debugName = "TextureDescriptor",
     });
 }

@@ -18,9 +18,9 @@ inline std::string toString(const Size2D& size2D) noexcept
     return std::format("[w={}, h={}]", size2D.width, size2D.height);
 }
 
-inline std::string toString(const RHIFeatureLevel featureLevel) noexcept
+inline std::string toString(const RHI::FeatureLevel featureLevel) noexcept
 {
-    if (featureLevel == RHIFeatureLevel::Basic)
+    if (featureLevel == RHI::FeatureLevel::Basic)
     {
         return "Basic";
     }

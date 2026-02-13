@@ -63,7 +63,7 @@ namespace rg
         #undef X
     }
 
-    constexpr RHIFeatureLevel getNodeRequiredFeatureLevel(const NodeType nodeType) noexcept
+    constexpr RHI::FeatureLevel getNodeRequiredFeatureLevel(const NodeType nodeType) noexcept
     {
         using enum NodeType;
         switch (nodeType)
@@ -81,7 +81,7 @@ namespace rg
             case AntiAliasingPass:
             case CombinePass:
             default: {
-                return RHIFeatureLevel::Basic;
+                return RHI::FeatureLevel::Basic;
             }
         }
     }

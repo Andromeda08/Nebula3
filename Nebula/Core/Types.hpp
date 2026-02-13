@@ -5,10 +5,10 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
-#include "VulkanRHI/RHIConfiguration.hpp"
+#include "VulkanRHI/Common.hpp"
 
 template <class T>
-using PerFrameArray = std::array<T, gFramesInFlight>;
+using PerFrameArray = std::array<T, RHI::gFramesInFlight>;
 
 template <class T>
 using UPtr = std::unique_ptr<T>;

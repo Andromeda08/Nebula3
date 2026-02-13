@@ -2,9 +2,9 @@
 
 #include <SDL3/SDL.h>
 
+#include <VulkanRHI/IWindow.hpp>
 #include "WindowCreateInfo.hpp"
 #include "Core/Macro.hpp"
-#include "VulkanRHI/IWindow.hpp"
 
 class SDLWindow : public RHI::IWindow
 {

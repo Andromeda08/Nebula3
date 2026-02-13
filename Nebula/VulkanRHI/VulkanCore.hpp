@@ -7,17 +7,12 @@
 #include <type_traits>
 #include <vector>
 #include <vulkan/vulkan.hpp>
+#include "Common.hpp"
 
 // Platform Specifics
 // ============================
 namespace RHI::Platform
 {
-    #ifdef __APPLE__
-    constexpr bool isApple = true;
-    #else
-    constexpr bool isApple = false;
-    #endif
-
     // Get platform specific Vulkan Instance flags.
     [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept
     {
@@ -46,15 +41,8 @@ namespace RHI
     constexpr auto gVulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
     constexpr auto gVulkanPortabilitySubsetExtensionName = "VK_KHR_portability_subset";
 
-    enum class QueueType
-    {
-        Graphics,
-        Compute,
-        Transfer,
-    };
-
-    using QueueFamily = uint32_t;
-    using QueueIndex  = uint32_t;
+    using QueueFamily = std::uint32_t;
+    using QueueIndex  = std::uint32_t;
 
     struct QueueFamilyInfo
     {
