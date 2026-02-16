@@ -3,13 +3,13 @@
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 
+#include "Core/Util.hpp"
+
 SDLWindow::SDLWindow(const WindowCreateInfo& createInfo)
 {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
     {
-        // exitWithError("Failed to initialize windowing system.");
-        __builtin_debugtrap();
-        exit(EXIT_FAILURE);
+        exitWithError("Failed to initialize windowing system.");
     }
 
     uint64_t windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -73,7 +73,6 @@ void SDLWindow::createVulkanSurface(const vk::Instance& instance, vk::SurfaceKHR
 {
     if (!SDL_Vulkan_CreateSurface(mWindow, instance, nullptr, reinterpret_cast<VkSurfaceKHR*>(pSurface)))
     {
-        __builtin_debugtrap();
-        exit(EXIT_FAILURE);
+        exitWithError("Failed to create Vulkan Surface");
     }
 }
