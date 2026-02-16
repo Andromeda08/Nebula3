@@ -26,11 +26,25 @@ public:
         return mIndices;
     }
 
+    [[deprecated("Use getVertexCount instead")]]
     [[nodiscard]] uint32_t vertexCount() const noexcept
     {
         return mVertexCount;
     }
+
+    [[nodiscard]] uint32_t getVertexCount() const noexcept
+    {
+        return mVertexCount;
+    }
+
+    [[deprecated("Use getIndexCount instead")]]
     [[nodiscard]] uint32_t indexCount() const noexcept
+    {
+        return mIndexCount;
+    }
+
+
+    [[nodiscard]] uint32_t getIndexCount() const noexcept
     {
         return mIndexCount;
     }
