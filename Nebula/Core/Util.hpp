@@ -13,7 +13,7 @@ template <class... Args>
 
     // "portable" __debugbreak() / __builtin_debugtrap()
     #if defined(__x86_64__) || defined(_M_X64)
-    asm("int 3");
+    __debugbreak();
     #else
     // Breakpoint for arm platforms
     asm("brk #0xF000");
