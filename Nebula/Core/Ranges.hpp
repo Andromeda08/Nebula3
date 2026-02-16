@@ -53,6 +53,7 @@ namespace nbl
                 range);
         };
         #else
+        template <std::ranges::viewable_range _Range>
         constexpr auto operator()(_Range&& range) const noexcept
         {
             return std::views::enumerate(range);
