@@ -3,6 +3,7 @@
 #include "Configuration.hpp"
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "RenderPass/HelloTrianglePass.hpp"
+#include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
 #include "Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
@@ -40,6 +41,9 @@ App::App()
     });
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
+
+    // TODO: Testing SceneV2
+    mSV2 = makeUnique<SceneV2>(mVulkanRHI);
 }
 
 UPtr<App> App::create() noexcept

@@ -4,6 +4,7 @@
 #include "Math/DeltaTime.hpp"
 #include "RenderGraph/RenderGraphContext.hpp"
 #include "Scene/Scene.hpp"
+#include "Scene/SceneV2.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/SDLWindow.hpp"
@@ -27,6 +28,8 @@ private:
     UPtr<UserInterface>          mUserInterface;
     SPtr<rg::RenderGraphContext> mRenderGraphContext;
     UPtr<Scene>                  mScene;
+
+    UPtr<SceneV2>                mSV2;
 };
 
 extern App* gApplication;
