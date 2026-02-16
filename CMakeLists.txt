@@ -224,6 +224,7 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Common.hpp
     Nebula/Scene/SceneV2.hpp
     Nebula/Scene/SceneGeometry.hpp
+    Nebula/Scene/SceneGeometry.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
