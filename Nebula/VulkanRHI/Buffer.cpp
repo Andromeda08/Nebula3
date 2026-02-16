@@ -27,6 +27,7 @@ namespace RHI
         const auto addressInfo = vk::BufferDeviceAddressInfo().setBuffer(mBuffer);
         mDeviceAddress = mDevice->getHandle().getBufferAddress(&addressInfo);
 
+        setLabel(createInfo.label);
         mDevice->nameObject<vk::Buffer>({
             .debugName = mLabel,
             .handle    = mBuffer,
