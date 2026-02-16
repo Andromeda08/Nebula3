@@ -112,7 +112,7 @@ void CIFParser::loadCIFFile(const std::string& filename)
 
 void CIFParser::parseAtoms()
 {
-    constexpr std::string atomCategory = MANDATORY_MMCIF_CATEGORIES[1];
+    const std::string atomCategory = MANDATORY_MMCIF_CATEGORIES[1];
     auto table = mBlock.find_mmcif_category(atomCategory);
     exitOnAssert(table.ok(), "{} data is empty!", atomCategory);
 
@@ -130,7 +130,7 @@ void CIFParser::parseAtoms()
 
 void CIFParser::parseBonds()
 {
-    constexpr std::string bondCategory = MANDATORY_MMCIF_CATEGORIES[2];
+    const std::string bondCategory = MANDATORY_MMCIF_CATEGORIES[2];
     auto table = mBlock.find_mmcif_category(bondCategory);
     exitOnAssert(table.ok(), "{} data is empty!", bondCategory);
 
@@ -204,7 +204,7 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
     }
     else
     {
-        constexpr std::string atomSiteCategory = OPTIONAL_MMCIF_CATEGORIES[0];
+        const std::string atomSiteCategory = OPTIONAL_MMCIF_CATEGORIES[0];
         auto siteTable = mBlock.find_mmcif_category(atomSiteCategory);
         auto siteCompIds = siteTable.find_column("label_comp_id");
         auto siteAtomIds = siteTable.find_column("label_atom_id");
@@ -240,7 +240,7 @@ void CIFParser::getPositions(cif::Table& table, cif::Column& compIds, cif::Colum
         #ifdef CIF_PARSER_PRODUCE_FRACTIONAL_COORDINATES
         if (mFractTransfData)
         {
-            constexpr std::string atomSitesCategory = OPTIONAL_MMCIF_CATEGORIES[1];
+            const std::string atomSitesCategory = OPTIONAL_MMCIF_CATEGORIES[1];
             auto sitesTable = mBlock.find_mmcif_category(atomSitesCategory);
 
             for (auto i = 0; i < 3; i++)
