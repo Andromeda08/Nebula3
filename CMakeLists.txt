@@ -11,6 +11,7 @@ nrt_build()
 
 add_subdirectory(External/glm)
 add_subdirectory(External/json)
+add_subdirectory(External/ktx)
 add_subdirectory(External/vma)
 add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL)
@@ -235,6 +236,7 @@ target_include_directories(Nebula3 PUBLIC
     External/imgui/misc/cpp
     External/imnodes
     External/json/include
+    External/ktx/lib/include
     External/stb
     External/vma/include
     External/gemmi/include
@@ -251,6 +253,7 @@ target_link_libraries(Nebula3 PUBLIC
     GPUOpen::VulkanMemoryAllocator
     SDL3::SDL3
     spdlog::spdlog
+    ktx
 )
 
 target_compile_definitions(Nebula3 PUBLIC

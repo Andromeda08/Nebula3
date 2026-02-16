@@ -25,3 +25,6 @@
 [submodule "External/SDL"]
 	path = External/SDL
 	url = https://github.com/libsdl-org/SDL.git
+[submodule "External/ktx"]
+	path = External/ktx
+	url = https://github.com/KhronosGroup/KTX-Software.git
