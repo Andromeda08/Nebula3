@@ -19,6 +19,7 @@ void FXAAPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameDat
 {
     const PushConstant pushConstant { 1.0f / static_cast<float>(mRenderResolution.width), 1.0f / static_cast<float>(mRenderResolution.height), 0.0f, 0.0f };
 
+    pCommandList->beginLabel("FXAA_Pass");
     RHI::Barrier()
         .addBarrier(mInput.input->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
@@ -30,6 +31,7 @@ void FXAAPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameDat
         mPipeline->pushConstants(commandBuffer, &pushConstant);
         commandBuffer.draw(3, 1, 0, 0);
     });
+    pCommandList->endLabel();
 }
 
 SPtr<RHI::Image> FXAAPass::getResult() const noexcept
