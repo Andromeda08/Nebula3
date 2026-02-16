@@ -20,13 +20,13 @@ namespace RHI::Platform
         {
             return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
         }
-        return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+        return {};
     }
 
     // Get platform specific Vulkan Instance extensions.
-    [[nodiscard]] constexpr std::vector<const char*> getInstanceExtensions() noexcept
+    [[nodiscard]] inline std::vector<const char*> getInstanceExtensions() noexcept
     {
-        if constexpr (isApple)
+        if (isApple)
         {
             return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
         }
