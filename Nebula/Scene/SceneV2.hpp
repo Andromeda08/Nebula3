@@ -6,9 +6,7 @@
 #include "SceneGeometry.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
-#include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
-#include "VulkanRHI/Buffer.hpp"
 
 struct Material
 {
@@ -50,9 +48,6 @@ public:
         mGeometry->addGeometry<Sphere>(Sphere::Params {});
 
         mGeometry->onUpdate();
-
-        mGeometry->addGeometry<Cube>(Cube::Params {});
-        mGeometry->onUpdate();
     }
 
 private:
@@ -60,4 +55,5 @@ private:
 
     UPtr<SceneGeometry>  mGeometry;
 
+    std::vector<Object>  mObjects;
 };
