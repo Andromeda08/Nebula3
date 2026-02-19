@@ -1,5 +1,22 @@
 #include "SceneGeometry.hpp"
 
+#include "Core/Ranges.hpp"
+
+SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
+{
+    mRaytracing = mRHI->getFeatureLevel() == RHI::FeatureLevel::Complete;
+    if (mRaytracing)
+    {
+        vk::PhysicalDeviceAccelerationStructurePropertiesKHR asProps;
+        vk::PhysicalDeviceProperties2 props2;
+        props2.pNext = &asProps;
+
+        mRHI->getDevice()->getPhysicalDevice().getProperties2(&props2);
+
+        mBLAlignment = asProps.minAccelerationStructureScratchOffsetAlignment;
+    }
+}
+
 void SceneGeometry::uploadQueuedData() noexcept
 {
     uint64_t addVtxSize = 0;
@@ -10,8 +27,8 @@ void SceneGeometry::uploadQueuedData() noexcept
         addIdxSize += info.indexRegion.indexCount   * sizeof(uint32_t);
     }
 
-    // Staging buffer for new data
-    // [ addVtxSize | addIdxSize ]
+    // Vertex and Index data
+    // Staging buffer: [ addVtxSize | addIdxSize ]
     // ================================================
     const auto dataStaging = mRHI->createBuffer({
         .size  = addVtxSize + addIdxSize,
@@ -48,7 +65,7 @@ void SceneGeometry::uploadQueuedData() noexcept
 
         const auto idxCopy = vk::BufferCopy2()
             .setSrcOffset(idxOffset)
-            .setDstOffset(oldIdxSize + idxOffset)
+            .setDstOffset(oldIdxSize + idxOffset - addVtxSize)
             .setSize(idxSize);
         idxCopies.push_back(idxCopy);
 
@@ -76,13 +93,13 @@ void SceneGeometry::uploadQueuedData() noexcept
         {
             #pragma region
             const auto oldVtxCopy = vk::BufferCopy2()
-                                    .setSrcOffset(0)
-                                    .setDstOffset(0)
-                                    .setSize(oldVtxSize);
+                .setSrcOffset(0)
+                .setDstOffset(0)
+                .setSize(oldVtxSize);
             const auto oldVtxCopyInfo = vk::CopyBufferInfo2()
-                                        .setSrcBuffer(mVertexBuffer->getHandle())
-                                        .setDstBuffer(newVertexBuffer->getHandle())
-                                        .setRegions(oldVtxCopy);
+                .setSrcBuffer(mVertexBuffer->getHandle())
+                .setDstBuffer(newVertexBuffer->getHandle())
+                .setRegions(oldVtxCopy);
             #pragma endregion
             pCommandList->getHandle().copyBuffer2(oldVtxCopyInfo);
         }
@@ -95,7 +112,7 @@ void SceneGeometry::uploadQueuedData() noexcept
             const auto oldIdxCopy = vk::BufferCopy2()
                 .setSrcOffset(0)
                 .setDstOffset(0)
-                .setSize(oldVtxSize);
+                .setSize(oldIdxSize);
             const auto oldIdxCopyInfo = vk::CopyBufferInfo2()
                 .setSrcBuffer(mIndexBuffer->getHandle())
                 .setDstBuffer(newIndexBuffer->getHandle())
@@ -122,6 +139,165 @@ void SceneGeometry::uploadQueuedData() noexcept
     // Replace old buffers
     mVertexBuffer = std::move(newVertexBuffer);
     mIndexBuffer  = std::move(newIndexBuffer);
+
+    // Raytracing
+    // ================================================
+    if (mRaytracing)
+    {
+        const auto device = mRHI->getDevice()->getHandle();
+
+        const auto oldBlasCount = mBottomLevel.size();
+        const auto addBlasCount = mUploadQueue.size();
+        const auto newBlasCount = oldBlasCount + addBlasCount;
+
+        // (New) Geometry Data
+        // ================================================
+        std::vector<vk::AccelerationStructureBuildRangeInfoKHR>         buildRangeInfos;
+        std::vector<vk::AccelerationStructureGeometryTrianglesDataKHR>  triangleDatas;
+        std::vector<vk::AccelerationStructureGeometryKHR>               geometries;
+        std::vector<vk::AccelerationStructureBuildGeometryInfoKHR>      buildGeometryInfos;
+
+        buildRangeInfos.reserve(addBlasCount);
+        triangleDatas.reserve(addBlasCount);
+        geometries.reserve(addBlasCount);
+        buildGeometryInfos.reserve(addBlasCount);
+
+        uint64_t vertexBufferOffset = oldVtxSize;
+        for (auto&& [queueIdx, geometryInfo] : nbl::enumerate(mUploadQueue))
+        {
+            const auto buildRangeInfo = vk::AccelerationStructureBuildRangeInfoKHR()
+                .setFirstVertex(0)
+                .setPrimitiveCount(geometryInfo.getPrimitiveCount())
+                .setPrimitiveOffset(geometryInfo.indexRegion.firstIndex * sizeof(uint32_t))
+                .setTransformOffset(0);
+            buildRangeInfos.push_back(buildRangeInfo);
+
+            const auto triangleData = vk::AccelerationStructureGeometryTrianglesDataKHR()
+                .setIndexData(mIndexBuffer->getAddress())
+                .setIndexType(vk::IndexType::eUint32)
+                .setVertexData(mVertexBuffer->getAddress() + vertexBufferOffset)
+                .setVertexFormat(vk::Format::eR32G32B32Sfloat)
+                .setVertexStride(sizeof(Vertex))
+                .setMaxVertex(geometryInfo.geometry->getVertexCount())
+                .setPNext(nullptr);
+            triangleDatas.push_back(triangleData);
+
+            const auto geometryData = vk::AccelerationStructureGeometryDataKHR().setTriangles(triangleDatas.back());
+
+            const auto geometry = vk::AccelerationStructureGeometryKHR()
+                .setGeometryType(vk::GeometryTypeKHR::eTriangles)
+                .setGeometry(geometryData);
+            geometries.push_back(geometry);
+
+            const auto buildGeometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR()
+                .setFlags(vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace)
+                .setGeometryCount(1)
+                .setGeometries(geometries.back())
+                .setMode(vk::BuildAccelerationStructureModeKHR::eBuild)
+                .setType(vk::AccelerationStructureTypeKHR::eBottomLevel);
+            buildGeometryInfos.push_back(buildGeometryInfo);
+
+            vertexBufferOffset += geometryInfo.getVertexSize();
+        }
+
+        // Resize (or create) backing buffer
+        // ================================================
+        #pragma region
+        // Memory Requirements
+        std::vector<vk::AccelerationStructureBuildSizesInfoKHR> buildSizesInfos(addBlasCount);
+        for (auto i = 0; i < addBlasCount; i++)
+        {
+            buildSizesInfos[i] = device.getAccelerationStructureBuildSizesKHR(
+                vk::AccelerationStructureBuildTypeKHR::eDevice, buildGeometryInfos[i], buildRangeInfos[i].primitiveCount);
+        }
+
+        const auto oldBufferSize = mBottomLevelData ? mBottomLevelData->getSize() : 0;
+        const auto addBufferSize = std::ranges::fold_left(buildSizesInfos, 0,
+            [this](uint64_t acc, const auto& bsi){ return acc + alignBLAS(bsi.accelerationStructureSize); });
+
+        auto newBottomLevelData = mRHI->createBuffer({
+            .size  = oldBufferSize + addBufferSize,
+            .type = RHI::BufferType::AccelerationStructure,
+            .label = "SceneGeometry-BLAS-Data",
+        });
+        #pragma endregion
+
+        const auto staging = mRHI->createBuffer({
+            .size  = addBufferSize,
+            .type = RHI::BufferType::Storage,
+            .label = "SceneGeometry-BLAS-Scratch",
+        });
+
+        // [ Current BL Copies | New BL Build ]
+        std::vector<RHI::AccelerationStructure> newBottomLevel(newBlasCount);
+        if (oldBlasCount > 0)
+        {
+            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
+                for (auto&& [i, blas] : nbl::enumerate(mBottomLevel))
+                {
+                    const auto copyInfo = vk::CopyAccelerationStructureInfoKHR()
+                        .setSrc(blas.getHandle())
+                        .setDst(newBottomLevel[i].getHandle())
+                        .setMode(vk::CopyAccelerationStructureModeKHR::eClone);
+                    pCommandList->getHandle().copyAccelerationStructureKHR(copyInfo);
+                }
+            });
+        }
+
+        // Offsets
+        uint64_t              baseOffset = oldBufferSize;
+        std::vector<uint64_t> stagingOffsets;
+        vk::DeviceSize        currentOffset = 0;
+        for (const auto& buildSizesInfo : buildSizesInfos)
+        {
+            const auto alignedSize = alignBLAS(buildSizesInfo.accelerationStructureSize);
+
+            stagingOffsets.push_back(currentOffset);
+            currentOffset += alignedSize;
+        }
+
+        // Create new BLAS handles
+        for (auto i = 0; i < addBlasCount; i++)
+        {
+            const auto createInfo = vk::AccelerationStructureCreateInfoKHR()
+                .setBuffer(newBottomLevelData->getHandle())
+                .setOffset(baseOffset + stagingOffsets[i])
+                .setSize(buildSizesInfos[i].accelerationStructureSize)
+                .setType(vk::AccelerationStructureTypeKHR::eBottomLevel);
+            newBottomLevel[oldBlasCount + i].mHandle = device.createAccelerationStructureKHR(createInfo);
+
+            const auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
+                .setAccelerationStructure(newBottomLevel[oldBlasCount + i].mHandle);
+            newBottomLevel[oldBlasCount + i].mAddress = device.getAccelerationStructureAddressKHR(addressInfo);
+        }
+
+        // Build new BLAS
+        std::vector<const vk::AccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos;
+        for (size_t i = 0; i < addBlasCount; i++)
+        {
+            pBuildRangeInfos.push_back(&buildRangeInfos[i]);
+
+            buildGeometryInfos[i]
+                .setDstAccelerationStructure(newBottomLevel[oldBlasCount + i].mHandle)
+                .setScratchData(staging->getAddress() + stagingOffsets[i]);
+        }
+
+        mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
+            pCommandList->getHandle().buildAccelerationStructuresKHR(
+                pBuildRangeInfos.size(), buildGeometryInfos.data(), pBuildRangeInfos.data());
+        });
+
+        mBottomLevel     = std::move(newBottomLevel);
+        mBottomLevelData = std::move(newBottomLevelData);
+
+        if (mRaytracing)
+        {
+            spdlog::debug("BLAS count: {} -> {}", oldBlasCount, newBlasCount);
+        }
+    }
+
+    // Cleanup
+    // ================================================
 
     // Add new committed GeometryInfo structs to meta
     mInfos.append_range(mUploadQueue);

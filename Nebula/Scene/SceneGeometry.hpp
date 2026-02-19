@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <vector>
 
 #include "Core/Types.hpp"
@@ -34,6 +35,11 @@ struct GeometryInfo
     {
         return geometry->getIndexCount() * sizeof(uint32_t);
     }
+
+    [[nodiscard]] uint32_t getPrimitiveCount() const noexcept
+    {
+        return static_cast<uint32_t>(indexRegion.indexCount) / 3;
+    }
 };
 
 // Geometry Management
@@ -41,10 +47,7 @@ struct GeometryInfo
 class SceneGeometry
 {
 public:
-    explicit SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi)
-    : mRHI(rhi)
-    {
-    }
+    explicit SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi);
 
     /**
      * Add a new Geometry type.
@@ -56,6 +59,7 @@ public:
     {
         SPtr<Geometry> geometry = makeShared<T>(std::forward<Args>(args)...);
         mGeometries.push_back(geometry);
+        mGeometryLookup.insert_or_assign(geometry->getName(), geometry);
 
         const auto vertexCount = geometry->getVertexCount();
         const auto indexCount = geometry->getIndexCount();
@@ -74,6 +78,12 @@ public:
         return geometry;
     }
 
+    [[nodiscard]] const SPtr<Geometry>& getGeometry(const std::string& name) const noexcept
+    {
+        exitOnAssert(mGeometryLookup.contains(name), "Invalid Geometry name: {}", name);
+        return mGeometryLookup.at(name);
+    }
+
     void onUpdate() noexcept
     {
         if (!mUploadQueue.empty())
@@ -83,7 +93,8 @@ public:
     }
 
 private:
-    std::vector<SPtr<Geometry>> mGeometries;
+    std::map<std::string, SPtr<Geometry>> mGeometryLookup;
+    std::vector<SPtr<Geometry>>           mGeometries;
 
     // GPU resources & meta
     // ========================
@@ -92,6 +103,18 @@ private:
     SPtr<RHI::Buffer>           mVertexBuffer = nullptr;
     uint64_t                    mLastIndex    = 0;
     SPtr<RHI::Buffer>           mIndexBuffer  = nullptr;
+
+    // Raytracing
+    // ========================
+    bool                                    mRaytracing = false;
+    uint64_t                                mBLAlignment = 0;
+    std::vector<RHI::AccelerationStructure> mBottomLevel;
+    SPtr<RHI::Buffer>                       mBottomLevelData;
+
+    [[nodiscard]] uint64_t alignBLAS(const uint64_t x) const noexcept
+    {
+        return (x + mBLAlignment - 1) & ~(mBLAlignment - 1);
+    }
 
     // Updates
     // ========================
