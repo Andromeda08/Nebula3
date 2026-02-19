@@ -71,6 +71,8 @@ protected:
 class Cube final : public Geometry
 {
 public:
+    constexpr static auto sName = "Cube";
+
     struct Params
     {
         float scale {0.5f};
@@ -90,6 +92,8 @@ private:
 class Sphere final : public Geometry
 {
 public:
+    constexpr static auto sName = "Sphere";
+
     struct Params
     {
         float    radius {1.0f};
@@ -110,6 +114,8 @@ private:
 class Cylinder final : public Geometry
 {
 public:
+    constexpr static auto sName = "Cylinder";
+
     struct Params
     {
         float    radius       = 1.0f;

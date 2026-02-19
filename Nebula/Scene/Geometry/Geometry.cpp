@@ -53,7 +53,7 @@ Cube::Cube(const Params& params)
     mIndices     = sCubeIndices;
     mIndexCount  = static_cast<uint32_t>(sCubeIndices.size());
 
-    mName = "Cube";
+    mName = sName;
 }
 
 std::vector<Vertex> Cube::generateVertices(const float scale)
@@ -75,7 +75,7 @@ Sphere::Sphere(const Params& params)
     mIndices     = generateIndices(params.tesselationX, params.tesselationY);
     mIndexCount  = static_cast<uint32_t>(mIndices.size());
 
-    mName = "Sphere";
+    mName = sName;
 }
 
 std::vector<Vertex> Sphere::generateVertices(const int32_t stackCount, const int32_t sectorCount, const float radius)
@@ -156,7 +156,7 @@ Cylinder::Cylinder(const Params& params)
     mIndices     = generateIndices(params.tesselation);
     mIndexCount  = static_cast<uint32_t>(mIndices.size());
 
-    mName = "Cylinder";
+    mName = sName;
 }
 
 std::vector<Vertex> Cylinder::generateVertices(const uint32_t segments, const float radius, const float height) noexcept
