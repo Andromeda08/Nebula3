@@ -17,6 +17,27 @@ SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
     }
 }
 
+const SPtr<Geometry>& SceneGeometry::getGeometry(const std::string& name) const noexcept
+{
+    exitOnAssert(mGeometryLookup.contains(name), "Invalid Geometry name: {}", name);
+    return mGeometryLookup.at(name);
+}
+
+const SPtr<RHI::AccelerationStructure>& SceneGeometry::getGeometryBLAS(const std::string& name) const noexcept
+{
+    const auto it = std::ranges::find_if(mGeometries, [&name](const auto& geom){ return geom->getName() == name; });
+    exitOnAssert(it != std::end(mGeometries), "Invalid Geometry name: {}", name);
+    return mBottomLevel[std::distance(std::begin(mGeometries), it)];
+}
+
+void SceneGeometry::onUpdate() noexcept
+{
+    if (!mUploadQueue.empty())
+    {
+        uploadQueuedData();
+    }
+}
+
 void SceneGeometry::uploadQueuedData() noexcept
 {
     uint64_t addVtxSize = 0;
@@ -232,6 +253,7 @@ void SceneGeometry::uploadQueuedData() noexcept
 
         // Prepare new bottom level build
         // ================================================
+        #pragma region
         std::vector<SPtr<RHI::AccelerationStructure>> newBottomLevel(newBlasCount);
 
         // Copy old BLAS
@@ -281,6 +303,7 @@ void SceneGeometry::uploadQueuedData() noexcept
                 .type = RHI::AccelerationStructureType::BottomLevel,
             }, mRHI->getDevice());
         }
+        #pragma endregion
 
         // Build (new) Bottom Level
         // ================================================

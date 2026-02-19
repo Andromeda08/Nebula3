@@ -78,19 +78,11 @@ public:
         return geometry;
     }
 
-    [[nodiscard]] const SPtr<Geometry>& getGeometry(const std::string& name) const noexcept
-    {
-        exitOnAssert(mGeometryLookup.contains(name), "Invalid Geometry name: {}", name);
-        return mGeometryLookup.at(name);
-    }
+    [[nodiscard]] const SPtr<Geometry>& getGeometry(const std::string& name) const noexcept;
 
-    void onUpdate() noexcept
-    {
-        if (!mUploadQueue.empty())
-        {
-            uploadQueuedData();
-        }
-    }
+    [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getGeometryBLAS(const std::string& name) const noexcept;
+
+    void onUpdate() noexcept;
 
 private:
     std::map<std::string, SPtr<Geometry>> mGeometryLookup;
@@ -106,10 +98,10 @@ private:
 
     // Raytracing
     // ========================
-    bool                                    mRaytracing = false;
-    uint64_t                                mBLAlignment = 0;
-    std::vector<SPtr<RHI::AccelerationStructure>> mBottomLevel;
-    SPtr<RHI::Buffer>                       mBottomLevelData;
+    bool                                            mRaytracing = false;
+    uint64_t                                        mBLAlignment = 0;
+    std::vector<SPtr<RHI::AccelerationStructure>>   mBottomLevel;
+    SPtr<RHI::Buffer>                               mBottomLevelData;
 
     [[nodiscard]] uint64_t alignBLAS(const uint64_t x) const noexcept
     {
