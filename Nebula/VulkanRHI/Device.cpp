@@ -98,7 +98,7 @@ namespace RHI
     // VK_KHR_acceleration_structure
     def_VulkanExt(
         AccelerationStructureExt,
-        VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+        vk::KHRAccelerationStructureExtensionName,
         vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceAccelerationStructureFeaturesKHR()
@@ -109,7 +109,7 @@ namespace RHI
     // VK_KHR_ray_tracing_pipeline
     def_VulkanExt(
         RayTracingPipelineExt,
-        VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+        vk::KHRRayTracingPipelineExtensionName,
         vk::PhysicalDeviceRayTracingPipelineFeaturesKHR,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR()
@@ -117,10 +117,21 @@ namespace RHI
         }
     );
 
+    // VK_KHR_ray_tracing_maintenance1
+    def_VulkanExt(
+        RayTracingMaintenance1Ext,
+        vk::KHRRayTracingMaintenance1ExtensionName,
+        vk::PhysicalDeviceRayTracingMaintenance1FeaturesKHR,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceRayTracingMaintenance1FeaturesKHR()
+                .setRayTracingMaintenance1(true);
+        }
+    );
+
     // VK_KHR_ray_query
     def_VulkanExt(
         RayQueryExt,
-        VK_KHR_RAY_QUERY_EXTENSION_NAME,
+        vk::KHRRayQueryExtensionName,
         vk::PhysicalDeviceRayQueryFeaturesKHR,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceRayQueryFeaturesKHR()
@@ -131,7 +142,7 @@ namespace RHI
     // VK_EXT_mesh_shader
     def_VulkanExt(
         MeshShaderExt,
-        VK_EXT_MESH_SHADER_EXTENSION_NAME,
+        vk::EXTMeshShaderExtensionName,
         vk::PhysicalDeviceMeshShaderFeaturesEXT,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceMeshShaderFeaturesEXT()
@@ -144,7 +155,7 @@ namespace RHI
     // VK_EXT_swapchain_maintenance1
     def_VulkanExt(
         SwapchainMaintenance1Ext,
-        VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
+        vk::KHRSwapchainMaintenance1ExtensionName,
         vk::PhysicalDeviceSwapchainMaintenance1FeaturesKHR,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceSwapchainMaintenance1FeaturesKHR()
@@ -181,6 +192,7 @@ namespace RHI
             {
                 extensions.push_back(std::make_unique<VulkanAccelerationStructureExt>());
                 extensions.push_back(std::make_unique<VulkanRayTracingPipelineExt>());
+                extensions.push_back(std::make_unique<VulkanRayTracingMaintenance1Ext>());
                 extensions.push_back(std::make_unique<VulkanRayQueryExt>());
                 extensions.push_back(std::make_unique<VulkanMeshShaderExt>());
             }
