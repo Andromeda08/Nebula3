@@ -152,6 +152,7 @@ void SceneGeometry::uploadQueuedData() noexcept
 
         // (New) Geometry Data
         // ================================================
+        #pragma region
         std::vector<vk::AccelerationStructureBuildRangeInfoKHR>         buildRangeInfos;
         std::vector<vk::AccelerationStructureGeometryTrianglesDataKHR>  triangleDatas;
         std::vector<vk::AccelerationStructureGeometryKHR>               geometries;
@@ -199,6 +200,7 @@ void SceneGeometry::uploadQueuedData() noexcept
 
             vertexBufferOffset += geometryInfo.getVertexSize();
         }
+        #pragma endregion
 
         // Resize (or create) backing buffer
         // ================================================
@@ -228,23 +230,36 @@ void SceneGeometry::uploadQueuedData() noexcept
             .label = "SceneGeometry-BLAS-Scratch",
         });
 
-        // [ Current BL Copies | New BL Build ]
-        std::vector<RHI::AccelerationStructure> newBottomLevel(newBlasCount);
+        // Prepare new bottom level build
+        // ================================================
+        std::vector<SPtr<RHI::AccelerationStructure>> newBottomLevel(newBlasCount);
+
+        // Copy old BLAS
         if (oldBlasCount > 0)
         {
+            for (auto i = 0; i < oldBlasCount; i++)
+            {
+                newBottomLevel[i] = RHI::AccelerationStructure::create({
+                    .backingBuffer = newBottomLevelData,
+                    .offset = mBottomLevel[i]->getOffset(),
+                    .size = mBottomLevel[i]->getSize(),
+                    .type = RHI::AccelerationStructureType::BottomLevel,
+                }, mRHI->getDevice());
+            }
+
             mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
                 for (auto&& [i, blas] : nbl::enumerate(mBottomLevel))
                 {
                     const auto copyInfo = vk::CopyAccelerationStructureInfoKHR()
-                        .setSrc(blas.getHandle())
-                        .setDst(newBottomLevel[i].getHandle())
+                        .setSrc(blas->getHandle())
+                        .setDst(newBottomLevel[i]->getHandle())
                         .setMode(vk::CopyAccelerationStructureModeKHR::eClone);
                     pCommandList->getHandle().copyAccelerationStructureKHR(copyInfo);
                 }
             });
         }
 
-        // Offsets
+        // Offsets for new BLAS
         uint64_t              baseOffset = oldBufferSize;
         std::vector<uint64_t> stagingOffsets;
         vk::DeviceSize        currentOffset = 0;
@@ -259,26 +274,23 @@ void SceneGeometry::uploadQueuedData() noexcept
         // Create new BLAS handles
         for (auto i = 0; i < addBlasCount; i++)
         {
-            const auto createInfo = vk::AccelerationStructureCreateInfoKHR()
-                .setBuffer(newBottomLevelData->getHandle())
-                .setOffset(baseOffset + stagingOffsets[i])
-                .setSize(buildSizesInfos[i].accelerationStructureSize)
-                .setType(vk::AccelerationStructureTypeKHR::eBottomLevel);
-            newBottomLevel[oldBlasCount + i].mHandle = device.createAccelerationStructureKHR(createInfo);
-
-            const auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
-                .setAccelerationStructure(newBottomLevel[oldBlasCount + i].mHandle);
-            newBottomLevel[oldBlasCount + i].mAddress = device.getAccelerationStructureAddressKHR(addressInfo);
+            newBottomLevel[oldBlasCount + i] = RHI::AccelerationStructure::create({
+                .backingBuffer = newBottomLevelData,
+                .offset = baseOffset + stagingOffsets[i],
+                .size = buildSizesInfos[i].accelerationStructureSize,
+                .type = RHI::AccelerationStructureType::BottomLevel,
+            }, mRHI->getDevice());
         }
 
-        // Build new BLAS
+        // Build (new) Bottom Level
+        // ================================================
         std::vector<const vk::AccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos;
         for (size_t i = 0; i < addBlasCount; i++)
         {
             pBuildRangeInfos.push_back(&buildRangeInfos[i]);
 
             buildGeometryInfos[i]
-                .setDstAccelerationStructure(newBottomLevel[oldBlasCount + i].mHandle)
+                .setDstAccelerationStructure(newBottomLevel[oldBlasCount + i]->getHandle())
                 .setScratchData(staging->getAddress() + stagingOffsets[i]);
         }
 

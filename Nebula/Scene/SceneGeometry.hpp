@@ -108,7 +108,7 @@ private:
     // ========================
     bool                                    mRaytracing = false;
     uint64_t                                mBLAlignment = 0;
-    std::vector<RHI::AccelerationStructure> mBottomLevel;
+    std::vector<SPtr<RHI::AccelerationStructure>> mBottomLevel;
     SPtr<RHI::Buffer>                       mBottomLevelData;
 
     [[nodiscard]] uint64_t alignBLAS(const uint64_t x) const noexcept

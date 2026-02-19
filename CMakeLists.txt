@@ -226,6 +226,8 @@ add_executable(Nebula3
     Nebula/Scene/SceneV2.hpp
     Nebula/Scene/SceneGeometry.hpp
     Nebula/Scene/SceneGeometry.cpp
+    Nebula/VulkanRHI/Raytracing/AccelerationStructure.hpp
+    Nebula/VulkanRHI/Raytracing/AccelerationStructure.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
