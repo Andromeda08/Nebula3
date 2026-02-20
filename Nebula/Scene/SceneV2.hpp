@@ -3,19 +3,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include "InstancePool.hpp"
 #include "SceneGeometry.hpp"
 #include "Core/Random.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
-
-struct GPUObjectInstanceDataV2
-{
-    glm::mat4 model;
-    int32_t   textureIndex;
-    int32_t   instanceIndex;
-    int32_t   _p0, _p1;
-};
 
 struct Object
 {
@@ -25,6 +18,8 @@ struct Object
     // Properties
     SPtr<Geometry> pGeometry    = nullptr;
     int32_t        textureIndex = -1;
+    int32_t        geometryIndex = -1;
+    int32_t        instanceIndex = -1;
     glm::vec4      solidColor   = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
     Transform      transform    = {};
 
@@ -35,6 +30,16 @@ struct Object
     // General
     int32_t         id;
     std::string     name;
+
+    [[nodiscard]] GPUInstanceData getInstanceData() noexcept
+    {
+        return {
+            .model         = transform.getModel(),
+            .solidColor    = solidColor,
+            .textureIndex  = textureIndex,
+            .geometryIndex = geometryIndex,
+        };
+    }
 };
 
 struct ExampleObject : public Object
@@ -57,9 +62,42 @@ public:
     : mRHI(rhi)
     {
         mGeometry = makeUnique<SceneGeometry>(mRHI);
+        mInstancePool = makeUnique<InstancePool>(mRHI);
         mTextureManager = TextureManager::create({ mRHI });
 
         initScene();
+    }
+
+    void onUpdate(const float dt, const RHI::CommandList* pCommandList) noexcept
+    {
+        for (auto& obj : mObjects)
+        {
+            obj->onUpdate(dt);
+            if (obj->transform.isDirty())
+            {
+                mInstancePool->update(obj->instanceIndex, {
+                .model         = obj->transform.getModel(),
+                .solidColor    = obj->solidColor,
+                .textureIndex  = obj->textureIndex,
+                .geometryIndex = obj->geometryIndex,
+            });
+            }
+        }
+        mInstancePool->flush(pCommandList);
+    }
+
+    template <class T>
+    requires std::is_base_of_v<Object, T>
+    void addObject(const SPtr<Geometry>& geometry, const int32_t tex, const Transform transform) noexcept
+    {
+        auto obj = makeUnique<T>();
+        obj->pGeometry = geometry;
+        obj->textureIndex = tex;
+        obj->transform = transform;
+
+        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
+
+        mObjects.push_back(std::move(obj));
     }
 
 private:
@@ -77,23 +115,9 @@ private:
         mTextureManager->loadTexture("missingTexture.png", 2);
         mTextureManager->loadTexture("missingTexture.png", 3);
 
-        auto cube = makeUnique<ExampleObject>();
-        cube->pGeometry = geoCube;
-        cube->textureIndex = 1;
-        cube->transform.translate({ 5.0f, 0.0f, 0.0f });
-        mObjects.push_back(std::move(cube));
-
-        auto sphere = makeUnique<ExampleObject>();
-        sphere->pGeometry = geoSphere;
-        sphere->textureIndex = 2;
-        sphere->transform.translate({ 0.0f, 0.0f, 0.0f });
-        mObjects.push_back(std::move(sphere));
-
-        auto cylinder = makeUnique<ExampleObject>();
-        cylinder->pGeometry = geoCylinder;
-        cylinder->textureIndex = 3;
-        cylinder->transform.translate({ -5.0f, 0.0f, 0.0f });
-        mObjects.push_back(std::move(cylinder));
+        addObject<ExampleObject>(geoCube, 1, Transform().translate({ 5.0f, 0.0f, 0.0f }));
+        addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }));
+        addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }));
 
         buildTLAS();
     }
@@ -107,17 +131,12 @@ private:
         for (const auto& obj : mObjects)
         {
             const auto blas = mGeometry->getGeometryBLAS(obj->pGeometry->getName());
-            const auto m = obj->transform.getModel();
             const auto instance = vk::AccelerationStructureInstanceKHR()
                 .setFlags(vk::GeometryInstanceFlagBitsKHR::eTriangleFacingCullDisable)
                 .setMask(obj->rt_mask)
                 .setAccelerationStructureReference(blas->getAddress())
                 .setInstanceShaderBindingTableRecordOffset(0)
-                .setTransform(vk::TransformMatrixKHR({
-                    std::array { m[0].x, m[1].x, m[2].x, m[3].x },
-                    std::array { m[0].y, m[1].y, m[2].y, m[3].y },
-                    std::array { m[0].z, m[1].z, m[2].z, m[3].z }
-                }));
+                .setTransform(obj->transform.getModel3x4());
             instances.push_back(instance);
         }
 
@@ -181,6 +200,7 @@ private:
     SPtr<RHI::VulkanRHI>                mRHI;
 
     UPtr<SceneGeometry>                 mGeometry;
+    UPtr<InstancePool>                  mInstancePool;
     UPtr<TextureManager>                mTextureManager;
 
     std::vector<UPtr<Object>>           mObjects;

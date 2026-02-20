@@ -6,6 +6,11 @@
 
 #include "MathUtil.hpp"
 
+namespace vk
+{
+    struct TransformMatrixKHR;
+}
+
 struct Transform
 {
     glm::vec3 _translate = glm::vec3(0.0f);
@@ -45,6 +50,7 @@ struct Transform
     Transform& rotate(const glm::vec3& r) noexcept
     {
         _euler += r;
+        wrapRotationAngles();
         _dirty = true;
         return *this;
     }
@@ -52,6 +58,7 @@ struct Transform
     Transform& setRotation(const glm::vec3& r) noexcept
     {
         _euler = r;
+        wrapRotationAngles();
         _dirty = true;
         return *this;
     }
@@ -74,6 +81,13 @@ struct Transform
         return _model;
     }
 
+    vk::TransformMatrixKHR getModel3x4() noexcept;
+
+    [[nodiscard]] bool isDirty() const noexcept
+    {
+        return _dirty;
+    }
+
 private:
     glm::mat4 computeModel() const
     {
@@ -83,6 +97,19 @@ private:
             ? glm::rotate(glm::mat4(1.0f), glm::radians(_angle), _axis) 
             : glm::yawPitchRoll(glm::radians(_euler.y), glm::radians(_euler.x), glm::radians(_euler.z));
         return T * R * S;
+    }
+
+    void wrapRotationAngles() noexcept
+    {
+        _euler.x = wrapAngle(_euler.x);
+        _euler.y = wrapAngle(_euler.y);
+        _euler.z = wrapAngle(_euler.z);
+    }
+
+    [[nodiscard]] static float wrapAngle(float a) noexcept
+    {
+        a = glm::mod(a, 360.0f);
+        return a < 0 ? a + 360.0f : a;
     }
 
     // _model is updated when _dirty is true and getModel() is called.
