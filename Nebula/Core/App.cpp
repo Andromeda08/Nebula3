@@ -110,7 +110,7 @@ void App::run_renderPathLoop()
         // Updates
         mScene->onUpdate(commandList, frameData, dt);
 
-        mSV2->onUpdate(dt, commandList);
+        mSV2->onUpdate(dt, frameData, commandList);
 
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
