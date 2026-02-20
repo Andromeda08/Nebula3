@@ -155,10 +155,6 @@ public:
 
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
     {
-        if (mRenderPath)
-        {
-            mRenderPath->execute(commandList, frameData);
-        }
     }
 
     template <class T>
