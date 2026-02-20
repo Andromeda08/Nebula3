@@ -10,6 +10,8 @@
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
+#include "Voxel/TerrainGenerator.hpp"
+#include "Voxel/Features/FoliageGenerator.hpp"
 
 struct Object
 {
@@ -122,6 +124,36 @@ private:
         addObject<ExampleObject>(geoCube, 1, Transform().translate({ 5.0f, 0.0f, 0.0f }));
         addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }));
         addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }));
+
+        for (uint32_t i = 0; i < 256; i++)
+        {
+            const auto transform = Transform().translate({
+                Random::get(-64.0f, 64.0f),
+                Random::get(-64.0f, 64.0f),
+                Random::get(-64.0f, 64.0f),
+            });
+            addObject<ExampleObject>(geoCube, 1, transform);
+        }
+
+        auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 96, true });
+        terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
+            .patchCount             = 12,
+            .patchRadius            = 12,
+            .radiusVariance         = 3,
+            .density                = 0.65f,
+            .patchDensityVariance   = true,
+            .instanceRandomOffset   = true,
+            .instanceRandomScale    = true,
+        });
+
+        terrainGenerator.generate();
+
+        for (const auto& voxel : terrainGenerator.getResult())
+        {
+            auto t = Transform().setScale(voxel.scale).setTranslate(voxel.position);
+            addObject<Object>(geoCube, 1, t);
+        }
+
     }
 
     SPtr<RHI::VulkanRHI>                mRHI;

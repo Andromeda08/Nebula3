@@ -57,6 +57,8 @@ private:
     SPtr<RHI::Buffer>           mStagingBuffer;
     uint32_t                    mCapacity;
 
+    std::vector<InstanceIndex>  mUpdateQueue;
+
     std::vector<InstanceData>   mData;
     std::vector<InstanceIndex>  mFree;
     std::vector<bool>           mDirty;

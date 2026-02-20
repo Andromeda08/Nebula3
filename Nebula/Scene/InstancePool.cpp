@@ -51,6 +51,7 @@ void InstancePool::update(const InstanceIndex idx, const InstanceData& data) noe
 {
     mData[idx]  = data;
     mDirty[idx] = true;
+    mUpdateQueue.push_back(idx);
 }
 
 void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
@@ -58,7 +59,7 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
     pCommandList->beginLabel("InstancePool_flush");
     std::vector<vk::BufferCopy2> regions;
     std::vector<InstanceData>    staged;
-    for (auto i = 0; i < mData.size(); i++)
+    for (auto i = 0; i < mUpdateQueue.size(); i++)
     {
         if (!mDirty[i])
         {
@@ -89,6 +90,8 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
         .setRegions(regions);
     pCommandList->getHandle().copyBuffer2(copyInfo);
     pCommandList->endLabel();
+
+    mUpdateQueue.clear();
 }
 
 void InstancePool::resizeBuffer() noexcept
