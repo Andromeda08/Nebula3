@@ -78,6 +78,7 @@ struct Transform
         {
             _model = computeModel();
         }
+        _dirty = false;
         return _model;
     }
 
