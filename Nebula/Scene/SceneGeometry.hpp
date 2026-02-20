@@ -82,6 +82,16 @@ public:
 
     [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getGeometryBLAS(const std::string& name) const noexcept;
 
+    [[nodiscard]] const SPtr<RHI::Buffer>& getVertexBuffer() const noexcept
+    {
+        return mVertexBuffer;
+    }
+
+    [[nodiscard]] const SPtr<RHI::Buffer>& getIndexBuffer() const noexcept
+    {
+        return mIndexBuffer;
+    }
+
     void onUpdate() noexcept;
 
 private:
