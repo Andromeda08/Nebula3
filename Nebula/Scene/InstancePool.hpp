@@ -11,7 +11,7 @@ struct GPUInstanceData
     glm::vec4 solidColor;
     int32_t   textureIndex;
     int32_t   geometryIndex;
-    int32_t   _p0, _p1;
+    uint64_t  blasAddress = 0;
 };
 
 using InstanceIndex = uint32_t;
@@ -36,6 +36,16 @@ public:
     [[nodiscard]] const auto& getData() const noexcept
     {
         return mData;
+    }
+
+    [[nodiscard]] uint32_t getSize() const noexcept
+    {
+        return static_cast<uint32_t>(mData.size());
+    }
+
+    [[nodiscard]] const SPtr<RHI::Buffer>& getBuffer() const noexcept
+    {
+        return mInstanceBuffer;
     }
 
 private:

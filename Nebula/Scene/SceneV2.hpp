@@ -5,6 +5,7 @@
 
 #include "InstancePool.hpp"
 #include "SceneGeometry.hpp"
+#include "TLASManager.hpp"
 #include "Core/Random.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
@@ -65,25 +66,26 @@ public:
         mInstancePool = makeUnique<InstancePool>(mRHI);
         mTextureManager = TextureManager::create({ mRHI });
 
+        mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
+
         initScene();
     }
 
     void onUpdate(const float dt, const RHI::CommandList* pCommandList) noexcept
     {
-        for (auto& obj : mObjects)
+        for (const auto& obj : mObjects)
         {
             obj->onUpdate(dt);
             if (obj->transform.isDirty())
             {
-                mInstancePool->update(obj->instanceIndex, {
-                .model         = obj->transform.getModel(),
-                .solidColor    = obj->solidColor,
-                .textureIndex  = obj->textureIndex,
-                .geometryIndex = obj->geometryIndex,
-            });
+                auto instanceData = obj->getInstanceData();
+                instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+
+                mInstancePool->update(obj->instanceIndex, instanceData);
             }
         }
         mInstancePool->flush(pCommandList);
+        mTLASManager->onUpdate(pCommandList);
     }
 
     template <class T>
@@ -95,7 +97,9 @@ public:
         obj->textureIndex = tex;
         obj->transform = transform;
 
-        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
+        auto instanceData = obj->getInstanceData();
+        instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+        obj->instanceIndex = mInstancePool->acquire(instanceData);
 
         mObjects.push_back(std::move(obj));
     }
@@ -119,7 +123,7 @@ private:
         addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }));
         addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }));
 
-        buildTLAS();
+        // buildTLAS();
     }
 
     void buildTLAS() noexcept
@@ -164,7 +168,7 @@ private:
             .setPNext(nullptr);
 
         auto tlasBuildGeometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR()
-            .setFlags(vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace)
+            .setFlags(vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastBuild | vk::BuildAccelerationStructureFlagBitsKHR::eAllowUpdate)
             .setGeometryCount(1)
             .setPGeometries(&tlasGeometry)
             .setMode(vk::BuildAccelerationStructureModeKHR::eBuild)
@@ -202,10 +206,11 @@ private:
     UPtr<SceneGeometry>                 mGeometry;
     UPtr<InstancePool>                  mInstancePool;
     UPtr<TextureManager>                mTextureManager;
+    UPtr<TLASManager>                   mTLASManager;
 
     std::vector<UPtr<Object>>           mObjects;
 
     SPtr<RHI::AccelerationStructure>    mTopLevelAS;
-    SPtr<RHI::Buffer>                   mTopLevelInstances;
     SPtr<RHI::Buffer>                   mTopLevelData;
+    SPtr<RHI::Buffer>                   mTopLevelInstances;
 };

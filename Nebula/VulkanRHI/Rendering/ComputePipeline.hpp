@@ -19,6 +19,16 @@ namespace RHI
             computeShader = shaderInfo;
             return *this;
         }
+
+        ComputePipelineCreateInfo& setComputeShader(const std::string& shaderPath)
+        {
+            computeShader = {
+                .filePath    = shaderPath,
+                .shaderStage = vk::ShaderStageFlagBits::eCompute,
+                .entryPoint  = "main"
+            };
+            return *this;
+        }
     end_PipelineCreateInfoStruct;
 
     class ComputePipeline final : public Pipeline

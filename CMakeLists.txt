@@ -231,6 +231,8 @@ add_executable(Nebula3
     Nebula/Scene/InstancePool.hpp
     Nebula/Scene/InstancePool.cpp
     Nebula/Math/Transform.cpp
+    Nebula/Scene/TLASManager.hpp
+    Nebula/Scene/TLASManager.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

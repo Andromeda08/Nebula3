@@ -105,12 +105,15 @@ void App::run_renderPathLoop()
         const RHI::FrameData frameData   = mVulkanRHI->beginFrame();
         RHI::CommandList*    commandList = commandLists[frameData.currentFrame];
 
+        commandList->begin();
+
         // Updates
         mScene->onUpdate(commandList, frameData, dt);
+
+        mSV2->onUpdate(dt, commandList);
+
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
-
-        commandList->begin();
 
         mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
 
