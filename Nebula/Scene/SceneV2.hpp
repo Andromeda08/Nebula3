@@ -165,6 +165,7 @@ public:
         obj->pGeometry = geometry;
         obj->textureIndex = tex;
         obj->transform = transform;
+        obj->geometryIndex = mGeometry->getGeometryIndex(geometry->getName());
 
         auto instanceData = obj->getInstanceData();
         instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();

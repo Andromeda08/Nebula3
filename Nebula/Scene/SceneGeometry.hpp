@@ -80,6 +80,8 @@ public:
 
     [[nodiscard]] const SPtr<Geometry>& getGeometry(const std::string& name) const noexcept;
 
+    [[nodiscard]] uint32_t getGeometryIndex(const std::string& name) const noexcept;
+
     [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getGeometryBLAS(const std::string& name) const noexcept;
 
     [[nodiscard]] const SPtr<RHI::Buffer>& getVertexBuffer() const noexcept

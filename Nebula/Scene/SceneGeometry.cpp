@@ -23,6 +23,13 @@ const SPtr<Geometry>& SceneGeometry::getGeometry(const std::string& name) const 
     return mGeometryLookup.at(name);
 }
 
+uint32_t SceneGeometry::getGeometryIndex(const std::string& name) const noexcept
+{
+    const auto it = std::ranges::find_if(mGeometries, [&name](const auto& geom){ return geom->getName() == name; });
+    exitOnAssert(it != std::end(mGeometries), "Invalid Geometry name: {}", name);
+    return std::distance(std::begin(mGeometries), it);
+}
+
 const SPtr<RHI::AccelerationStructure>& SceneGeometry::getGeometryBLAS(const std::string& name) const noexcept
 {
     const auto it = std::ranges::find_if(mGeometries, [&name](const auto& geom){ return geom->getName() == name; });
