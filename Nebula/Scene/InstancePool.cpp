@@ -1,8 +1,8 @@
 #include "InstancePool.hpp"
 
-InstancePool::InstancePool(const SPtr<RHI::VulkanRHI>& rhi)
+InstancePool::InstancePool(const SPtr<RHI::VulkanRHI>& rhi, const uint32_t initialCapacity)
 : mRHI(rhi)
-, mCapacity(256)
+, mCapacity(initialCapacity)
 {
     mInstanceBuffer = mRHI->createBuffer({
         .size  = mCapacity * sizeof(InstanceData),
@@ -126,4 +126,6 @@ void InstancePool::resizeBuffer() noexcept
         .type  = RHI::BufferType::Staging,
         .label = "InstanceStagingBuffer"
     });
+
+    spdlog::warn("InstancePool resized: {} -> {}", oldCapacity, mCapacity);
 }

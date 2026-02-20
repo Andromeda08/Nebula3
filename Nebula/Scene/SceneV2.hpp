@@ -65,7 +65,7 @@ public:
     : mRHI(rhi)
     {
         mGeometry = makeUnique<SceneGeometry>(mRHI);
-        mInstancePool = makeUnique<InstancePool>(mRHI);
+        mInstancePool = makeUnique<InstancePool>(mRHI, 65536);
         mTextureManager = TextureManager::create({ mRHI });
 
         mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
@@ -75,10 +75,11 @@ public:
 
     void onUpdate(const float dt, const RHI::CommandList* pCommandList) noexcept
     {
+        static bool isFirstUpdate = true;
         for (const auto& obj : mObjects)
         {
             obj->onUpdate(dt);
-            if (obj->transform.isDirty())
+            if (obj->transform.isDirty() || isFirstUpdate)
             {
                 auto instanceData = obj->getInstanceData();
                 instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
@@ -88,6 +89,7 @@ public:
         }
         mInstancePool->flush(pCommandList);
         mTLASManager->onUpdate(pCommandList);
+        isFirstUpdate = false;
     }
 
     template <class T>

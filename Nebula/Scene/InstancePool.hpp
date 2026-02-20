@@ -21,7 +21,7 @@ class InstancePool
 public:
     using InstanceData = GPUInstanceData;
 
-    explicit InstancePool(const SPtr<RHI::VulkanRHI>& rhi);
+    explicit InstancePool(const SPtr<RHI::VulkanRHI>& rhi, uint32_t initialCapacity = 256);
 
     [[nodiscard]] InstanceIndex acquire(const InstanceData& data) noexcept;
 
