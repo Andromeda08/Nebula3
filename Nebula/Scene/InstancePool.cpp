@@ -6,7 +6,7 @@ InstancePool::InstancePool(const SPtr<RHI::VulkanRHI>& rhi, const uint32_t initi
 {
     mInstanceBuffer = mRHI->createBuffer({
         .size  = mCapacity * sizeof(InstanceData),
-        .type  = RHI::BufferType::Storage,
+        .type  = RHI::BufferType::Vertex,
         .label = "InstanceBuffer"
     });
     mStagingBuffer = mRHI->createBuffer({
@@ -101,7 +101,7 @@ void InstancePool::resizeBuffer() noexcept
 
     auto newInstanceBuffer = mRHI->createBuffer({
         .size  = mCapacity * sizeof(InstanceData),
-        .type  = RHI::BufferType::Storage,
+        .type  = RHI::BufferType::Vertex,
         .label = "InstanceBuffer"
     });
 
