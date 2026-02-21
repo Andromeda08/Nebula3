@@ -71,7 +71,10 @@ public:
         mInstancePool = makeUnique<InstancePool>(mRHI, 65536);
         mTextureManager = TextureManager::create({ mRHI });
 
-        mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
+        if (mRHI->getRaytracingSupport())
+        {
+            mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
+        }
 
         mLightSystem = makeUnique<LightSystem>(mRHI);
 
@@ -134,13 +137,20 @@ public:
             if (obj->transform.isDirty() || isFirstUpdate)
             {
                 auto instanceData = obj->getInstanceData();
-                instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+                if (mRHI->getRaytracingSupport())
+                {
+                    instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+                }
 
                 mInstancePool->update(obj->instanceIndex, instanceData);
             }
         }
         mInstancePool->flush(pCommandList);
-        mTLASManager->onUpdate(pCommandList);
+
+        if (mRHI->getRaytracingSupport())
+        {
+            mTLASManager->onUpdate(pCommandList);
+        }
 
         if (mCamera)
         {
@@ -168,7 +178,10 @@ public:
         obj->geometryIndex = mGeometry->getGeometryIndex(geometry->getName());
 
         auto instanceData = obj->getInstanceData();
-        instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+        if (mRHI->getRaytracingSupport())
+        {
+            instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
+        }
         obj->instanceIndex = mInstancePool->acquire(instanceData);
 
         mObjects.push_back(std::move(obj));

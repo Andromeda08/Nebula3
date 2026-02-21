@@ -25,8 +25,6 @@ public:
 private:
     void generateTerrainVoxelData() noexcept;
 
-    void createForwardPass() noexcept;
-
     friend class vxlRenderPath;
     friend class Voxel_GBufferPass;
 
@@ -40,9 +38,4 @@ private:
     SPtr<RHI::Buffer>                           mInstanceBuffer;
 
     VoxelSceneParams                            mParams;
-
-    // Forward Pass
-    SPtr<RHI::Image>                            mDepthImage;
-    SPtr<RHI::GraphicsPipeline>                 mPipeline;
-    SPtr<RHI::RenderPass>                       mRenderPass;
 };

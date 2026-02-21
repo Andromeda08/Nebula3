@@ -58,6 +58,11 @@ namespace RHI
             return mFeatureLevel;
         }
 
+        [[nodiscard]] bool getRaytracingSupport() const noexcept
+        {
+            return mFeatureLevel >= FeatureLevel::Complete;
+        }
+
         void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
 
     private:
