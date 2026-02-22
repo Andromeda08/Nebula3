@@ -73,7 +73,8 @@ void App::run_renderPathLoop()
         const float dt = mDeltaTime.getDeltaTime();
         // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
-        mScene->preFrame();
+        // mScene->preFrame();
+        mSV2->preFrame();
 
         // Input
         SDL_Event event;
@@ -84,7 +85,8 @@ void App::run_renderPathLoop()
             // If ImGui didn't want to consume any input continue with Scene handlers.
             if (!mUserInterface->wantCaptureInput())
             {
-                mScene->onEvent(event);
+                // mScene->onEvent(event);
+                mSV2->onEvent(event);
             }
 
             switch (event.type)
@@ -108,14 +110,12 @@ void App::run_renderPathLoop()
         commandList->begin();
 
         // Updates
-        mScene->onUpdate(commandList, frameData, dt);
+        // mScene->onUpdate(commandList, frameData, dt);
 
         mSV2->onUpdate(dt, frameData, commandList);
 
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
-
-        mVulkanRHI->getSwapchain()->setScissorViewport(commandList->getHandle());
 
         // =====================================
         // RenderPath
@@ -123,12 +123,7 @@ void App::run_renderPathLoop()
         // pRenderPath->initialize(commandList);   // Runs once
         // pRenderPath->execute(commandList, frameData);
 
-        /* Acquired Swapchain Image | ColorAttachment */ {
-            const auto barrier = RHI::Barrier()
-                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
-            barrier.insert(commandList);
-        }
-        mScene->render(commandList, frameData);
+        // mScene->render(commandList, frameData);
 
         mSV2->onRender(commandList, frameData);
 

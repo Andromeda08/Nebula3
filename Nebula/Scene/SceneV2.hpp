@@ -15,9 +15,13 @@
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
+#include "Render/FXAAPass.hpp"
+#include "Render/LightingPass.hpp"
+#include "Render/SSAOPass.hpp"
 #include "Scene/Render/Indirect_GBufferPass.hpp"
 #include "Voxel/TerrainGenerator.hpp"
 #include "Voxel/Features/FoliageGenerator.hpp"
+#include "VulkanRHI/Barrier.hpp"
 
 struct Object
 {
@@ -119,9 +123,28 @@ public:
 
         const auto extent = mRHI->getSwapchain()->getProperties().extent;
         mTestPass = Indirect_GBufferPass::create({
-            .resolution ={ extent.width, extent.height } ,
+            .resolution ={ extent.width, extent.height },
             .pScene = this,
             .rhi = mRHI,
+        });
+        
+        mSSAO = SSAOPass::create({
+            .useBlur    = true,
+            .resolution = { extent.width, extent.height },
+            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mSceneDescriptor },
+            .rhi        = mRHI,
+        });
+
+        mLightingPass = LightingPass::create({
+            .resolution = { extent.width, extent.height },
+            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult() },
+            .rhi        = mRHI,
+        });
+
+        mFXAA = FXAAPass::create({
+            .resolution = { extent.width, extent.height },
+            .input      = { mLightingPass->getResult() },
+            .rhi        = mRHI,
         });
     }
 
@@ -187,6 +210,42 @@ public:
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
     {
         mTestPass->execute(commandList, frameData);
+        mSSAO->execute(commandList, frameData);
+        mLightingPass->execute(commandList, frameData);
+        mFXAA->execute(commandList, frameData);
+
+        commandList->beginLabel("Present_Blit");
+        // Barriers
+        const auto barrier = RHI::Barrier()
+            .addBarrier(mFXAA->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
+            .addBarrier(mRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
+        barrier.insert(commandList);
+
+        // Blit
+        const auto srcExtent = mFXAA->getResult()->getProperties().extent;
+        const auto dstExtent = mRHI->getSwapchain()->getProperties().extent;
+        const auto region    = vk::ImageBlit2()
+            .setSrcOffsets({
+                vk::Offset3D { 0, 0, 0 },
+                vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
+            })
+            .setSrcSubresource(mFXAA->getResult()->getProperties().getSubresourceLayers())
+            .setDstOffsets({
+                vk::Offset3D { 0, 0, 0 },
+                vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
+            })
+            .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
+
+        const auto blit = vk::BlitImageInfo2()
+            .setSrcImage(mFXAA->getResult()->getImage())
+            .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+            .setDstImage(mRHI->getSwapchain()->getImage(frameData.acquiredIndex))
+            .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+            .setFilter(vk::Filter::eLinear)
+            .setRegions(region);
+
+        commandList->getHandle().blitImage2(blit);
+        commandList->endLabel();
     }
 
     template <class T>
@@ -267,6 +326,7 @@ private:
         {
             auto t = Transform().setScale(voxel.scale).setTranslate(voxel.position);
             addObject<Object>(geoCube, 1, t);
+            mObjects.back()->solidColor = glm::vec4(voxel.color, 1.0f);
         }
     }
 
@@ -294,7 +354,7 @@ private:
                 .setIndexCount(info.indexRegion.indexCount)
                 .setInstanceCount(instanceIndices.size())
                 .setFirstIndex(info.indexRegion.firstIndex)
-                .setVertexOffset(static_cast<uint32_t>(info.vertexRegion.firstVertex))
+                .setVertexOffset(static_cast<int32_t>(info.vertexRegion.firstVertex))
                 .setFirstInstance(firstInstance);
             draws.push_back(cmd);
         }
@@ -369,4 +429,7 @@ private:
     uint32_t                            mDrawCount = 0;
 
     UPtr<Indirect_GBufferPass>          mTestPass;
+    UPtr<SSAOPass>                      mSSAO;
+    UPtr<LightingPass>                  mLightingPass;
+    UPtr<FXAAPass>                      mFXAA;
 };
