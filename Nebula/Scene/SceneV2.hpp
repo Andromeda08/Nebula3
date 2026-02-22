@@ -301,12 +301,24 @@ private:
 
         for (uint32_t i = 0; i < 256; i++)
         {
-            const auto transform = Transform().translate({
-                Random::get(-64.0f, 64.0f),
-                Random::get(-64.0f, 64.0f),
-                Random::get(-64.0f, 64.0f),
-            });
-            addObject<ExampleObject>(geoCube, 1, transform);
+            auto geometry = geoCube;
+            if (Random::get(0, 128) % 2 == 0)
+            {
+                geometry = geoSphere;
+            }
+            if (Random::get(0, 128) % 3 == 0)
+            {
+                geometry = geoCylinder;
+            }
+
+            const auto transform = Transform()
+                .translate({
+                    Random::get(-64.0f, 64.0f),
+                    Random::get(-64.0f, 64.0f),
+                    Random::get(-64.0f, 64.0f),
+                });
+            addObject<ExampleObject>(geometry, 1, transform);
+            mObjects.back()->solidColor = Random::getColor();
         }
 
         auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 96, true });
