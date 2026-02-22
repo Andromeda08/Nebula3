@@ -130,6 +130,8 @@ void App::run_renderPathLoop()
         }
         mScene->render(commandList, frameData);
 
+        mSV2->onRender(commandList, frameData);
+
         // =====================================
         // User Interface
         // =====================================

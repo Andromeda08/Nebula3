@@ -77,7 +77,7 @@ namespace RHI
         /**
          * Create Sampler
          */
-        if (createInfo.createSampler)
+        // if (createInfo.createSampler)
         {
             constexpr auto samplerCreateInfo = vk::SamplerCreateInfo()
                 .setMagFilter(vk::Filter::eLinear)

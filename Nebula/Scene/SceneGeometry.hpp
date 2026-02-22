@@ -82,6 +82,11 @@ public:
 
     [[nodiscard]] uint32_t getGeometryIndex(const std::string& name) const noexcept;
 
+    [[nodiscard]] const GeometryInfo& getGeometryInfo(const std::string& name) const noexcept
+    {
+        return mInfos[getGeometryIndex(name)];
+    }
+
     [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getGeometryBLAS(const std::string& name) const noexcept;
 
     [[nodiscard]] const SPtr<RHI::Buffer>& getVertexBuffer() const noexcept
@@ -92,6 +97,11 @@ public:
     [[nodiscard]] const SPtr<RHI::Buffer>& getIndexBuffer() const noexcept
     {
         return mIndexBuffer;
+    }
+
+    [[nodiscard]] uint32_t getCount() const noexcept
+    {
+        return static_cast<uint32_t>(mGeometries.size());
     }
 
     void onUpdate() noexcept;

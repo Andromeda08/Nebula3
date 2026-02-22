@@ -233,6 +233,8 @@ add_executable(Nebula3
     Nebula/Math/Transform.cpp
     Nebula/Scene/TLASManager.hpp
     Nebula/Scene/TLASManager.cpp
+    Nebula/Scene/Render/Indirect_GBufferPass.hpp
+    Nebula/Scene/Render/Indirect_GBufferPass.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

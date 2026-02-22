@@ -7,7 +7,7 @@ layout (location = 1) in vec4 inViewNormal;
 layout (location = 2) in vec2 inUV;
 layout (location = 3) in vec4 inColor;
 
-// Input Attributes
+// Output Attributes
 // ========================================
 layout (location = 0) out vec4 outPosition;
 layout (location = 1) out vec4 outNormal;

@@ -1,11 +1,13 @@
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 #include <glm/glm.hpp>
 
 #include "InstancePool.hpp"
 #include "LightSystem.hpp"
 #include "SceneGeometry.hpp"
+#include "TextureManager.hpp"
 #include "TLASManager.hpp"
 #include "Camera/FlyingCamera.hpp"
 #include "Core/Random.hpp"
@@ -13,6 +15,7 @@
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
+#include "Scene/Render/Indirect_GBufferPass.hpp"
 #include "Voxel/TerrainGenerator.hpp"
 #include "Voxel/Features/FoliageGenerator.hpp"
 
@@ -113,6 +116,13 @@ public:
                 mSceneDescriptor->write(i, descriptorWrite);
             }
         }
+
+        const auto extent = mRHI->getSwapchain()->getProperties().extent;
+        mTestPass = Indirect_GBufferPass::create({
+            .resolution ={ extent.width, extent.height } ,
+            .pScene = this,
+            .rhi = mRHI,
+        });
     }
 
     void preFrame() noexcept
@@ -131,6 +141,8 @@ public:
     void onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
     {
         static bool isFirstUpdate = true;
+
+        // Update Instance Data
         for (const auto& obj : mObjects)
         {
             obj->onUpdate(dt);
@@ -147,11 +159,13 @@ public:
         }
         mInstancePool->flush(pCommandList);
 
+        // Update Top-Level AS
         if (mRHI->getRaytracingSupport())
         {
             mTLASManager->onUpdate(pCommandList);
         }
 
+        // Update Camera Data
         if (mCamera)
         {
             mCamera->onUpdate();
@@ -160,11 +174,19 @@ public:
             mCameraUniformBuffers[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
         }
 
+        // Update draw commands
+        if (mObjectCountChanged || isFirstUpdate)
+        {
+            buildDrawCommands(pCommandList);
+        }
+
+        mObjectCountChanged = false;
         isFirstUpdate = false;
     }
 
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
     {
+        mTestPass->execute(commandList, frameData);
     }
 
     template <class T>
@@ -185,13 +207,20 @@ public:
         obj->instanceIndex = mInstancePool->acquire(instanceData);
 
         mObjects.push_back(std::move(obj));
+
+        mObjectCountChanged = true;
+    }
+
+    [[nodiscard]] const SPtr<RHI::Descriptor>& getSceneDescriptor() const noexcept
+    {
+        return mSceneDescriptor;
     }
 
 private:
     void initScene() noexcept
     {
         const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
-        auto camera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+        mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
 
         mLightSystem->addLight({});
 
@@ -241,6 +270,82 @@ private:
         }
     }
 
+    void buildDrawCommands(const RHI::CommandList* pCommandList) noexcept
+    {
+        std::unordered_map<Geometry*, std::vector<uint32_t>> groups;
+        for (const auto& obj : mObjects)
+        {
+            groups[obj->pGeometry.get()].push_back(obj->instanceIndex);
+        }
+
+        std::vector<uint32_t> instanceMap;
+        std::vector<vk::DrawIndexedIndirectCommand> draws;
+        for (auto& [geometry, instanceIndices] : groups)
+        {
+            auto& info = mGeometry->getGeometryInfo(geometry->getName());
+
+            const auto firstInstance = static_cast<uint32_t>(instanceMap.size());
+            for (auto instanceIndex : instanceIndices)
+            {
+                instanceMap.push_back(instanceIndex);
+            }
+
+            const auto cmd = vk::DrawIndexedIndirectCommand()
+                .setIndexCount(info.indexRegion.indexCount)
+                .setInstanceCount(instanceIndices.size())
+                .setFirstIndex(info.indexRegion.firstIndex)
+                .setVertexOffset(static_cast<uint32_t>(info.vertexRegion.firstVertex))
+                .setFirstInstance(firstInstance);
+            draws.push_back(cmd);
+        }
+
+        mDrawCount = mGeometry->getCount();
+
+        const auto drawSize = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
+        mDrawCmdBuffer = mRHI->createBuffer({
+            .size  = drawSize,
+            .type  = RHI::BufferType::Indirect,
+            .label = "Scene_Draw_Commands",
+        });
+
+        const auto mapSize = instanceMap.size() * sizeof(uint32_t);
+        mInstanceMapBuffer = mRHI->createBuffer({
+            .size  = mapSize,
+            .type  = RHI::BufferType::Storage,
+            .label = "Scene_Instance_Map"
+        });
+
+        mDrawStaging = mRHI->createBuffer({
+            .size  = drawSize + mapSize,
+            .type  = RHI::BufferType::Staging,
+            .label = "Scene_Staging",
+        });
+        mDrawStaging->setData(draws.data(), drawSize, 0);
+        mDrawStaging->setData(instanceMap.data(), mapSize, drawSize);
+
+        const auto drawCopy = vk::BufferCopy2()
+            .setSrcOffset(0)
+            .setDstOffset(0)
+            .setSize(drawSize);
+        const auto drawCopyInfo = vk::CopyBufferInfo2()
+            .setSrcBuffer(mDrawStaging->getHandle())
+            .setDstBuffer(mDrawCmdBuffer->getHandle())
+            .setRegions(drawCopy);
+        pCommandList->getHandle().copyBuffer2(drawCopyInfo);
+
+        const auto mapCopy = vk::BufferCopy2()
+            .setSrcOffset(drawSize)
+            .setDstOffset(0)
+            .setSize(mapSize);
+        const auto mapCopyInfo = vk::CopyBufferInfo2()
+            .setSrcBuffer(mDrawStaging->getHandle())
+            .setDstBuffer(mInstanceMapBuffer->getHandle())
+            .setRegions(mapCopy);
+        pCommandList->getHandle().copyBuffer2(mapCopyInfo);
+    }
+
+    friend class Indirect_GBufferPass;
+
     SPtr<RHI::VulkanRHI>                mRHI;
 
     UPtr<SceneGeometry>                 mGeometry;
@@ -256,4 +361,12 @@ private:
     SPtr<RHI::Descriptor>               mSceneDescriptor;
 
     std::vector<UPtr<Object>>           mObjects;
+    bool                                mObjectCountChanged = false;
+
+    SPtr<RHI::Buffer>                   mDrawStaging;
+    SPtr<RHI::Buffer>                   mDrawCmdBuffer;
+    SPtr<RHI::Buffer>                   mInstanceMapBuffer;
+    uint32_t                            mDrawCount = 0;
+
+    UPtr<Indirect_GBufferPass>          mTestPass;
 };
