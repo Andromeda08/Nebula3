@@ -60,6 +60,11 @@ public:
         return result;
     }
 
+    [[nodiscard]] static glm::vec4 getColor() noexcept
+    {
+        return { unit(), unit(), unit(), 1.0f };
+    }
+
     #endif
 
 private:
