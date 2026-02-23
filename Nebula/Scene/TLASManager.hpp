@@ -22,6 +22,11 @@ public:
 
     void onUpdate(const RHI::CommandList* pCommandList) noexcept;
 
+    [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getTLAS() const noexcept
+    {
+        return mTLAS;
+    }
+
 private:
     void createInitialEmptyTLAS() noexcept;
 
