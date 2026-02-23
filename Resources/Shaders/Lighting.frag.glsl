@@ -1,13 +1,18 @@
 #version 460
 
+#extension GL_EXT_ray_tracing : require
+#extension GL_EXT_ray_query : enable
+
 #define MAX_LIGHTS 100
+
 struct GPULightData
 {
     vec4  position;
     vec4  color;
     float intensity;
     int   enabled;
-    int   _p0, _p1;
+    int   castsShadow;
+    int   _p0;
 };
 
 // Input Attributes
@@ -33,6 +38,8 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 layout (set = 0, binding = 1) readonly buffer LightUniform {
     GPULightData data[MAX_LIGHTS];
 } lights;
+
+layout (set = 0, binding = 2) uniform accelerationStructureEXT topLevelAS;
 
 layout (set = 1, binding = 0) uniform sampler2D uPositionDepth;
 layout (set = 1, binding = 1) uniform sampler2D uNormal;
@@ -81,6 +88,24 @@ void main()
 
         vec4 color = vec4(albedo * dotNL, 1.0);
         color.rgb = color.rgb * (light.color.rgb * light.intensity) / (dist * dist);
+
+        if (light.castsShadow == 1)
+        {
+            vec3 origin = wPos;
+            vec3 direction = L;
+            float tMin = 0.01;
+            float tMax = length(lightDir);
+
+            rayQueryEXT ray_query;
+            rayQueryInitializeEXT(ray_query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT, 0xFF, origin, tMin, direction, tMax);
+
+            const float shadowFactor = 0.1;
+            while(rayQueryProceedEXT(ray_query)) {}
+            if (rayQueryGetIntersectionTypeEXT(ray_query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+            {
+                color.rgb *= shadowFactor;
+            }
+        }
 
         finalColor += color.rgb;
     }
