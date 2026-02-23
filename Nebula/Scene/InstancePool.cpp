@@ -88,6 +88,20 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
         .setSrcBuffer(mStagingBuffer->getHandle())
         .setDstBuffer(mInstanceBuffer->getHandle())
         .setRegions(regions);
+
+    {
+        const auto barrier = vk::BufferMemoryBarrier2()
+            .setSrcAccessMask(vk::AccessFlagBits2::eShaderStorageRead)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+            .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eCopy)
+            .setBuffer(mInstanceBuffer->getHandle())
+            .setSize(VK_WHOLE_SIZE);
+        const auto dependencyInfo = vk::DependencyInfo()
+            .setBufferMemoryBarriers(barrier);
+        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
+    }
+
     pCommandList->getHandle().copyBuffer2(copyInfo);
     pCommandList->endLabel();
 
