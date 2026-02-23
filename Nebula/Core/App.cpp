@@ -35,15 +35,15 @@ App::App()
     // });
     // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
-    mScene = makeUnique<VoxelScene>(SceneCreateInfo{
-        .rhi  = mVulkanRHI,
-        .name = "Voxel Scene",
-    });
-    mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+    // mScene = makeUnique<VoxelScene>(SceneCreateInfo{
+    //     .rhi  = mVulkanRHI,
+    //     .name = "Voxel Scene",
+    // });
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
     // TODO: Testing SceneV2
     mSV2 = makeUnique<SceneV2>(mVulkanRHI);
+    mUserInterface->addComponent<SceneInfoComponent>(mSV2.get());
 }
 
 UPtr<App> App::create() noexcept

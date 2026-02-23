@@ -2,17 +2,17 @@
 
 #include "UserInterface/IComponent.hpp"
 
-class Scene;
+class SceneV2;
 class SceneInfoComponent final : public IComponent
 {
 public:
-    explicit SceneInfoComponent(Scene* pScene);
+    explicit SceneInfoComponent(SceneV2* pScene);
 
     ~SceneInfoComponent() override = default;
 
     void draw() override;
 
 private:
-    Scene* mScene;
+    SceneV2* mScene;
     std::size_t mLightIndex = 0;
 };

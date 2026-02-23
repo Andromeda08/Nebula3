@@ -4,9 +4,9 @@
 #include <imgui_stdlib.h>
 #include <glm/gtc/type_ptr.hpp>
 #include "Core/Random.hpp"
-#include "Scene/Scene.hpp"
+#include "Scene/SceneV2.hpp"
 
-SceneInfoComponent::SceneInfoComponent(Scene* pScene)
+SceneInfoComponent::SceneInfoComponent(SceneV2* pScene)
 : mScene(pScene)
 {
 }
@@ -19,20 +19,31 @@ void SceneInfoComponent::draw()
     // ============================
     // Lights
     // ============================
-    auto* lights = mScene->mLights.get();
+    auto* lights = mScene->mLightSystem.get();
     ImGui::Text("Lights (%u)", static_cast<uint32_t>(lights->getCount()));
     ImGui::SameLine();
     if (ImGui::SmallButton("Add"))
     {
         mLightIndex = lights->addLight({
-            .position   = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
-            .color      = Random::getVector<glm::vec3>(),
-            .intensity  = 10000.0f,
-            .enabled    = true,
-            .type       = LightType::Point,
-            .name       = "Light",
+            .position    = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
+            .color       = Random::getVector<glm::vec3>(),
+            .intensity   = 1500.0f,
+            .enabled     = true,
+            .castsShadow = true,
+            .type        = LightType::Point,
+            .name        = "Light",
         });
     }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Remove"))
+    {
+        lights->removeLight(mLightIndex);
+        lights->queueUpdate(mLightIndex);
+
+        const auto& i = lights->getValidIndices();
+        mLightIndex = *std::ranges::min_element(i);
+    }
+
     ImGui::Separator();
     if (lights->getCount() == 0)
     {
@@ -62,6 +73,7 @@ void SceneInfoComponent::draw()
         changed |= ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
         changed |= ImGui::InputFloat("Intensity", &light.intensity);
         changed |= ImGui::Checkbox("Enabled", &light.enabled);
+        changed |= ImGui::Checkbox("Shadows", &light.castsShadow);
 
         if (changed)
         {
