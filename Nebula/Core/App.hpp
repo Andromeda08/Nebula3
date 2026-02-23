@@ -21,15 +21,14 @@ public:
 
 private:
     bool                         mRunning = false;
+    float                        mCPUFramerate = 0.0f;
 
     DeltaTime                    mDeltaTime;
     SPtr<SDLWindow>              mWindow;
     SPtr<RHI::VulkanRHI>         mVulkanRHI;
     UPtr<UserInterface>          mUserInterface;
     SPtr<rg::RenderGraphContext> mRenderGraphContext;
-    UPtr<Scene>                  mScene;
-
-    UPtr<SceneV2>                mSV2;
+    UPtr<SceneV2>                mScene;
 };
 
 extern App* gApplication;

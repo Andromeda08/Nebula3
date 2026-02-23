@@ -11,7 +11,7 @@ namespace RHI
 class StatisticsComponent final : public IComponent
 {
 public:
-    explicit StatisticsComponent(const SPtr<RHI::VulkanRHI>& rhi);
+    explicit StatisticsComponent(const SPtr<RHI::VulkanRHI>& rhi, float* pCPUFramerate);
 
     ~StatisticsComponent() override = default;
 
@@ -19,4 +19,5 @@ public:
 
 private:
     SPtr<RHI::VulkanRHI> mRHI;
+    float*               mCPUFramerate;
 };

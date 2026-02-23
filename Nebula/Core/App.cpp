@@ -28,22 +28,17 @@ App::App()
         .window   = mWindow,
         .rhi      = mVulkanRHI,
     });
-    mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI);
+    mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
     // mRenderGraphContext = rg::RenderGraphContext::create({
     //     .rhi = mVulkanRHI,
     // });
     // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
 
-    // mScene = makeUnique<VoxelScene>(SceneCreateInfo{
-    //     .rhi  = mVulkanRHI,
-    //     .name = "Voxel Scene",
-    // });
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
-    // TODO: Testing SceneV2
-    mSV2 = makeUnique<SceneV2>(mVulkanRHI);
-    mUserInterface->addComponent<SceneInfoComponent>(mSV2.get());
+    mScene = makeUnique<SceneV2>(mVulkanRHI);
+    mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 }
 
 UPtr<App> App::create() noexcept
@@ -71,10 +66,10 @@ void App::run_renderPathLoop()
     while (mRunning)
     {
         const float dt = mDeltaTime.getDeltaTime();
+        mCPUFramerate = dt;
         // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
-        // mScene->preFrame();
-        mSV2->preFrame();
+        mScene->preFrame();
 
         // Input
         SDL_Event event;
@@ -85,8 +80,7 @@ void App::run_renderPathLoop()
             // If ImGui didn't want to consume any input continue with Scene handlers.
             if (!mUserInterface->wantCaptureInput())
             {
-                // mScene->onEvent(event);
-                mSV2->onEvent(event);
+                mScene->onEvent(event);
             }
 
             switch (event.type)
@@ -110,9 +104,7 @@ void App::run_renderPathLoop()
         commandList->begin();
 
         // Updates
-        // mScene->onUpdate(commandList, frameData, dt);
-
-        mSV2->onUpdate(dt, frameData, commandList);
+        mScene->onUpdate(dt, frameData, commandList);
 
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
@@ -123,9 +115,7 @@ void App::run_renderPathLoop()
         // pRenderPath->initialize(commandList);   // Runs once
         // pRenderPath->execute(commandList, frameData);
 
-        // mScene->render(commandList, frameData);
-
-        mSV2->onRender(commandList, frameData);
+        mScene->onRender(commandList, frameData);
 
         // =====================================
         // User Interface
