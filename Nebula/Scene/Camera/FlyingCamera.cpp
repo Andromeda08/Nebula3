@@ -18,6 +18,7 @@ FlyingCamera::~FlyingCamera() = default;
 
 void FlyingCamera::onEvent(const SDL_Event& event) noexcept
 {
+    auto* pWindow = SDL_GetWindowFromID(event.button.windowID);
     switch (event.type)
     {
         case SDL_EVENT_KEY_DOWN:
@@ -29,7 +30,7 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 mMouseCaptured = true;
-                SDL_SetWindowRelativeMouseMode(SDL_GetWindowFromID(event.button.windowID), true);
+                SDL_SetWindowRelativeMouseMode(pWindow, true);
             }
             break;
         }
@@ -37,7 +38,9 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 mMouseCaptured = false;
-                SDL_SetWindowRelativeMouseMode(SDL_GetWindowFromID(event.button.windowID), false);
+                mKeyState = {};
+                SDL_SetWindowRelativeMouseMode(pWindow, false);
+                SDL_WarpMouseInWindow(pWindow, mSize.x / 2.0f, mSize.y / 2.0f);
             }
             break;
         }
@@ -46,6 +49,12 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             {
                 handleMouseEvent(event.motion);
             }
+            break;
+        }
+        case SDL_EVENT_WINDOW_FOCUS_LOST: {
+            mKeyState = {};
+            mMouseCaptured = false;
+            SDL_SetWindowRelativeMouseMode(pWindow, false);
             break;
         }
         default:
