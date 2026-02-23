@@ -27,6 +27,8 @@ public:
      */
     uint64_t addLight(const Light& light) noexcept;
 
+    void removeLight(uint64_t idx) noexcept;
+
     /**
      * Gather and upload the queued changes to the GPU-side data buffer.
      */

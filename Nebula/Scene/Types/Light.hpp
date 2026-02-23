@@ -26,6 +26,7 @@ struct Light
     glm::vec3   color       = glm::vec3(1.0f);
     float       intensity   = 1500.0f;
     bool        enabled     = true;
+    bool        castsShadow = true;
     LightType   type        = LightType::Point;
     std::string name        = "Light";
 };

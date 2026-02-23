@@ -11,7 +11,8 @@ struct GPULightData
     glm::vec4   color;
     float       intensity;
     int32_t     enabled;
-    int32_t     _p0, _p1;
+    int32_t     castsShadow;
+    int32_t     _p0;
 };
 
 LightSystem::LightSystem(const SPtr<RHI::VulkanRHI>& rhi, const std::vector<Light>& initialLights)
@@ -62,6 +63,14 @@ uint64_t LightSystem::addLight(const Light& light) noexcept
     return static_cast<uint64_t>(index);
 }
 
+void LightSystem::removeLight(const uint64_t idx) noexcept
+{
+    exitOnAssert(idx < mLights.size(), "Out of bounds index");
+
+    mValidity[idx] = false;
+    mLights[idx].enabled = false;
+}
+
 void LightSystem::upload() noexcept
 {
     if (mUploadQueue.empty())
@@ -93,6 +102,7 @@ void LightSystem::upload() noexcept
             .color = glm::vec4(mLights[lightIndex].color, 1.0f),
             .intensity = mLights[lightIndex].intensity,
             .enabled = mLights[lightIndex].enabled ? 1 : 0,
+            .castsShadow = mLights[lightIndex].castsShadow ? 1 : 0,
         });
     }
 
