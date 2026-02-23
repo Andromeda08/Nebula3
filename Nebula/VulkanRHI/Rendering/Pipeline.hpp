@@ -5,6 +5,7 @@
 
 #include "Shader.hpp"
 #include "VulkanRHI/Device.hpp"
+#include "VulkanRHI/Commands/CommandList.hpp"
 
 namespace RHI
 {
@@ -67,23 +68,35 @@ namespace RHI
     public:
         virtual ~Pipeline();
 
+        [[deprecated("Use the version that takes in a CommandList as parameter")]]
         void bind(const vk::CommandBuffer& commandBuffer) const;
 
+        void bind(const CommandList* pCommandList) const;
+
+        [[deprecated("Use the version that takes in a CommandList as parameter")]]
         void bindDescriptorSet(const vk::CommandBuffer& commandBuffer, const vk::DescriptorSet& descriptorSet) const;
 
+        /**
+         * Bind a DescriptorSet at the specified index, or 0 when omitted.
+         */
+        void bindDescriptorSet(const CommandList* pCommandList, const vk::DescriptorSet& descriptorSet, uint32_t setIndex = 0) const;
+
+        [[deprecated("Use the version that takes in a CommandList as parameter")]]
         void bindDescriptorSets(const vk::CommandBuffer& commandBuffer, const std::vector<vk::DescriptorSet>& descriptorSets) const;
 
+        /**
+         * Bind multiple DescriptorSets starting at the specified index, or 0 when omitted.
+         */
+        void bindDescriptorSets(const CommandList* pCommandList, const std::vector<vk::DescriptorSet>& descriptorSets, uint32_t firstSet = 0) const;
+
+        [[deprecated("Use the version that takes in a CommandList as parameter")]]
         void pushConstants(const vk::CommandBuffer& commandBuffer, const void* pData) const;
 
-        vk::Pipeline getHandle() const
-        {
-            return mPipeline;
-        }
+        void pushConstants(const CommandList* pCommandList, const void* pData) const;
 
-        vk::PipelineLayout getPipelineLayout() const
-        {
-            return mPipelineLayout;
-        }
+        [[nodiscard]] const vk::Pipeline& getHandle() const noexcept;
+
+        [[nodiscard]] const vk::PipelineLayout& getPipelineLayout() const noexcept;
 
     protected:
         vk::Pipeline            mPipeline;

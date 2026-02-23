@@ -44,4 +44,9 @@ namespace RHI
     {
         commandBuffer.dispatch(sizeX, sizeY, sizeZ);
     }
+
+    void ComputePipeline::dispatch(const CommandList* pCommandList, const uint32_t sizeX, const uint32_t sizeY, const uint32_t sizeZ) const noexcept
+    {
+        pCommandList->getHandle().dispatch(sizeX, sizeY, sizeZ);
+    }
 }
