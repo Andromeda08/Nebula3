@@ -28,7 +28,7 @@ App::App()
         .window   = mWindow,
         .rhi      = mVulkanRHI,
     });
-    mUserInterface->addComponent<StatisticsComponent>();
+    mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI);
 
     // mRenderGraphContext = rg::RenderGraphContext::create({
     //     .rhi = mVulkanRHI,
