@@ -96,18 +96,28 @@ public:
 
         initScene();
 
+        std::vector bindings = {
+            vk::DescriptorSetLayoutBinding {
+                0, vk::DescriptorType::eUniformBuffer, 1,
+                vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+            },
+            vk::DescriptorSetLayoutBinding {
+                1, vk::DescriptorType::eStorageBuffer, 1,
+                vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+            },
+        };
+        if (mRHI->getRaytracingSupport())
+        {
+            using enum vk::ShaderStageFlagBits;
+            bindings.push_back({
+                2, vk::DescriptorType::eAccelerationStructureKHR, 1,
+                eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR
+            });
+        }
+
         /* TODO: Bindless */ {
             mSceneDescriptor = mRHI->createDescriptor({
-                .bindings = {
-                    vk::DescriptorSetLayoutBinding {
-                        0, vk::DescriptorType::eUniformBuffer, 1,
-                        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
-                    },
-                    vk::DescriptorSetLayoutBinding {
-                        1, vk::DescriptorType::eStorageBuffer, 1,
-                        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
-                    },
-                },
+                .bindings = bindings,
                 .setCount = 2,
                 .debugName = "Scene_Descriptor",
             });
@@ -116,7 +126,8 @@ public:
             {
                 const auto descriptorWrite = RHI::DescriptorWrite()
                     .writeUniformBuffer(0, mCameraUniformBuffers[i])
-                    .writeStorageBuffer(1, mLightSystem->getDataBuffer());
+                    .writeStorageBuffer(1, mLightSystem->getDataBuffer())
+                    .writeAccelerationStructure(2, mTLASManager->getTLAS());
                 mSceneDescriptor->write(i, descriptorWrite);
             }
         }
@@ -186,6 +197,10 @@ public:
         if (mRHI->getRaytracingSupport())
         {
             mTLASManager->onUpdate(pCommandList);
+
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                    .writeAccelerationStructure(2, mTLASManager->getTLAS());
+            mSceneDescriptor->write(frameData.currentFrame, descriptorWrite);
         }
 
         // Update Camera Data
@@ -282,6 +297,22 @@ private:
         mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
 
         mLightSystem->addLight({});
+        mLightSystem->addLight({
+            .position = { -45.0f, 50.0f, -50.0f },
+            .color = { 185.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
+            .intensity = 1500.0f,
+            .enabled = true,
+            .castsShadow = true,
+            .type = LightType::Point
+        });
+        mLightSystem->addLight({
+            .position = { -17, 50, 35 },
+            .color = { 23.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
+            .intensity = 1500.0f,
+            .enabled = true,
+            .castsShadow = true,
+            .type = LightType::Point
+        });
 
         const auto geoCube = mGeometry->addGeometry<Cube>(Cube::Params {});
         mGeometry->onUpdate();
@@ -417,6 +448,7 @@ private:
     }
 
     friend class Indirect_GBufferPass;
+    friend class SceneInfoComponent;
 
     SPtr<RHI::VulkanRHI>                mRHI;
 
@@ -444,4 +476,6 @@ private:
     UPtr<SSAOPass>                      mSSAO;
     UPtr<LightingPass>                  mLightingPass;
     UPtr<FXAAPass>                      mFXAA;
+
+    std::string                         mName = "Scene V2 Test";
 };
