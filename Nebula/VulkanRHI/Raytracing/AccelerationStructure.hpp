@@ -36,6 +36,11 @@ namespace RHI
 
         [[nodiscard]] uint64_t getSize() const noexcept;
 
+        [[nodiscard]] AccelerationStructureType getType() const noexcept
+        {
+            return mType;
+        }
+
     private:
         SPtr<Device>                 mDevice;
         SPtr<Buffer>                 mBackingBuffer;
