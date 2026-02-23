@@ -223,6 +223,27 @@ void TLASManager::execute_TLASBuild(const RHI::CommandList* pCommandList) const 
         .setPrimitiveCount(mInstancePool->getSize());
     const auto* pRangeInfo = &rangeInfo;
 
+    {
+        const auto b1 = vk::BufferMemoryBarrier2()
+            .setSrcAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR | vk::AccessFlagBits2::eAccelerationStructureReadKHR)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
+            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
+            .setBuffer(mBuildScratchBuffer->getHandle())
+            .setSize(VK_WHOLE_SIZE);
+        const auto b2 = vk::BufferMemoryBarrier2()
+            .setSrcAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
+            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
+            .setBuffer(mBackingBuffer->getHandle())
+            .setSize(VK_WHOLE_SIZE);
+        const std::array barriers = { b1, b2 };
+        const auto dependencyInfo = vk::DependencyInfo()
+            .setBufferMemoryBarriers(barriers);
+        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
+    }
+
     pCommandList->getHandle().buildAccelerationStructuresKHR(1, &buildInfo, &pRangeInfo);
 
     pCommandList->endLabel();
