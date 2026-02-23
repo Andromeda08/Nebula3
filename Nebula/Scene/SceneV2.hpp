@@ -17,6 +17,7 @@
 #include "Math/Transform.hpp"
 #include "Render/FXAAPass.hpp"
 #include "Render/LightingPass.hpp"
+#include "Render/RTAOPass.hpp"
 #include "Render/SSAOPass.hpp"
 #include "Scene/Render/Indirect_GBufferPass.hpp"
 #include "Voxel/TerrainGenerator.hpp"
@@ -146,9 +147,15 @@ public:
             .rhi        = mRHI,
         });
 
+        mRTAO = RTAOPass::create({
+            .resolution = { extent.width, extent.height },
+            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mSceneDescriptor },
+            .rhi        = mRHI,
+        });
+
         mLightingPass = LightingPass::create({
             .resolution = { extent.width, extent.height },
-            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult() },
+            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mRTAO->getResult() },
             .rhi        = mRHI,
         });
 
@@ -226,6 +233,7 @@ public:
     {
         mTestPass->execute(commandList, frameData);
         mSSAO->execute(commandList, frameData);
+        mRTAO->execute(commandList, frameData);
         mLightingPass->execute(commandList, frameData);
         mFXAA->execute(commandList, frameData);
 
@@ -474,6 +482,7 @@ private:
 
     UPtr<Indirect_GBufferPass>          mTestPass;
     UPtr<SSAOPass>                      mSSAO;
+    UPtr<RTAOPass>                      mRTAO;
     UPtr<LightingPass>                  mLightingPass;
     UPtr<FXAAPass>                      mFXAA;
 

@@ -236,6 +236,8 @@ add_executable(Nebula3
     Nebula/Scene/Render/Indirect_GBufferPass.hpp
     Nebula/Scene/Render/Indirect_GBufferPass.cpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.cpp
+    Nebula/Scene/Render/RTAOPass.hpp
+    Nebula/Scene/Render/RTAOPass.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

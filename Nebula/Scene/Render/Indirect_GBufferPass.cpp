@@ -96,25 +96,25 @@ void Indirect_GBufferPass::createResources() noexcept
     mPositionDepthBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eR32G32B32A32Sfloat,
-        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_PositionDepth",
     });
     mNormalBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eR32G32B32A32Sfloat,
-        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_Normal",
     });
     mAlbedoBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eR32G32B32A32Sfloat,
-        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_Albedo",
     });
     mDepthBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eD32Sfloat,
-        .usageFlags    = eDepthStencilAttachment | eSampled | eTransferSrc | eTransferDst,
+        .usageFlags    = eDepthStencilAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_DepthBuffer"
     });
 }
