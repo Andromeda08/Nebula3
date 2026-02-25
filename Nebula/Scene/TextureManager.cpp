@@ -69,6 +69,84 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
     return true;
 }
 
+void TextureManager::loadTextureFromMemory(const std::string& label, const stbi_uc* pixels,
+    int32_t width, int32_t height, uint32_t slot) noexcept
+{
+    const auto size = getTextureSize(width, height);
+    const auto stagingBuffer = mRHI->createBuffer({ size, RHI::BufferType::Staging, label });
+    stagingBuffer->setData(pixels, size);
+
+    const auto image = mRHI->createImage({
+        .extent = vk::Extent2D()
+            .setWidth(static_cast<uint32_t>(width))
+            .setHeight(static_cast<uint32_t>(height)),
+        .format = vk::Format::eR8G8B8A8Srgb,
+        .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+        .createSampler = true,
+        .aliased = false,
+        .debugName = std::format("{}[slot={}]", label, slot),
+    });
+
+    const auto loadInfo = TextureLoadInfo {
+        .stagingBuffer = stagingBuffer,
+        .textureImage  = image,
+        .slot          = slot
+    };
+
+    loadImmediately(loadInfo);
+}
+
+TextureManager::BatchUpload TextureManager::createBatchUpload() noexcept
+{
+    return {
+        .mRHI = mRHI
+    };
+}
+
+void TextureManager::loadTextureBatch(const BatchUpload& batch) noexcept
+{
+    auto write = RHI::DescriptorWrite();
+
+    mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+        auto transferBarrier = RHI::Barrier();
+        for (const auto& item : batch.mItems)
+        {
+            transferBarrier.addImageBarrier({
+                .dstUsage = RHI::ImageUsage::TransferDst,
+                .image = item.textureImage,
+            });
+        }
+        transferBarrier.insert(commandList);
+
+        for (const auto& item : batch.mItems)
+        {
+            mTextures[item.slot] = item.textureImage;
+            setSlot(item.slot, true);
+            write.writeCombinedImageSampler(0, item.slot, vk::ImageLayout::eShaderReadOnlyOptimal, mTextures[item.slot]);
+
+            commandList->copyBufferToImage({
+                .pSrcBuffer   = batch.mStaging.get(),
+                .pDstImage    = item.textureImage.get(),
+                .bufferOffset = item.offset,
+            });
+        }
+
+        auto shaderBarrier = RHI::Barrier();
+        for (const auto& item : batch.mItems)
+        {
+            shaderBarrier.addImageBarrier({
+                .dstUsage = RHI::ImageUsage::ShaderReadOnly,
+                .image = item.textureImage,
+            });
+        }
+        shaderBarrier.insert(commandList);
+
+        updateMetaTexture(commandList);
+    });
+
+    mDescriptor->writeAll(write);
+}
+
 void TextureManager::update(const RHI::CommandList* commandList) const
 {
     if (mMetaIsDirty)

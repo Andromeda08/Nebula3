@@ -30,6 +30,8 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
+set(FFX_SDK_DIR External/FidelityFX-SDK-v1.1.4)
+
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
     Nebula/Impl/pch.hpp
@@ -240,6 +242,10 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Detail/DescriptorWrite.cpp
     Nebula/Scene/Render/RTAOPass.hpp
     Nebula/Scene/Render/RTAOPass.cpp
+    Nebula/Scene/SceneV2.cpp
+    Nebula/Window/SplashWindow.hpp
+    Nebula/Window/SplashWindow.cpp
+    # Nebula/Scene/Render/FFX_Denoiser.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -259,6 +265,7 @@ target_include_directories(Nebula3 PUBLIC
     External/SDL_ttf/include
     External/spdlog/include
     ${Vulkan_INCLUDE_DIRS}
+    # ${FFX_SDK_DIR}/sdk/include
 )
 
 target_link_libraries(Nebula3 PUBLIC

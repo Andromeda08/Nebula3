@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="nrt_shaders" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="buildProfileId" value="dev" />
-    <option name="command" value="run -- build-shaders -b ../../cmake-build-debug/Resources/Shaders/bin -p ../../Resources/Shaders -d" />
+    <option name="buildProfileId" value="release" />
+    <option name="command" value="run -- build-shaders -b ../../cmake-build-release/Resources/Shaders/bin -p ../../Resources/Shaders -d" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$/Tools/nrt" />
     <envs />
     <option name="emulateTerminal" value="true" />
