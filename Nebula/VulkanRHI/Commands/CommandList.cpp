@@ -73,7 +73,7 @@ namespace RHI
     {
         const auto imageProperties = copyInfo.pDstImage->getProperties();
         const auto copyRegion = vk::BufferImageCopy2()
-            .setBufferOffset(0)
+            .setBufferOffset(copyInfo.bufferOffset)
             .setBufferRowLength(0)
             .setBufferImageHeight(0)
             .setImageSubresource({ copyInfo.pDstImage->getProperties().aspectFlags, 0, 0, 1})

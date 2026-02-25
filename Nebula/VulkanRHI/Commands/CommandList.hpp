@@ -12,8 +12,9 @@ namespace RHI
 
     struct BufferImageCopyInfo
     {
-        Buffer* pSrcBuffer;
-        Image*  pDstImage;
+        Buffer*  pSrcBuffer;
+        Image*   pDstImage;
+        uint64_t bufferOffset = 0;
     };
 
     struct CommandListCreateInfo
