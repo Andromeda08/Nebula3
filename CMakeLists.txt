@@ -9,13 +9,15 @@ find_package(Vulkan REQUIRED)
 include(Tools/nrt/cmake/nrt.cmake)
 nrt_build()
 
-add_subdirectory(External/glm)
-add_subdirectory(External/json)
-add_subdirectory(External/ktx)
-add_subdirectory(External/vma)
-add_subdirectory(External/gemmi EXCLUDE_FROM_ALL)
-add_subdirectory(External/SDL)
-add_subdirectory(External/spdlog)
+add_subdirectory(External/fastgltf  EXCLUDE_FROM_ALL)
+add_subdirectory(External/glm       EXCLUDE_FROM_ALL)
+add_subdirectory(External/json      EXCLUDE_FROM_ALL)
+add_subdirectory(External/ktx       EXCLUDE_FROM_ALL)
+add_subdirectory(External/vma       EXCLUDE_FROM_ALL)
+add_subdirectory(External/gemmi     EXCLUDE_FROM_ALL)
+add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
+add_subdirectory(External/SDL_ttf   EXCLUDE_FROM_ALL)
+add_subdirectory(External/spdlog    EXCLUDE_FROM_ALL)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -242,6 +244,7 @@ add_executable(Nebula3
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
+    External/fastgltf/include
     External/glm
     External/imgui
     External/imgui/backends
@@ -253,6 +256,7 @@ target_include_directories(Nebula3 PUBLIC
     External/vma/include
     External/gemmi/include
     External/SDL/include
+    External/SDL_ttf/include
     External/spdlog/include
     ${Vulkan_INCLUDE_DIRS}
 )
@@ -264,8 +268,10 @@ target_link_libraries(Nebula3 PUBLIC
     gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
     SDL3::SDL3
+    SDL3_ttf::SDL3_ttf
     spdlog::spdlog
     ktx
+    fastgltf::fastgltf
 )
 
 target_compile_definitions(Nebula3 PUBLIC
