@@ -3,7 +3,7 @@
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_ray_query : enable
 
-#define MAX_LIGHTS 100
+#define MAX_LIGHTS 256
 
 struct GPULightData
 {

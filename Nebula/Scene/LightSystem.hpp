@@ -16,7 +16,7 @@ namespace RHI
 class LightSystem
 {
 public:
-    constexpr static std::size_t sMaxLights = 100;
+    constexpr static std::size_t sMaxLights = 256;
 
     explicit LightSystem(const SPtr<RHI::VulkanRHI>& rhi, const std::vector<Light>& initialLights = {});
 
