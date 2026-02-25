@@ -95,7 +95,35 @@ public:
             });
         }
 
-        initScene();
+        {
+            const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
+            mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+
+            mLightSystem->addLight({
+                .position = { -17.0f, 15.0f, -1.0f },
+                .color = { 241.0f / 255.0f, 241.0f / 255.0f, 204.0f / 255.0f },
+                .intensity = 750.0f,
+                .enabled = true,
+                .castsShadow = true,
+                .type = LightType::Point,
+                .name = "Highlight"
+            });
+            mLightSystem->addLight({
+                .position = { -10, 250, 10 },
+                .color = { 232.0f / 255.0f, 243.0f / 255.0f, 240.0f / 255.0f },
+                .intensity = 75000.0f,
+                .enabled = true,
+                .castsShadow = true,
+                .type = LightType::Point,
+                .name = "Sky"
+            });
+
+            mName = "Amazon Lumberyard Bistro";
+            // mName = "New Sponza";
+            fast_parseGLTFScene("bistro.glb");
+        }
+
+        // initScene();
 
         std::vector bindings = {
             vk::DescriptorSetLayoutBinding {
@@ -155,7 +183,7 @@ public:
 
         mLightingPass = LightingPass::create({
             .resolution = { extent.width, extent.height },
-            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mRTAO->getResult() },
+            .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult() },
             .rhi        = mRHI,
         });
 
@@ -233,7 +261,7 @@ public:
     {
         mTestPass->execute(commandList, frameData);
         mSSAO->execute(commandList, frameData);
-        mRTAO->execute(commandList, frameData);
+        // mRTAO->execute(commandList, frameData);
         mLightingPass->execute(commandList, frameData);
         mFXAA->execute(commandList, frameData);
 
@@ -380,6 +408,8 @@ private:
             mObjects.back()->solidColor = glm::vec4(voxel.color, 1.0f);
         }
     }
+
+    void fast_parseGLTFScene(const std::string& fileName) noexcept;
 
     void buildDrawCommands(const RHI::CommandList* pCommandList) noexcept
     {
