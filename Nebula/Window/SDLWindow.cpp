@@ -12,7 +12,7 @@ SDLWindow::SDLWindow(const WindowCreateInfo& createInfo)
         exitWithError("Failed to initialize windowing system.");
     }
 
-    uint64_t windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    uint64_t windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
     if (createInfo.isResizable)
     {
         windowFlags |= SDL_WINDOW_RESIZABLE;

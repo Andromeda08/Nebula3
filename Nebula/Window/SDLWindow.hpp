@@ -33,6 +33,11 @@ public:
 
     void createVulkanSurface(const vk::Instance& instance, vk::SurfaceKHR* pSurface) const override;
 
+    void reveal() const noexcept
+    {
+        SDL_ShowWindow(mWindow);
+    }
+
 private:
     float       mDisplayScaling  = 1.0f;
     Size2D      mWindowSize      = {};

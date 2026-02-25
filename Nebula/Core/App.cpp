@@ -9,20 +9,24 @@
 #include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
+#include "Window/SplashWindow.hpp"
 
 App* gApplication = nullptr;
 
 App::App()
 {
     const auto& config = Configuration::getConfig();
+    SplashWindow::get().setMessage("Creating Window...");
     mWindow = SDLWindow::create({
         .size  = config.app.windowSize,
         .title = config.app.windowTitle,
     });
+    SplashWindow::get().setMessage("Initializing VulkanRHI...");
     mVulkanRHI = RHI::VulkanRHI::create({
         .pWindow = mWindow,
     });
 
+    SplashWindow::get().setMessage("Initializing UserInterface...");
     mUserInterface = UserInterface::create({
         .fontFile = "Resources/Fonts/GeistMono-Regular.ttf",
         .window   = mWindow,
@@ -37,8 +41,11 @@ App::App()
 
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
+    SplashWindow::get().setMessage(std::format("Loading Scene (bistro.glb)..."));
     mScene = makeUnique<SceneV2>(mVulkanRHI);
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+
+    mWindow->reveal();
 }
 
 UPtr<App> App::create() noexcept

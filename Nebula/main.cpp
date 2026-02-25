@@ -1,6 +1,7 @@
 #include <spdlog/spdlog.h>
 #include "Core/App.hpp"
 #include "Core/Configuration.hpp"
+#include "Window/SplashWindow.hpp"
 
 UPtr<App> lApplication;
 
@@ -14,12 +15,17 @@ int main()
         spdlog::set_level(spdlog::level::debug);
     #endif
 
+    SplashWindow::get().open();
+
     // 1. Load Nebula configuration
+    SplashWindow::get().setMessage("Loading configuration...");
     auto* config = Configuration::getInstance();
 
     // 2. Create Application instance and set global reference.
     lApplication = App::create();
     gApplication = lApplication.get();
+
+    SplashWindow::get().close();
 
     // 3. Run application
     lApplication->run_renderPathLoop();
