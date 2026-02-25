@@ -24,6 +24,7 @@ layout (location = 0) out vec4 outViewPosition;
 layout (location = 1) out vec4 outViewNormal;
 layout (location = 2) out vec2 outUV;
 layout (location = 3) out vec4 outColor;
+layout (location = 4) out int  outTextureIndex;
 
 // Buffer References
 // ========================================
@@ -70,5 +71,6 @@ void main()
 
     outUV           = vec2(inUV.x, 1.0 - inUV.y);
     outColor        = inst.solidColor;
+    outTextureIndex = inst.textureIndex;
     gl_Position     = camera.proj * viewPos;
 }

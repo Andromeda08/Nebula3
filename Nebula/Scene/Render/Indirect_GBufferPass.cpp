@@ -59,7 +59,10 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         };
 
         mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSet(commandBuffer, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+        mPipeline->bindDescriptorSets(commandBuffer, {
+            mScene->getSceneDescriptor()->getSet(frameData.currentFrame),
+            mScene->mTextureManager->getDescriptor()->getSet(0),
+        });
         mPipeline->pushConstants(commandBuffer, &pc);
 
         static constexpr vk::DeviceSize offsets[1] = { 0 };
@@ -167,6 +170,7 @@ void Indirect_GBufferPass::createPipeline() noexcept
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
         .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants) })
         .addDescriptorSetLayout(mScene->getSceneDescriptor()->getLayout())
+        .addDescriptorSetLayout(mScene->mTextureManager->getDescriptor()->getLayout())
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
             .configure([](RHI::GraphicsPipelineStateInfo& stateInfo) {
                 stateInfo.addAttributeDescriptions<Vertex>(0, 0);
