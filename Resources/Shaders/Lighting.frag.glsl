@@ -87,7 +87,12 @@ void main()
         float dotNL = max(0.0, dot(N, L));
 
         vec4 color = vec4(albedo * dotNL, 1.0);
-        color.rgb = color.rgb * (light.color.rgb * light.intensity) / (dist * dist);
+        color.rgb = color.rgb * (light.color.rgb * light.intensity) / max(15.0, (dist * dist));
+
+        if (dotNL <= 0.0)
+        {
+            continue;
+        }
 
         if (light.castsShadow == 1)
         {
