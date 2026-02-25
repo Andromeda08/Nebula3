@@ -18,6 +18,7 @@ struct Transform
     glm::vec3 _euler     = glm::vec3(0.0f);
     glm::vec3 _axis      = glm::vec3(0.0f);
     float     _angle     = 0.f;
+    glm::quat _quat      = glm::quat(1, 0, 0, 0);
 
     Transform& translate(const glm::vec3& t) noexcept
     {
@@ -72,9 +73,25 @@ struct Transform
         return *this;
     }
 
+    Transform& setRotation(const glm::quat& q) noexcept
+    {
+        _quat = q;
+        _useQuat = true;
+        _dirty = true;
+        return *this;
+    }
+
+    Transform& setModel(const glm::mat4& model) noexcept
+    {
+        _model = model;
+        _customModel = true;
+        _dirty = true;
+        return *this;
+    }
+
     const glm::mat4& getModel() noexcept
     {
-        if (_dirty)
+        if (_dirty && !_customModel)
         {
             _model = computeModel();
         }
@@ -96,7 +113,9 @@ private:
         const glm::mat4 S = glm::scale(glm::mat4(1.0f), _scale);
         const glm::mat4 R = _useAxisAngle 
             ? glm::rotate(glm::mat4(1.0f), glm::radians(_angle), _axis) 
-            : glm::yawPitchRoll(glm::radians(_euler.y), glm::radians(_euler.x), glm::radians(_euler.z));
+            : _useQuat
+                ? glm::mat4_cast(_quat)
+                : glm::yawPitchRoll(glm::radians(_euler.y), glm::radians(_euler.x), glm::radians(_euler.z));
         return T * R * S;
     }
 
@@ -115,6 +134,8 @@ private:
 
     // _model is updated when _dirty is true and getModel() is called.
     glm::mat4 _model = glm::mat4(1.0f);
+    bool      _customModel = false;
     bool      _dirty = false;
     bool      _useAxisAngle = false;
+    bool      _useQuat = false;
 };
