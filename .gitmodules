@@ -28,3 +28,9 @@
 [submodule "External/ktx"]
 	path = External/ktx
 	url = https://github.com/KhronosGroup/KTX-Software.git
+[submodule "External/fastgltf"]
+	path = External/fastgltf
+	url = https://github.com/spnda/fastgltf.git
+[submodule "External/SDL_ttf"]
+	path = External/SDL_ttf
+	url = https://github.com/libsdl-org/SDL_ttf
