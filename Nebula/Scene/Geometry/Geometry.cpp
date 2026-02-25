@@ -44,6 +44,15 @@ std::vector<Vertex> Cube::sCubeVertices = {
 
 #pragma endregion
 
+Geometry::Geometry(const GeometryCreateInfo& createInfo)
+: mVertices(createInfo.vertices)
+, mIndices(createInfo.indices)
+, mName(createInfo.name)
+{
+    mVertexCount = static_cast<uint32_t>(mVertices.size());
+    mIndexCount  = static_cast<uint32_t>(mIndices.size());
+}
+
 Cube::Cube(const Params& params)
 : Geometry()
 {
