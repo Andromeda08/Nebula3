@@ -22,6 +22,10 @@ struct Lighting_Params
 // Deferred Lighting Pass
 class LightingPass : public RenderPass
 {
+    struct PushConstants
+    {
+        int32_t shadowMode = 1;
+    };
 public:
     explicit LightingPass(const Lighting_Params& params);
 
@@ -33,10 +37,16 @@ public:
 
     [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
 
+    void setShadowMode(const int32_t mode) noexcept
+    {
+        mPushConstants.shadowMode = mode;
+    }
+
 private:
     void createResources() noexcept;
     void createPipeline()  noexcept;
 
+    PushConstants           mPushConstants;
     Lighting_Input          mInput;
     SPtr<RHI::Image>        mOutput;
     SPtr<RHI::Descriptor>   mDescriptor;

@@ -45,6 +45,71 @@ layout (set = 1, binding = 0) uniform sampler2D uPositionDepth;
 layout (set = 1, binding = 1) uniform sampler2D uNormal;
 layout (set = 1, binding = 2) uniform sampler2D uAlbedo;
 layout (set = 1, binding = 3) uniform sampler2D uSSAO;
+layout (set = 1, binding = 4) uniform sampler2D uSky;
+
+layout (push_constant) uniform PushConstant {
+    int shadowMode;
+};
+
+// Building an Orthonormal Basis, Revisited, Tom Duff et al. 2017
+void branchlessONB(vec3 n, out vec3 b1, out vec3 b2)
+{
+    const float s = n.z >= 0.0 ? 1.0 : -1.0;
+    const float a = -1.0f / (s + n.z);
+    const float b = n.x * n.y * a;
+    b1 = vec3(1.0 + s * n.x * n.x * a, s * b, -s * n.x);
+    b2 = vec3(b, s + n.y * n.y * a, -n.y);
+}
+
+vec2 randomDisk(int i, int numSamples)
+{
+    float noise = fract(sin(gl_FragCoord.x * 12.9898 + gl_FragCoord.y * 78.233) * 43758.5453);
+
+    float r = sqrt((float(i) + noise) / float(numSamples));
+    float theta = 2.39996323 * float(i);
+
+    return vec2(r * cos(theta), r * sin(theta));
+}
+
+// Return shadowFactor or 1.0f
+float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
+{
+    const float shadowFactor = 0.1;
+
+    rayQueryEXT ray_query;
+    rayQueryInitializeEXT(ray_query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT, 0xFF, origin, tMin, direction, tMax);    
+
+    while(rayQueryProceedEXT(ray_query)) {}
+    if (rayQueryGetIntersectionTypeEXT(ray_query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+    {
+        return shadowFactor;
+    }
+    return 1.0;
+}
+
+float castSoftShadow(vec3 origin, GPULightData light, float r)
+{
+    float shadow = 0.0;
+    const int samples = 16;
+
+    vec3 lightDir = light.position.xyz - origin;
+    vec3 b1, b2;
+    branchlessONB(lightDir, b1, b2);
+
+    for (int i = 0; i < samples; i++)
+    {
+        vec2 rnd = randomDisk(i, samples);
+        vec3 jitteredLightPos = light.position.xyz + r * (rnd.x * b1 + rnd.y * b2);
+
+        vec3  dir  = jitteredLightPos - origin.xyz;
+        vec3  L    = normalize(dir);
+        float tMax = length(dir);
+
+        shadow += castShadow(origin, dir, 0.01, tMax);
+    }
+
+    return shadow / float(samples);
+}
 
 void main()
 {
@@ -94,21 +159,20 @@ void main()
             continue;
         }
 
-        if (light.castsShadow == 1)
+        if (shadowMode != 0 && light.castsShadow == 1)
         {
             vec3 origin = wPos;
             vec3 direction = L;
             float tMin = 0.01;
             float tMax = length(lightDir);
 
-            rayQueryEXT ray_query;
-            rayQueryInitializeEXT(ray_query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT, 0xFF, origin, tMin, direction, tMax);
-
-            const float shadowFactor = 0.1;
-            while(rayQueryProceedEXT(ray_query)) {}
-            if (rayQueryGetIntersectionTypeEXT(ray_query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+            if (shadowMode == 1)
             {
-                color.rgb *= shadowFactor;
+                color *= castShadow(origin, direction, tMin, tMax);
+            }
+            if (shadowMode == 2)
+            {
+                color *= castSoftShadow(origin, light, 1.0);
             }
         }
 

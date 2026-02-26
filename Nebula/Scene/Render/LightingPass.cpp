@@ -28,6 +28,7 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
 
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mPipeline->bind(commandBuffer);
+        mPipeline->pushConstants(commandBuffer, &mPushConstants);
         mPipeline->bindDescriptorSets(commandBuffer, {
             mInput.sceneDescriptor->getSet(frameData.currentFrame),
             mDescriptor->getSet(0),
@@ -91,6 +92,7 @@ void LightingPass::createPipeline() noexcept
     });
 
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
+        .setPushConstantRange({ vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstants) })
         .addDescriptorSetLayout(mInput.sceneDescriptor->getLayout())
         .addDescriptorSetLayout(mDescriptor->getLayout())
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
