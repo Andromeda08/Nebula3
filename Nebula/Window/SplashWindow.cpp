@@ -4,7 +4,7 @@
 
 void SplashWindow::setMessage(const std::string& message, const std::string& sceneName) const
 {
-    if (!mWindow || !mFont)
+    if (!mWindow || !mFont || !mFont16)
     {
         return;
     }
