@@ -40,8 +40,130 @@ namespace detail
     }
 }
 
+SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi)
+: mRHI(rhi)
+{
+    mGeometry = makeUnique<SceneGeometry>(mRHI);
+    mInstancePool = makeUnique<InstancePool>(mRHI, 65536);
+    mTextureManager = TextureManager::create({ mRHI });
+
+    if (mRHI->getRaytracingSupport())
+    {
+        mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
+    }
+
+    mLightSystem = makeUnique<LightSystem>(mRHI);
+
+    for (auto&& [i, buffer] : nbl::enumerate(mCameraUniformBuffers))
+    {
+        buffer = mRHI->createBuffer({
+            .size = sizeof(CameraData),
+            .type = RHI::BufferType::Uniform,
+            .label = std::format("Scene_Uniform_Camera_{}", i),
+        });
+    }
+
+    {
+        const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
+        mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+
+        mLightSystem->addLight({
+            .position = { -17.0f, 15.0f, -1.0f },
+            .color = { 241.0f / 255.0f, 241.0f / 255.0f, 204.0f / 255.0f },
+            .intensity = 750.0f,
+            .enabled = true,
+            .castsShadow = true,
+            .type = LightType::Point,
+            .name = "Highlight"
+        });
+        mLightSystem->addLight({
+            .position = { -10, 250, 10 },
+            .color = { 232.0f / 255.0f, 243.0f / 255.0f, 240.0f / 255.0f },
+            .intensity = 75000.0f,
+            .enabled = true,
+            .castsShadow = true,
+            .type = LightType::Point,
+            .name = "Sky"
+        });
+
+        fast_parseGLTFScene("bistro.glb");
+    }
+
+    // initScene();
+
+    std::vector bindings = {
+        vk::DescriptorSetLayoutBinding {
+            0, vk::DescriptorType::eUniformBuffer, 1,
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+        },
+        vk::DescriptorSetLayoutBinding {
+            1, vk::DescriptorType::eStorageBuffer, 1,
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+        },
+    };
+    if (mRHI->getRaytracingSupport())
+    {
+        using enum vk::ShaderStageFlagBits;
+        bindings.push_back({
+            2, vk::DescriptorType::eAccelerationStructureKHR, 1,
+            eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR
+        });
+    }
+
+    /* TODO: Bindless */ {
+        mSceneDescriptor = mRHI->createDescriptor({
+            .bindings = bindings,
+            .setCount = 2,
+            .debugName = "Scene_Descriptor",
+        });
+
+        for (auto i = 0; i < mSceneDescriptor->getSetCount(); i++)
+        {
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                .writeUniformBuffer(0, mCameraUniformBuffers[i])
+                .writeStorageBuffer(1, mLightSystem->getDataBuffer())
+                .writeAccelerationStructure(2, mTLASManager->getTLAS());
+            mSceneDescriptor->write(i, descriptorWrite);
+        }
+    }
+
+    const auto extent = mRHI->getSwapchain()->getProperties().extent;
+    mTestPass = Indirect_GBufferPass::create({
+        .resolution ={ extent.width, extent.height },
+        .pScene = this,
+        .rhi = mRHI,
+    });
+
+    mSSAO = SSAOPass::create({
+        .useBlur    = true,
+        .resolution = { extent.width, extent.height },
+        .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mSceneDescriptor },
+        .rhi        = mRHI,
+    });
+
+    mRTAO = RTAOPass::create({
+        .resolution = { extent.width, extent.height },
+        .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mSceneDescriptor },
+        .rhi        = mRHI,
+    });
+
+    mLightingPass = LightingPass::create({
+        .resolution = { extent.width, extent.height },
+        .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult() },
+        .rhi        = mRHI,
+    });
+
+    mFXAA = FXAAPass::create({
+        .resolution = { extent.width, extent.height },
+        .input      = { mLightingPass->getResult() },
+        .rhi        = mRHI,
+    });
+}
+
 void SceneV2::fast_parseGLTFScene(const std::string& fileName) noexcept
 {
+    mName = std::filesystem::path(fileName).filename().stem().string();
+
     DeltaTime dt = {};
     dt.initialize();
 
@@ -66,7 +188,7 @@ void SceneV2::fast_parseGLTFScene(const std::string& fileName) noexcept
     // auto textureBatch = mTextureManager->createBatchUpload();
 
     std::unordered_map<int32_t, int32_t> textureMap;
-    int32_t slotCounter = 1;
+    int32_t slotCounter = 2;
 
     int32_t c_fallback = 0;
     int32_t c_uri = 0;
@@ -141,12 +263,12 @@ void SceneV2::fast_parseGLTFScene(const std::string& fileName) noexcept
 
         if (pixels)
         {
-            mTextureManager->loadTextureFromMemory(name, pixels, width, height, slotCounter);
+            uint32_t s = mTextureManager->loadTextureFromMemory(name, pixels, width, height);
             //textureBatch.addTexture(name, pixels, width, height, slotCounter);
             stbi_image_free(pixels);
             // spdlog::info("Loaded texture [slot={}]: {}", slotCounter, name);
-            SplashWindow::get().setMessage(std::format("Loaded texture [slot={}]: {}", slotCounter, name), mName);
-            textureMap[static_cast<int32_t>(texIdx)] = slotCounter;
+            SplashWindow::get().setMessage(std::format("Loaded texture [slot={}]: {}", s, name), mName);
+            textureMap[static_cast<int32_t>(texIdx)] = s;
             slotCounter++;
         }
         else

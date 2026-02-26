@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <stb_image.h>
+
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -10,6 +11,11 @@ TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
 {
     createMetadataResources();
     createDescriptor();
+
+    for (auto i = 0; i < sMaxTextureCount; i++)
+    {
+        mFreeSlots.push(i);
+    }
 
     const auto result = loadTexture(sMissingTextureName, sMissingTextureId);
     mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
@@ -25,26 +31,25 @@ RHI::Image* TextureManager::getTexture(const uint32_t slot) const noexcept
     return mTextures[slot].get();
 }
 
-std::expected<bool, std::string> TextureManager::loadTexture(const std::string& textureFile, const uint32_t slot) noexcept
+uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::optional<uint32_t>& slot) noexcept
 {
-    if (slot >= mTextures.size())
-    {
-        return std::unexpected(std::format(
-            "Invalid texture slot: {}. (valid: [0, {}])", slot, sMaxTextureCount - 1));
-    }
+    const auto loadSlot = slot.value_or(acquireNextSlot());
+    exitOnAssert(loadSlot < mTextures.size(), "Texture slot out of bounds: {} (/{})", loadSlot, sMaxTextureCount);
 
-    int width, height, channels;
-    stbi_uc* pixels = stbi_load(
-        Configuration::getTextureFilePath(textureFile).c_str(),
-        &width, &height, &channels, STBI_rgb_alpha);
+    const auto path = Configuration::getTextureFilePath(textureFile);
+    int32_t width, height, channels;
+    stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
     if (!pixels)
     {
-        return std::unexpected(std::format("Failed to load texture: {}", textureFile));
+        spdlog::error("Failed to load texture: {}", path);
+        return std::numeric_limits<int32_t>::max();
     }
 
     const auto size = getTextureSize(width, height);
     const auto stagingBuffer = mRHI->createBuffer({ size, RHI::BufferType::Staging, textureFile });
     stagingBuffer->setData(pixels, size);
+
     stbi_image_free(pixels);
 
     const auto image = mRHI->createImage({
@@ -55,13 +60,13 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
         .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
         .createSampler = true,
         .aliased = false,
-        .debugName = std::format("{}[slot={}]", textureFile, slot),
+        .debugName = std::format("{}[slot={}]", textureFile, loadSlot),
     });
 
     const auto loadInfo = TextureLoadInfo {
         .stagingBuffer = stagingBuffer,
         .textureImage  = image,
-        .slot          = slot
+        .slot          = loadSlot
     };
 
     loadImmediately(loadInfo);
@@ -69,9 +74,12 @@ std::expected<bool, std::string> TextureManager::loadTexture(const std::string& 
     return true;
 }
 
-void TextureManager::loadTextureFromMemory(const std::string& label, const stbi_uc* pixels,
-    int32_t width, int32_t height, uint32_t slot) noexcept
+uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const stbi_uc* pixels,
+                                           const int32_t width, const int32_t height, const std::optional<uint32_t>& slot) noexcept
 {
+    const auto loadSlot = slot.value_or(acquireNextSlot());
+    exitOnAssert(loadSlot < mTextures.size(), "Texture slot out of bounds: {} (/{})", loadSlot, sMaxTextureCount);
+
     const auto size = getTextureSize(width, height);
     const auto stagingBuffer = mRHI->createBuffer({ size, RHI::BufferType::Staging, label });
     stagingBuffer->setData(pixels, size);
@@ -84,67 +92,18 @@ void TextureManager::loadTextureFromMemory(const std::string& label, const stbi_
         .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
         .createSampler = true,
         .aliased = false,
-        .debugName = std::format("{}[slot={}]", label, slot),
+        .debugName = std::format("{}[slot={}]", label, loadSlot),
     });
 
     const auto loadInfo = TextureLoadInfo {
         .stagingBuffer = stagingBuffer,
         .textureImage  = image,
-        .slot          = slot
+        .slot          = loadSlot
     };
 
     loadImmediately(loadInfo);
-}
 
-TextureManager::BatchUpload TextureManager::createBatchUpload() noexcept
-{
-    return {
-        .mRHI = mRHI
-    };
-}
-
-void TextureManager::loadTextureBatch(const BatchUpload& batch) noexcept
-{
-    auto write = RHI::DescriptorWrite();
-
-    mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
-        auto transferBarrier = RHI::Barrier();
-        for (const auto& item : batch.mItems)
-        {
-            transferBarrier.addImageBarrier({
-                .dstUsage = RHI::ImageUsage::TransferDst,
-                .image = item.textureImage,
-            });
-        }
-        transferBarrier.insert(commandList);
-
-        for (const auto& item : batch.mItems)
-        {
-            mTextures[item.slot] = item.textureImage;
-            setSlot(item.slot, true);
-            write.writeCombinedImageSampler(0, item.slot, vk::ImageLayout::eShaderReadOnlyOptimal, mTextures[item.slot]);
-
-            commandList->copyBufferToImage({
-                .pSrcBuffer   = batch.mStaging.get(),
-                .pDstImage    = item.textureImage.get(),
-                .bufferOffset = item.offset,
-            });
-        }
-
-        auto shaderBarrier = RHI::Barrier();
-        for (const auto& item : batch.mItems)
-        {
-            shaderBarrier.addImageBarrier({
-                .dstUsage = RHI::ImageUsage::ShaderReadOnly,
-                .image = item.textureImage,
-            });
-        }
-        shaderBarrier.insert(commandList);
-
-        updateMetaTexture(commandList);
-    });
-
-    mDescriptor->writeAll(write);
+    return loadSlot;
 }
 
 void TextureManager::update(const RHI::CommandList* commandList) const
@@ -273,4 +232,16 @@ void TextureManager::writeInitialDescriptors() const
         .writeStorageImage(1, vk::ImageLayout::eGeneral, mMetaTexture);
 
     mDescriptor->writeAll(descriptorWrite);
+}
+
+uint32_t TextureManager::acquireNextSlot() noexcept
+{
+    if (mFreeSlots.empty())
+    {
+        exitWithError("Out of available Texture slots.");
+    }
+
+    const auto slot = mFreeSlots.front();
+    mFreeSlots.pop();
+    return slot;
 }
