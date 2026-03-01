@@ -7,6 +7,7 @@ A cross-platform rendering engine built with Vulkan.
 - Vulkan raytracing support
 - User interface with ImGui
 - [wip] RenderGraph system with a node editor and support for serialization
+- GLTF loading
 - Basic Scene system
   - Geometry
     - Single Vertex and Index buffer
@@ -21,6 +22,7 @@ A cross-platform rendering engine built with Vulkan.
   - Screen-space and raytraced ambient occlusion
   - Raytraced shadows
   - Anti-aliasing (FXAA)
+  - Rayleigh-Mie Procedural Sky
   - Molecule rendering (CIF files via instanced rendering and ray marching)
 - WIP implementations of features from old engine versions
   - Pure Raytracing with shadows and reflections
