@@ -1,6 +1,11 @@
 ## Nebula
 A cross-platform rendering engine built with Vulkan.
 
+<p align="center">
+  <img src="./Resources/bistro_test.png" width="75%" />
+</p>
+
+
 ### Features
 - Supports Windows and macOS
 - GPU-driven rendering
