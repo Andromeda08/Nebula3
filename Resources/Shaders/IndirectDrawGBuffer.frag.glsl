@@ -55,7 +55,21 @@ void main()
         color = vec4(textureColor.rgb, 1.0);
     }
 
+    vec3 N = normalize(inViewNormal.xyz);
+
+    if (inNormalIndex >= 0)
+    {
+        int textureValidity = imageLoad(uTextureMeta, ivec2(inNormalIndex, 0)).r;
+        if (textureValidity == TEXTURE_VALID)
+        {
+            mat3 TBN = mat3(normalize(inViewTangent), normalize(inViewBitangent), normalize(inViewNormal.xyz));
+            vec3 normalMap = texture(uTextures[inNormalIndex], inUV).rgb;
+            N = normalMap * 2.0 - 1.0;
+            N = normalize(TBN * N);
+        }
+    }
+
     outPosition = vec4(inViewPosition.xyz, linearDepth(gl_FragCoord.z));
-    outNormal   = vec4(normalize(inViewNormal.xyz), 1.0);
+    outNormal   = vec4(N, 1.0);
     outAlbedo   = color;
 }

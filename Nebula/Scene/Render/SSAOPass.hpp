@@ -54,7 +54,7 @@ private:
 
     constexpr static uint32_t sKernelSize = 64;
     constexpr static uint32_t sNoiseSize  = 8;
-    constexpr static float    sRadius     = 0.5f;
+    constexpr static float    sRadius     = 1.0f;
 
     SSAO_Input              mInput;
     bool                    mRunBlurPass;

@@ -76,8 +76,8 @@ void main()
     mat3 normalMatrix = transpose(inverse(mat3(MV)));
     outViewNormal = vec4(normalMatrix * inNormal, 0.0);
 
-    outUV            = vec2(inUV.x, 1.0 - inUV.y);
-    //outUV            = vec2(inUV.x, inUV.y);
+    // outUV            = vec2(inUV.x, 1.0 - inUV.y);
+    outUV            = vec2(inUV.x, inUV.y);
     outColor         = inst.solidColor;
     outTextureIndex  = inst.textureIndex;
     outNormalIndex   = inst.normalIndex;

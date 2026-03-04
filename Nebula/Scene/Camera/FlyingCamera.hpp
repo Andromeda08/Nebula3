@@ -7,7 +7,7 @@
 class FlyingCamera final : public ICamera
 {
 public:
-    FlyingCamera(glm::ivec2 size, glm::vec3 eye, float h_fov = 75.0f, float near = 0.1f, float far = 256.0f);
+    FlyingCamera(glm::ivec2 size, glm::vec3 eye, float h_fov = 75.0f, float near = 0.1f, float far = 512.0f);
 
     ~FlyingCamera() override;
 

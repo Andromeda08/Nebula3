@@ -1,7 +1,7 @@
 #version 460
 
 #define SSAO_KERNEL_SIZE 32
-#define SSAO_RADIUS      0.5
+#define SSAO_RADIUS      1.0
 
 // Input Attributes
 // ========================================
