@@ -5,7 +5,7 @@
 class DeltaTime
 {
 public:
-    void initialize() noexcept;
+    DeltaTime& initialize() noexcept;
 
     // Get delta time in seconds.
     float getDeltaTime() noexcept;

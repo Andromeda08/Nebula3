@@ -10,6 +10,8 @@ struct Lighting_Input
     SPtr<RHI::Image>        albedo;
     SPtr<RHI::Descriptor>   sceneDescriptor;
     SPtr<RHI::Image>        ssao;
+    SPtr<RHI::Image>        cubeMap;
+    SPtr<RHI::Buffer>       skyData;
 };
 
 struct Lighting_Params

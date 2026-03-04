@@ -11,6 +11,8 @@ struct GPUInstanceData
     int      textureIndex;
     int      geometryIndex;
     uint64_t blasAddress;
+    int      normalIndex;
+    int      _p0, _p1, _p2;
 };
 
 struct AccelerationStructureInstanceKHR

@@ -12,6 +12,7 @@ namespace RHI
                 .extent      = createInfo.extent,
                 .aspectFlags = getImageAspectFlags(createInfo.format),
                 .levelCount  = (createInfo.mipmapping) ? getMipLevels(createInfo.extent) : 1,
+                .layerCount  = createInfo.cubeMap ? 6u : 1u,
                 .sampleCount = createInfo.samples,
             };
         }
@@ -31,11 +32,16 @@ namespace RHI
             .setSamples(mProperties.sampleCount)
             .setUsage(createInfo.usageFlags)
             .setTiling(vk::ImageTiling::eOptimal)
-            .setArrayLayers(1)
+            .setArrayLayers(createInfo.cubeMap ? 6 : 1)
             .setMipLevels(1)
             .setImageType(vk::ImageType::e2D)
             .setSharingMode(vk::SharingMode::eExclusive)
             .setInitialLayout(vk::ImageLayout::eUndefined);
+
+        if (createInfo.cubeMap)
+        {
+            imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eCubeCompatible);
+        }
 
         if (createInfo.aliased)
         {
@@ -64,8 +70,8 @@ namespace RHI
         const auto viewCreateInfo = vk::ImageViewCreateInfo()
             .setFormat(mProperties.format)
             .setImage(mImage)
-            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, 1 })
-            .setViewType(vk::ImageViewType::e2D);
+            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, static_cast<uint32_t>(createInfo.cubeMap ? 6 : 1) })
+            .setViewType(createInfo.cubeMap ? vk::ImageViewType::eCube : vk::ImageViewType::e2D);
 
         mImageView = mDevice->getHandle().createImageView(viewCreateInfo);
 
@@ -77,16 +83,27 @@ namespace RHI
         /**
          * Create Sampler
          */
-        // if (createInfo.createSampler)
+        //if (createInfo.createSampler)
         {
-            constexpr auto samplerCreateInfo = vk::SamplerCreateInfo()
-                .setMagFilter(vk::Filter::eLinear)
-                .setMinFilter(vk::Filter::eLinear)
-                .setAddressModeU(vk::SamplerAddressMode::eRepeat)
-                .setAddressModeV(vk::SamplerAddressMode::eRepeat)
-                .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+            auto samplerCreateInfo = vk::SamplerCreateInfo();
+
+            if (createInfo.samplerInfo.has_value())
+            {
+                samplerCreateInfo = createInfo.samplerInfo.value();
+            }
+            else
+            {
+                samplerCreateInfo
+                    .setMagFilter(vk::Filter::eLinear)
+                    .setMinFilter(vk::Filter::eLinear)
+                    .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+                    .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+                    .setAddressModeW(vk::SamplerAddressMode::eRepeat);
+            }
+
+            samplerCreateInfo
                 .setAnisotropyEnable(true)
-                .setMaxAnisotropy(1.0)
+                .setMaxAnisotropy(8.0)
                 .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
                 .setUnnormalizedCoordinates(false)
                 .setCompareEnable(false)

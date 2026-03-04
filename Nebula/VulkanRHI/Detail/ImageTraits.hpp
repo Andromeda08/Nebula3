@@ -213,6 +213,7 @@ namespace RHI
         vk::Extent2D            extent;
         vk::ImageAspectFlags    aspectFlags;
         uint32_t                levelCount  = 1;
+        uint32_t                layerCount  = 1;
         vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
 
         [[nodiscard]] vk::Extent3D getExtent3D() const
@@ -225,7 +226,7 @@ namespace RHI
             return vk::ImageSubresourceLayers()
                 .setAspectMask(aspectFlags)
                 .setBaseArrayLayer(0)
-                .setLayerCount(1)
+                .setLayerCount(layerCount)
                 .setMipLevel(0);
         }
 
@@ -234,7 +235,7 @@ namespace RHI
             return vk::ImageSubresourceRange()
                 .setAspectMask(aspectFlags)
                 .setBaseArrayLayer(0)
-                .setLayerCount(1)
+                .setLayerCount(layerCount)
                 .setBaseMipLevel(0)
                 .setLevelCount(levelCount);
         }

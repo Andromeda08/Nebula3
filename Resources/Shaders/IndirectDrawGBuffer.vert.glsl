@@ -5,11 +5,13 @@
 
 struct GPUInstanceData
 {
-    mat4  model;
-    vec4  solidColor;
-    int   textureIndex;
-    int   geometryIndex;
-    uvec2 blasAddress;
+    mat4     model;
+    vec4     solidColor;
+    int      textureIndex;
+    int      geometryIndex;
+    uint64_t blasAddress;
+    int      normalIndex;
+    int      _p0, _p1, _p2;
 };
 
 // Vertex Attributes
@@ -17,6 +19,8 @@ struct GPUInstanceData
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV;
+layout (location = 3) in vec2 inUV1;
+layout (location = 4) in vec4 inTangent;
 
 // Output Attributes
 // ========================================
@@ -25,6 +29,9 @@ layout (location = 1) out vec4 outViewNormal;
 layout (location = 2) out vec2 outUV;
 layout (location = 3) out vec4 outColor;
 layout (location = 4) out int  outTextureIndex;
+layout (location = 5) out int  outNormalIndex;
+layout (location = 6) out vec3 outViewTangent;
+layout (location = 7) out vec3 outViewBitangent;
 
 // Buffer References
 // ========================================
@@ -69,8 +76,12 @@ void main()
     mat3 normalMatrix = transpose(inverse(mat3(MV)));
     outViewNormal = vec4(normalMatrix * inNormal, 0.0);
 
-    outUV           = vec2(inUV.x, 1.0 - inUV.y);
-    outColor        = inst.solidColor;
-    outTextureIndex = inst.textureIndex;
-    gl_Position     = camera.proj * viewPos;
+    outUV            = vec2(inUV.x, 1.0 - inUV.y);
+    //outUV            = vec2(inUV.x, inUV.y);
+    outColor         = inst.solidColor;
+    outTextureIndex  = inst.textureIndex;
+    outNormalIndex   = inst.normalIndex;
+    outViewTangent   = normalize(normalMatrix * inTangent.xyz);
+    outViewBitangent = normalize(normalMatrix * cross(inNormal, inTangent.xyz) * inTangent.w);
+    gl_Position      = camera.proj * viewPos;
 }

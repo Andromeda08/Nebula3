@@ -49,7 +49,10 @@ public:
      */
     uint32_t loadTexture(const std::string& textureFile, const std::optional<uint32_t>& slot = std::nullopt) noexcept;
 
-    uint32_t loadTextureFromMemory(const std::string& label, const stbi_uc* pixels, int32_t width, int32_t height, const std::optional<uint32_t>& slot = std::nullopt) noexcept;
+    uint32_t loadTextureFromMemory(const std::string& label, const stbi_uc* pixels, int32_t width, int32_t height,
+        const std::optional<uint32_t>& slot = std::nullopt,
+        const std::optional<vk::SamplerCreateInfo>& samplerInfo = std::nullopt,
+        vk::Format format = vk::Format::eR8G8B8A8Srgb) noexcept;
 
     void update(const RHI::CommandList* commandList) const;
 

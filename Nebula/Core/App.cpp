@@ -41,8 +41,8 @@ App::App()
 
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
-    SplashWindow::get().setMessage(std::format("Loading Scene (bistro.glb)..."));
-    mScene = makeUnique<SceneV2>(mVulkanRHI);
+    SplashWindow::get().setMessage(std::format("Loading Scene (zorah_main_public.gltf)..."));
+    mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 
     mWindow->reveal();

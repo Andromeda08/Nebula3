@@ -13,7 +13,7 @@ SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
 
         mRHI->getDevice()->getPhysicalDevice().getProperties2(&props2);
 
-        mBLAlignment = asProps.minAccelerationStructureScratchOffsetAlignment;
+        mBLAlignment = 256;
     }
 }
 

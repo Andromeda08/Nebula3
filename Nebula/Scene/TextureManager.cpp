@@ -75,7 +75,8 @@ uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::
 }
 
 uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const stbi_uc* pixels,
-                                           const int32_t width, const int32_t height, const std::optional<uint32_t>& slot) noexcept
+    const int32_t width, const int32_t height, const std::optional<uint32_t>& slot,
+     const std::optional<vk::SamplerCreateInfo>& samplerInfo, const vk::Format format) noexcept
 {
     const auto loadSlot = slot.value_or(acquireNextSlot());
     exitOnAssert(loadSlot < mTextures.size(), "Texture slot out of bounds: {} (/{})", loadSlot, sMaxTextureCount);
@@ -88,11 +89,12 @@ uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const s
         .extent = vk::Extent2D()
             .setWidth(static_cast<uint32_t>(width))
             .setHeight(static_cast<uint32_t>(height)),
-        .format = vk::Format::eR8G8B8A8Srgb,
+        .format = format,
         .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
         .createSampler = true,
         .aliased = false,
         .debugName = std::format("{}[slot={}]", label, loadSlot),
+        .samplerInfo = samplerInfo,
     });
 
     const auto loadInfo = TextureLoadInfo {

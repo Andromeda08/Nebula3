@@ -15,69 +15,14 @@
 #include "Core/Macro.hpp"
 #include "Core/Util.hpp"
 #include "Detail/BufferTraits.hpp"
+#include "Detail/DeviceExtensions.hpp"
 
 namespace RHI
 {
-    class DeviceExtension
-    {
-    public:
-        explicit DeviceExtension(
-            const char*                  extensionName,
-            const std::function<void()>& structInitFn = [](){});
-
-        virtual ~DeviceExtension() = default;
-
-        void preCreateDevice(vk::DeviceCreateInfo& deviceCreateInfo) const;
-
-        [[nodiscard]] static std::vector<const char*> getExtensionNames(const std::vector<UPtr<DeviceExtension>>& extensions) noexcept;
-
-    protected:
-        void* mFeatureStructPtr = nullptr;
-
-    private:
-        static void addToNextChain(vk::DeviceCreateInfo& deviceCreateInfo, void* featureInfo);
-
-        const char*           mExtensionName       = nullptr;
-        bool                  mIsCoreFeatureStruct = false;
-        std::function<void()> mStructInitFn        = [](){};
-
-    };
-
-    namespace Platform
-    {
-        [[nodiscard]] constexpr bool getDrawIndirectCountSupported() noexcept
-        {
-            #ifdef __APPLE__
-            return false;
-            #endif
-            return true;
-        }
-
-        [[nodiscard]] std::vector<UPtr<DeviceExtension>> getDeviceExtensions(const RHIFeatureLevel& featureLevel) noexcept;
-
-        [[nodiscard]] inline vk::PhysicalDeviceFeatures getDeviceFeatures() noexcept
-        {
-            auto features = vk::PhysicalDeviceFeatures()
-                .setMultiDrawIndirect(true)
-                .setDrawIndirectFirstInstance(true)
-                .setFillModeNonSolid(true)
-                .setSamplerAnisotropy(true)
-                .setSampleRateShading(true)
-                .setShaderInt64(true);
-
-            if (Configuration::getConfig().rhi.featureLevel >= RHIFeatureLevel::Complete)
-            {
-                features.setGeometryShader(true).setTessellationShader(true);
-            }
-
-            return features;
-        }
-    }
-
     struct DeviceCreateInfo
     {
-        RHIFeatureLevel featureLevel;
-        vk::Instance    instance;
+        RHIFeatureLevel         featureLevel;
+        vk::Instance            instance;
     };
 
     template <class T>
@@ -149,8 +94,15 @@ namespace RHI
 
         RHIFeatureLevel getFeatureLevel() const noexcept { return mRHIFeatureLevel; }
 
+        [[nodiscard]] const DeviceExtensions& getDeviceExtensions() const noexcept
+        {
+            return mExtensions;
+        }
+
     private:
         void selectPhysicalDevice();
+
+        void selectPhysicalDeviceV2();
 
         void createDevice();
 
@@ -165,12 +117,12 @@ namespace RHI
         bool                                mDebugFeatures;
         vk::Instance                        mInstance;
         vk::PhysicalDevice                  mPhysicalDevice;
-        vk::PhysicalDeviceProperties        mProperties;
+
         std::string                         mDeviceName;
 
         vk::Device                          mDevice;
+        DeviceExtensions                    mExtensions = {};
         std::vector<const char*>            mExtensionNames;
-        std::vector<UPtr<DeviceExtension>>  mExtensions;
 
         DeviceQueue                         mGraphicsQueue;
 

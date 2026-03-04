@@ -41,6 +41,13 @@ namespace RHI
     constexpr auto gVulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
     constexpr auto gVulkanPortabilitySubsetExtensionName = "VK_KHR_portability_subset";
 
+    // PhysicalDevice scoring values for selection
+    static constexpr int32_t sDeviceScore_MissingRequiredExtension  = -10000000;
+    static constexpr int32_t sDeviceScore_HasRequiredExtension      =  100000;
+    static constexpr int32_t sDeviceScore_HasOptionalExtension      =  10000;
+    static constexpr int32_t sDeviceScore_IsDedicatedGPU            =  1000000;
+    static constexpr int32_t sDeviceScore_IsIntegratedGPU           =  10000;
+
     using QueueFamily = std::uint32_t;
     using QueueIndex  = std::uint32_t;
 

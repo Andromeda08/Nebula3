@@ -10,12 +10,12 @@ int main()
     // 0. Initial logger config
     spdlog::set_pattern("[%^%l%$] %v");
     #ifdef NDEBUG
-        spdlog::set_level(spdlog::level::info);
+        spdlog::set_level(spdlog::level::debug);
     #else
         spdlog::set_level(spdlog::level::debug);
     #endif
 
-    SplashWindow::get().open();
+    // SplashWindow::get().open();
 
     // 1. Load Nebula configuration
     SplashWindow::get().setMessage("Loading configuration...");
@@ -25,7 +25,7 @@ int main()
     lApplication = App::create();
     gApplication = lApplication.get();
 
-    SplashWindow::get().close();
+    // SplashWindow::get().close();
 
     // 3. Run application
     lApplication->run_renderPathLoop();

@@ -30,10 +30,11 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
-set(FFX_SDK_DIR External/FidelityFX-SDK-v1.1.4)
-
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
+    External/mikktspace/mikktspace.c
+    External/mikktspace/mikktspace.h
+
     Nebula/Impl/pch.hpp
     Nebula/Core/Configuration.hpp
     Nebula/VulkanRHI/RHIConfiguration.hpp
@@ -246,6 +247,16 @@ add_executable(Nebula3
     Nebula/Window/SplashWindow.hpp
     Nebula/Window/SplashWindow.cpp
     # Nebula/Scene/Render/FFX_Denoiser.hpp
+    Nebula/Scene/Render/ProceduralSky.hpp
+    Nebula/Scene/Render/ProceduralSky.cpp
+    Nebula/VulkanRHI/Detail/Extensions.hpp
+    Nebula/VulkanRHI/Detail/Extensions.cpp
+    Nebula/VulkanRHI/Detail/DeviceExtensions.hpp
+    Nebula/VulkanRHI/Detail/DeviceExtensions.cpp
+    Nebula/Scene/Render/TonemapPass.hpp
+    Nebula/Scene/Render/TonemapPass.cpp
+    Nebula/Scene/GLTF/GLTFLoader.hpp
+    Nebula/Scene/GLTF/GLTFLoader.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -258,6 +269,7 @@ target_include_directories(Nebula3 PUBLIC
     External/imnodes
     External/json/include
     External/ktx/lib/include
+    External/mikktspace
     External/stb
     External/vma/include
     External/gemmi/include
@@ -265,7 +277,6 @@ target_include_directories(Nebula3 PUBLIC
     External/SDL_ttf/include
     External/spdlog/include
     ${Vulkan_INCLUDE_DIRS}
-    # ${FFX_SDK_DIR}/sdk/include
 )
 
 target_link_libraries(Nebula3 PUBLIC
@@ -292,3 +303,4 @@ target_compile_definitions(Nebula3 PUBLIC
 target_precompile_headers(Nebula3 PUBLIC
     Nebula/Impl/pch.hpp
 )
+set_source_files_properties(External/mikktspace/mikktspace.c PROPERTIES SKIP_PRECOMPILE_HEADERS ON)

@@ -2,10 +2,11 @@
 
 #include <cassert>
 
-void DeltaTime::initialize() noexcept
+DeltaTime& DeltaTime::initialize() noexcept
 {
     mReady    = true;
     mLastTime = std::chrono::high_resolution_clock::now();
+    return *this;
 }
 
 float DeltaTime::getDeltaTime() noexcept

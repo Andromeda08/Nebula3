@@ -16,7 +16,7 @@ namespace RHI
     std::vector<char> Shader::readShaderFile(const std::string& filePath)
     {
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-        assert(file.is_open());
+        exitOnAssert(file.is_open(), "Failed to open file: {}", filePath);
 
         const std::streamsize fileSize = file.tellg();
         std::vector<char> buffer(fileSize);

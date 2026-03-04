@@ -41,11 +41,16 @@ layout (set = 0, binding = 1) readonly buffer LightUniform {
 
 layout (set = 0, binding = 2) uniform accelerationStructureEXT topLevelAS;
 
-layout (set = 1, binding = 0) uniform sampler2D uPositionDepth;
-layout (set = 1, binding = 1) uniform sampler2D uNormal;
-layout (set = 1, binding = 2) uniform sampler2D uAlbedo;
-layout (set = 1, binding = 3) uniform sampler2D uSSAO;
-layout (set = 1, binding = 4) uniform sampler2D uSky;
+layout (set = 1, binding = 0) uniform sampler2D   uPositionDepth;
+layout (set = 1, binding = 1) uniform sampler2D   uNormal;
+layout (set = 1, binding = 2) uniform sampler2D   uAlbedo;
+layout (set = 1, binding = 3) uniform sampler2D   uSSAO;
+layout (set = 1, binding = 4) uniform samplerCube uSkyTexture;
+layout (set = 1, binding = 5) readonly buffer SkyData {
+    vec4  sunTransmittance;
+    vec3  sunDirection;
+    float sunIntensity;
+};
 
 layout (push_constant) uniform PushConstant {
     int shadowMode;
@@ -118,7 +123,17 @@ void main()
     vec3 viewPos = texture(uPositionDepth, uv).rgb;
     if (viewPos.z >= 0.0)
     {
-        outColor = vec4(0.0);
+        vec4 clip = vec4(uv * 2.0 - 1.0, 1.0, 1.0);
+        vec4 world = camera.viewInverse * camera.projInverse * clip;
+        vec3 rayDir = normalize(world.xyz / world.w - camera.eye.xyz);
+
+        vec3 sky = texture(uSkyTexture, rayDir).rgb;
+
+        float sunAngle = acos(clamp(dot(rayDir, sunDirection), -1.0, 1.0));
+        if (sunAngle < 0.0047)
+        sky += sunTransmittance.rgb * sunIntensity;
+
+        outColor = vec4(sky, 1.0);
         return;
     }
 
@@ -135,6 +150,18 @@ void main()
 
     vec3 ambient = 0.05 * albedo;
     finalColor += ambient;
+
+    // sun directional light
+    vec3 sunColor = sunTransmittance.rgb * sunIntensity;
+    float sunNdotL = max(0.0, dot(N, sunDirection));
+    vec3 sunContrib = albedo * sunNdotL * sunColor;
+
+    if (shadowMode != 0 && sunNdotL > 0.0)
+    {
+        sunContrib *= castShadow(wPos, sunDirection, 0.01, 1000.0);
+    }
+
+    finalColor += sunContrib;
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {

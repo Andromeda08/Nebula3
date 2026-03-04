@@ -17,9 +17,12 @@
 #include "Math/Transform.hpp"
 #include "Render/FXAAPass.hpp"
 #include "Render/LightingPass.hpp"
+#include "Render/ProceduralSky.hpp"
 #include "Render/RTAOPass.hpp"
 #include "Render/SSAOPass.hpp"
+#include "Render/TonemapPass.hpp"
 #include "Scene/Render/Indirect_GBufferPass.hpp"
+#include "UserInterface/UserInterface.hpp"
 #include "Voxel/TerrainGenerator.hpp"
 #include "Voxel/Features/FoliageGenerator.hpp"
 #include "VulkanRHI/Barrier.hpp"
@@ -32,6 +35,7 @@ struct Object
     // Properties
     SPtr<Geometry> pGeometry    = nullptr;
     int32_t        textureIndex = -1;
+    int32_t        normalIndex   = -1;
     int32_t        geometryIndex = -1;
     int32_t        instanceIndex = -1;
     glm::vec4      solidColor   = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
@@ -52,6 +56,9 @@ struct Object
             .solidColor    = solidColor,
             .textureIndex  = textureIndex,
             .geometryIndex = geometryIndex,
+            .blasAddress   = 0,
+            .normalIndex   = normalIndex,
+            ._p0           = 0,
         };
     }
 };
@@ -72,7 +79,7 @@ private:
 class SceneV2
 {
 public:
-    explicit SceneV2(const SPtr<RHI::VulkanRHI>& rhi);
+    explicit SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI);
 
     void preFrame() noexcept
     {
@@ -137,55 +144,16 @@ public:
         isFirstUpdate = false;
     }
 
-    void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) noexcept
-    {
-        mTestPass->execute(commandList, frameData);
-        mSSAO->execute(commandList, frameData);
-        // mRTAO->execute(commandList, frameData);
-        mLightingPass->execute(commandList, frameData);
-        mFXAA->execute(commandList, frameData);
-
-        commandList->beginLabel("Present_Blit");
-        // Barriers
-        const auto barrier = RHI::Barrier()
-            .addBarrier(mFXAA->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
-            .addBarrier(mRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
-        barrier.insert(commandList);
-
-        // Blit
-        const auto srcExtent = mFXAA->getResult()->getProperties().extent;
-        const auto dstExtent = mRHI->getSwapchain()->getProperties().extent;
-        const auto region    = vk::ImageBlit2()
-            .setSrcOffsets({
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
-            })
-            .setSrcSubresource(mFXAA->getResult()->getProperties().getSubresourceLayers())
-            .setDstOffsets({
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
-            })
-            .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
-
-        const auto blit = vk::BlitImageInfo2()
-            .setSrcImage(mFXAA->getResult()->getImage())
-            .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
-            .setDstImage(mRHI->getSwapchain()->getImage(frameData.acquiredIndex))
-            .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
-            .setFilter(vk::Filter::eLinear)
-            .setRegions(region);
-
-        commandList->getHandle().blitImage2(blit);
-        commandList->endLabel();
-    }
+    void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
     template <class T>
     requires std::is_base_of_v<Object, T>
-    void addObject(const SPtr<Geometry>& geometry, const int32_t tex, const Transform transform) noexcept
+    void addObject(const SPtr<Geometry>& geometry, const int32_t tex, const Transform transform, const int32_t normalTex = -1) noexcept
     {
         auto obj = makeUnique<T>();
         obj->pGeometry = geometry;
         obj->textureIndex = tex;
+        obj->normalIndex = normalTex;
         obj->transform = transform;
         obj->geometryIndex = mGeometry->getGeometryIndex(geometry->getName());
 
@@ -194,6 +162,7 @@ public:
         {
             instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
         }
+
         obj->instanceIndex = mInstancePool->acquire(instanceData);
 
         mObjects.push_back(std::move(obj));
@@ -289,8 +258,6 @@ private:
         }
     }
 
-    void fast_parseGLTFScene(const std::string& fileName) noexcept;
-
     void buildDrawCommands(const RHI::CommandList* pCommandList) noexcept
     {
         std::unordered_map<Geometry*, std::vector<uint32_t>> groups;
@@ -369,6 +336,7 @@ private:
     friend class SceneInfoComponent;
 
     SPtr<RHI::VulkanRHI>                mRHI;
+    UserInterface*                      mUserInterface;
 
     UPtr<SceneGeometry>                 mGeometry;
     UPtr<InstancePool>                  mInstancePool;
@@ -393,8 +361,10 @@ private:
     UPtr<Indirect_GBufferPass>          mTestPass;
     UPtr<SSAOPass>                      mSSAO;
     UPtr<RTAOPass>                      mRTAO;
+    UPtr<ProceduralSkyPass>             mProcSky;
     UPtr<LightingPass>                  mLightingPass;
     UPtr<FXAAPass>                      mFXAA;
+    UPtr<TonemapPass>                   mTonemapPass;
 
     std::string                         mName = "Scene V2 Test";
 };

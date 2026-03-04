@@ -23,7 +23,10 @@ namespace RHI
         bool                createSampler   = false;
         bool                aliased         = false;
         bool                mipmapping      = false;
+        bool                cubeMap         = false;
         std::string         debugName       = "Unknown Image";
+
+        std::optional<vk::SamplerCreateInfo> samplerInfo = std::nullopt;
     };
 
     struct ImageCreateInfo : public RHIImageCreateInfo
@@ -49,7 +52,7 @@ namespace RHI
             const auto dstState = getImageState(dstUsage);
             const auto barrier = makeImageMemoryBarrier(mState, dstState)
                 .setImage(mImage)
-                .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, 1 });
+                .setSubresourceRange(mProperties.getSubresourceRange());
 
             if (update)
             {

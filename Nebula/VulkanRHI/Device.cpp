@@ -5,202 +5,6 @@
 
 namespace RHI
 {
-    struct VulkanAnyStruct
-    {
-        vk::StructureType sType;
-        const void*       pNext;
-    };
-
-    DeviceExtension::DeviceExtension(const char* extensionName, const std::function<void()>& structInitFn)
-    : mExtensionName(extensionName)
-    , mStructInitFn(structInitFn)
-    {
-        mIsCoreFeatureStruct = std::string(mExtensionName).contains("VulkanCore");
-    }
-
-    void DeviceExtension::preCreateDevice(vk::DeviceCreateInfo& deviceCreateInfo) const
-    {
-        if (mFeatureStructPtr != nullptr)
-        {
-            mStructInitFn();
-            addToNextChain(deviceCreateInfo, mFeatureStructPtr);
-        }
-    }
-
-    std::vector<const char*> DeviceExtension::getExtensionNames(const std::vector<UPtr<DeviceExtension>>& extensions) noexcept
-    {
-        return extensions
-            | std::views::filter([](const auto& ext){ return !ext->mIsCoreFeatureStruct; })
-            | std::views::transform([](const auto& ext){ return ext->mExtensionName; })
-            | std::ranges::to<std::vector<const char*>>();
-    }
-
-    void DeviceExtension::addToNextChain(vk::DeviceCreateInfo& deviceCreateInfo, void* featureInfo)
-    {
-        auto* featureStruct  = static_cast<VulkanAnyStruct*>(featureInfo);
-        featureStruct->pNext = deviceCreateInfo.pNext;
-        deviceCreateInfo.setPNext(featureInfo);
-    }
-
-    // ======================================== //
-    // Vulkan Device Extensions                 //
-    // ======================================== //
-    #pragma region "Define Vulkan Extension Macro"
-    #define def_VulkanExt(NAME, STR_EXT_NAME, STRUCT_T, FN)             \
-        class Vulkan##NAME : public DeviceExtension {                   \
-        public:                                                         \
-            Vulkan##NAME() : DeviceExtension(STR_EXT_NAME, FN) {        \
-                mFeatureStructPtr = &mFeatureStruct;                    \
-            }                                                           \
-            ~Vulkan##NAME() override = default;                         \
-        private:                                                        \
-            STRUCT_T mFeatureStruct;                                    \
-        }
-    #pragma endregion
-
-    #pragma region "Vulkan Core"
-
-    def_VulkanExt(Core11, "VulkanCore1.1", vk::PhysicalDeviceVulkan11Features, [&]() -> void {
-        mFeatureStruct = vk::PhysicalDeviceVulkan11Features();
-    });
-
-    def_VulkanExt(Core12, "VulkanCore1.2", vk::PhysicalDeviceVulkan12Features, [&]() -> void {
-        mFeatureStruct = vk::PhysicalDeviceVulkan12Features()
-            .setBufferDeviceAddress(true)
-            .setDescriptorIndexing(true)
-            .setScalarBlockLayout(true)
-            .setShaderInt8(true)
-            .setTimelineSemaphore(true)
-            .setHostQueryReset(true)
-            .setScalarBlockLayout(true)
-            .setDrawIndirectCount(Platform::getDrawIndirectCountSupported());
-    });
-
-    def_VulkanExt(Core13, "VulkanCore1.3", vk::PhysicalDeviceVulkan13Features, [&]() -> void {
-        mFeatureStruct = vk::PhysicalDeviceVulkan13Features()
-            .setMaintenance4(true)
-            .setDynamicRendering(true)
-            .setSynchronization2(true)
-            .setInlineUniformBlock(true);
-    });
-
-    def_VulkanExt(Core14, "VulkanCore1.4", vk::PhysicalDeviceVulkan14Features, [&]() -> void {
-        mFeatureStruct = vk::PhysicalDeviceVulkan14Features()
-            .setHostImageCopy(true)
-            .setMaintenance5(true)
-            .setMaintenance6(true);
-    });
-
-    #pragma endregion
-
-    #pragma region "Extensions with feature structs"
-
-    // VK_KHR_acceleration_structure
-    def_VulkanExt(
-        AccelerationStructureExt,
-        vk::KHRAccelerationStructureExtensionName,
-        vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceAccelerationStructureFeaturesKHR()
-                .setAccelerationStructure(true);
-        }
-    );
-
-    // VK_KHR_ray_tracing_pipeline
-    def_VulkanExt(
-        RayTracingPipelineExt,
-        vk::KHRRayTracingPipelineExtensionName,
-        vk::PhysicalDeviceRayTracingPipelineFeaturesKHR,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR()
-                .setRayTracingPipeline(true);
-        }
-    );
-
-    // VK_KHR_ray_tracing_maintenance1
-    def_VulkanExt(
-        RayTracingMaintenance1Ext,
-        vk::KHRRayTracingMaintenance1ExtensionName,
-        vk::PhysicalDeviceRayTracingMaintenance1FeaturesKHR,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceRayTracingMaintenance1FeaturesKHR()
-                .setRayTracingMaintenance1(true);
-        }
-    );
-
-    // VK_KHR_ray_query
-    def_VulkanExt(
-        RayQueryExt,
-        vk::KHRRayQueryExtensionName,
-        vk::PhysicalDeviceRayQueryFeaturesKHR,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceRayQueryFeaturesKHR()
-                .setRayQuery(true);
-        }
-    );
-
-    // VK_EXT_mesh_shader
-    def_VulkanExt(
-        MeshShaderExt,
-        vk::EXTMeshShaderExtensionName,
-        vk::PhysicalDeviceMeshShaderFeaturesEXT,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceMeshShaderFeaturesEXT()
-                .setMeshShader(true)
-                .setTaskShader(true)
-                .setMeshShaderQueries(true);
-        }
-    );
-
-    // VK_EXT_swapchain_maintenance1
-    def_VulkanExt(
-        SwapchainMaintenance1Ext,
-        vk::KHRSwapchainMaintenance1ExtensionName,
-        vk::PhysicalDeviceSwapchainMaintenance1FeaturesKHR,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceSwapchainMaintenance1FeaturesKHR()
-                .setSwapchainMaintenance1(true);
-        }
-    );
-
-    #pragma endregion
-
-    namespace Platform
-    {
-        std::vector<UPtr<DeviceExtension>> getDeviceExtensions(const RHIFeatureLevel& featureLevel) noexcept
-        {
-            std::vector<UPtr<DeviceExtension>> extensions;
-
-            #ifdef __APPLE__
-                extensions.push_back(std::make_unique<DeviceExtension>(gVulkanPortabilitySubsetExtensionName));
-            #endif
-
-            if (featureLevel >= RHIFeatureLevel::Basic)
-            {
-                extensions.push_back(std::make_unique<DeviceExtension>(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME));
-                extensions.push_back(std::make_unique<DeviceExtension>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
-                extensions.push_back(std::make_unique<VulkanCore11>());
-                extensions.push_back(std::make_unique<VulkanCore12>());
-                extensions.push_back(std::make_unique<VulkanCore13>());
-                extensions.push_back(std::make_unique<VulkanCore14>());
-                // TODO: Waiting for MoltenVK release 1.4.1
-                // extensions.push_back(std::make_unique<DeviceExtension>(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME));
-                // extensions.push_back(std::make_unique<VulkanSwapchainMaintenance1Ext>());
-            }
-
-            if (featureLevel >= RHIFeatureLevel::Complete)
-            {
-                extensions.push_back(std::make_unique<VulkanAccelerationStructureExt>());
-                extensions.push_back(std::make_unique<VulkanRayTracingPipelineExt>());
-                extensions.push_back(std::make_unique<VulkanRayTracingMaintenance1Ext>());
-                extensions.push_back(std::make_unique<VulkanRayQueryExt>());
-                extensions.push_back(std::make_unique<VulkanMeshShaderExt>());
-            }
-
-            return extensions;
-        }
-    }
-
     // ======================================== //
     // Vulkan Device                            //
     // ======================================== //
@@ -208,14 +12,27 @@ namespace RHI
     : mRHIFeatureLevel(createInfo.featureLevel)
     , mInstance(createInfo.instance)
     {
+        mExtensions
+            .addPlatformRequiredExtensions()
+            .addExtension<Core11>(FeatureOption::Required)
+            .addExtension<Core12>(FeatureOption::Required)
+            .addExtension<Core13>(FeatureOption::Required)
+            .addExtension<Core14>(FeatureOption::Required)
+            .addExtension(vk::KHRSwapchainExtensionName, FeatureOption::Required)
+            .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Required)
+            .addExtension<AccelerationStructureEXT>(FeatureOption::Optional)
+            .addExtension<RayTracingPipelineEXT>(FeatureOption::Optional)
+            .addExtension<RayQueryEXT>(FeatureOption::Optional)
+            .addExtension<MeshShaderEXT>(FeatureOption::Optional);
+
         const auto& config = Configuration::getConfig();
         mDebugFeatures  = config.rhi.debugFeatures;
-        mExtensions     = Platform::getDeviceExtensions(config.rhi.featureLevel);
-        mExtensionNames = DeviceExtension::getExtensionNames(mExtensions);
 
-        selectPhysicalDevice();
+        selectPhysicalDeviceV2();
         createDevice();
         createAllocator();
+
+        spdlog::info("GPU ({}) Extension support:\n{}", mDeviceName, mExtensions.toString());
     }
 
     Device::~Device()
@@ -296,14 +113,64 @@ namespace RHI
         const auto physicalDevices = mInstance.enumeratePhysicalDevices();
         const auto candidate = std::ranges::find_if(physicalDevices, [&](const vk::PhysicalDevice& physicalDevice) -> bool {
             const auto candidateExtensions = physicalDevice.enumerateDeviceExtensionProperties();
-            return evaluateSupport(candidateExtensions, mExtensionNames);
+            return evaluateSupport(candidateExtensions, mExtensions.getExtensionNames());
         });
 
-        assert(candidate != std::end(physicalDevices));
+        exitOnAssert(candidate != std::end(physicalDevices), "No suitable PhysicalDevice was found");
 
         mPhysicalDevice = *candidate;
-        mProperties = mPhysicalDevice.getProperties();
-        mDeviceName = std::string(mProperties.deviceName.data());
+
+        mExtensions.postPhysicalDeviceSelection(mPhysicalDevice);
+        mExtensionNames = mExtensions.getActiveExtensionNames();
+        mDeviceName = std::string(mExtensions.getProperties().deviceName.data());
+    }
+
+    void Device::selectPhysicalDeviceV2()
+    {
+        std::vector<std::string> availableDeviceNames;
+        std::map<vk::PhysicalDevice, int32_t> scores;
+
+        for (const auto& physicalDevice : mInstance.enumeratePhysicalDevices())
+        {
+            const auto props2 = physicalDevice.getProperties2();
+            const auto properties = props2.properties;
+
+            // Extension scoring
+            const auto extensionScore = mExtensions.evaluateDeviceSupport(physicalDevice);
+
+            // Device Type scoring
+            int32_t deviceTypeScore = 0;
+            switch (properties.deviceType)
+            {
+                case vk::PhysicalDeviceType::eIntegratedGpu:
+                    deviceTypeScore = sDeviceScore_IsIntegratedGPU;
+                    break;
+                case vk::PhysicalDeviceType::eDiscreteGpu: {
+                    deviceTypeScore = sDeviceScore_IsDedicatedGPU;
+                    break;
+                }
+                default: {
+                    deviceTypeScore = 0;
+                    break;
+                }
+            }
+
+            scores[physicalDevice] = extensionScore + deviceTypeScore;
+            availableDeviceNames.push_back(std::format("{}[Type={}, Score={}]",std::string(properties.deviceName.data()), to_string(properties.deviceType), scores[physicalDevice]));
+        }
+
+        if (scores.empty() || std::ranges::all_of(scores, [](const auto& dsp){return dsp.second <= 0; }))
+        {
+            exitWithError("{}", join(availableDeviceNames, ", "));
+        }
+
+        mPhysicalDevice = std::ranges::max_element(scores, [](const auto& a, const auto& b) -> bool {
+            return a.second < b.second;
+        })->first;
+
+        mExtensions.postPhysicalDeviceSelection(mPhysicalDevice);
+        mExtensionNames = mExtensions.getActiveExtensionNames();
+        mDeviceName = std::string(mExtensions.getProperties().deviceName.data());
     }
 
     void Device::createDevice()
@@ -312,7 +179,7 @@ namespace RHI
         std::set<QueueFamily> uniqueQueueFamilies;
 
         const auto graphicsQueue = findQueueFamily(vk::QueueFlagBits::eGraphics);
-        assert(graphicsQueue.has_value());
+        exitOnAssert(graphicsQueue.has_value(), "No queue with the Graphics bit was found");
 
         uniqueQueueFamilies.insert(graphicsQueue->familyIndex);
 
@@ -326,7 +193,9 @@ namespace RHI
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
-        const auto deviceFeatures = Platform::getDeviceFeatures();
+        // const auto deviceFeatures = Platform::getDeviceFeatures();
+        const auto deviceFeatures = mExtensions.getFeatures();
+
         auto createInfo = vk::DeviceCreateInfo()
             .setEnabledExtensionCount(static_cast<uint32_t>(mExtensionNames.size()))
             .setPpEnabledExtensionNames(mExtensionNames.data())
@@ -334,10 +203,7 @@ namespace RHI
             .setPQueueCreateInfos(queueCreateInfos.data())
             .setPEnabledFeatures(&deviceFeatures);
 
-        for (const auto& extension : mExtensions)
-        {
-            extension->preCreateDevice(createInfo);
-        }
+        mExtensions.preDeviceCreation(createInfo);
 
         mDevice = mPhysicalDevice.createDevice(createInfo);
 

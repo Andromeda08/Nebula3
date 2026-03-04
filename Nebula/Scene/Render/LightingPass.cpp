@@ -24,7 +24,21 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
         .addBarrier(mInput.normal->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.albedo->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.ssao->getBarrier(RHI::ImageUsage::ShaderReadOnly))
+        .addBarrier(mInput.cubeMap->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .insert(pCommandList);
+
+    {
+        const auto barrier = vk::BufferMemoryBarrier2()
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader)
+            .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
+            .setDstAccessMask(vk::AccessFlagBits2::eShaderRead)
+            .setBuffer(mInput.skyData->getHandle())
+            .setSize(VK_WHOLE_SIZE);
+        const auto dependencyInfo = vk::DependencyInfo()
+            .setBufferMemoryBarriers(barrier);
+        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
+    }
 
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mPipeline->bind(commandBuffer);
@@ -60,6 +74,8 @@ void LightingPass::createResources() noexcept
            { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
            { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
            { 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+           { 4, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+           { 5, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },
        },
        .setCount = 1,
        .debugName = "Lighting_Descriptor",
@@ -69,7 +85,9 @@ void LightingPass::createResources() noexcept
         .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.position)
         .writeCombinedImageSampler(1, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.normal)
         .writeCombinedImageSampler(2, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.albedo)
-        .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.ssao);
+        .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.ssao)
+        .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.cubeMap)
+        .writeStorageBuffer(5, mInput.skyData);
     mDescriptor->write(0, descriptorWrite);
 }
 

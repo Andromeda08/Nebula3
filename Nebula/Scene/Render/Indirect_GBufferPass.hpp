@@ -33,6 +33,8 @@ public:
 
     [[nodiscard]] const SPtr<RHI::Image>& getAlbedo() const noexcept;
 
+    [[nodiscard]] const SPtr<RHI::Image>& getDepth() const noexcept;
+
 private:
     void createResources() noexcept;
     void createPipeline()  noexcept;

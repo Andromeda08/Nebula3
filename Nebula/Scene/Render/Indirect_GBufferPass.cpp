@@ -93,6 +93,11 @@ const SPtr<RHI::Image>& Indirect_GBufferPass::getAlbedo() const noexcept
     return mAlbedoBuffer;
 }
 
+const SPtr<RHI::Image>& Indirect_GBufferPass::getDepth() const noexcept
+{
+    return mDepthBuffer;
+}
+
 void Indirect_GBufferPass::createResources() noexcept
 {
     using enum vk::ImageUsageFlagBits;
@@ -178,7 +183,7 @@ void Indirect_GBufferPass::createPipeline() noexcept
             })
             .addDefaultAttachmentStates(3))
         .addShader({ "Resources/Shaders/bin/IndirectDrawGBuffer.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/VoxelGBuffer.frag.spv", vk::ShaderStageFlagBits::eFragment })
+        .addShader({ "Resources/Shaders/bin/IndirectDrawGBuffer.frag.spv", vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mPositionDepthBuffer->getProperties().format)
         .addColorAttachmentFormat(mNormalBuffer->getProperties().format)
         .addColorAttachmentFormat(mAlbedoBuffer->getProperties().format)

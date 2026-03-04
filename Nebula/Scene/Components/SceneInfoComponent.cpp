@@ -81,5 +81,16 @@ void SceneInfoComponent::draw()
         }
     }
 
+    ImGui::Separator();
+    ImGui::Text("Set Shadow Mode");
+    if (ImGui::SmallButton("Disable"))
+    {
+        mScene->mLightingPass->setShadowMode(0);
+    }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Enable"))
+    {
+        mScene->mLightingPass->setShadowMode(1);
+    }
     ImGui::End();
 }

@@ -50,8 +50,8 @@ void main()
     {
         int textureValidity = imageLoad(uTextureMeta, ivec2(inTextureIndex, 0)).r;
         vec4 textureColor = (textureValidity == TEXTURE_VALID)
-            ? texture(uTextures[inTextureIndex], inUV)
-            : texture(uTextures[MISSING_TEXTURE_INDEX], inUV);
+        ? texture(uTextures[inTextureIndex], inUV)
+        : texture(uTextures[MISSING_TEXTURE_INDEX], inUV);
         color = vec4(textureColor.rgb, 1.0);
     }
 

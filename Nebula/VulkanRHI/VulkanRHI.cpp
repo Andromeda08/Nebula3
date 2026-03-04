@@ -45,7 +45,7 @@ namespace RHI
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
-            mDevice->getDeviceName(), toString(mFeatureLevel), toString(config.rhi.debugFeatures),
+            mDevice->getDeviceName(), "TODO FEATURE LEVEL", config.rhi.debugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 

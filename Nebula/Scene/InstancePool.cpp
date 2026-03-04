@@ -61,12 +61,13 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
     std::vector<InstanceData>    staged;
     for (auto i = 0; i < mUpdateQueue.size(); i++)
     {
-        if (!mDirty[i])
+        auto idx = mUpdateQueue[i];
+        if (!mDirty[idx])
         {
             continue;
         }
 
-        staged.push_back(mData[i]);
+        staged.push_back(mData[idx]);
 
         const auto region = vk::BufferCopy2()
             .setSrcOffset((staged.size() - 1) * sizeof(InstanceData))
@@ -74,7 +75,7 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
             .setSize(sizeof(InstanceData));
         regions.push_back(region);
 
-        mDirty[i] = false;
+        mDirty[idx] = false;
     }
 
     if (regions.empty())
