@@ -155,7 +155,7 @@ namespace RHI
     #pragma region "Extensions"
     // VK_KHR_acceleration_structure
     def_VulkanExtProps(
-        AccelerationStructureEXT,
+        AccelerationStructure,
         vk::KHRAccelerationStructureExtensionName,
         vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR,
@@ -167,7 +167,7 @@ namespace RHI
 
     // VK_KHR_ray_tracing_pipeline
     def_VulkanExtProps(
-        RayTracingPipelineEXT,
+        RayTracingPipeline,
         vk::KHRRayTracingPipelineExtensionName,
         vk::PhysicalDeviceRayTracingPipelineFeaturesKHR,
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR,
@@ -179,7 +179,7 @@ namespace RHI
 
     // VK_KHR_ray_tracing_maintenance1
     def_VulkanExt(
-        RayTracingMaintenance1EXT,
+        RayTracingMaintenance1,
         vk::KHRRayTracingMaintenance1ExtensionName,
         vk::PhysicalDeviceRayTracingMaintenance1FeaturesKHR,
         [&]() -> void {
@@ -190,7 +190,7 @@ namespace RHI
 
     // VK_KHR_ray_query
     def_VulkanExt(
-        RayQueryEXT,
+        RayQuery,
         vk::KHRRayQueryExtensionName,
         vk::PhysicalDeviceRayQueryFeaturesKHR,
         [&]() -> void {

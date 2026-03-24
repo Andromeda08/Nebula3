@@ -8,7 +8,7 @@ namespace RHI
     {
         const auto& config = Configuration::getConfig();
         const auto  applicationInfo = vk::ApplicationInfo()
-            .setApiVersion(VK_API_VERSION_1_4)
+            .setApiVersion(vk::ApiVersion14)
             .setPApplicationName(config.app.appName.c_str())
             .setPEngineName("Nebula3");
 

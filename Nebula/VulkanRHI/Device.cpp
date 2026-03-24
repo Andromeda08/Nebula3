@@ -13,20 +13,27 @@ namespace RHI
     {
         mExtensions
             .addPlatformRequiredExtensions()
+            // Core Vulkan functionality
             .addExtension<Core11>(FeatureOption::Required)
             .addExtension<Core12>(FeatureOption::Required)
             .addExtension<Core13>(FeatureOption::Required)
             .addExtension<Core14>(FeatureOption::Required)
+            // General extensions specified by name only
             .addExtension(vk::KHRSwapchainExtensionName, FeatureOption::Required)
             .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Required)
-            .addExtension<AccelerationStructureEXT>(FeatureOption::Optional)
-            .addExtension<RayTracingPipelineEXT>(FeatureOption::Optional)
-            .addExtension<RayQueryEXT>(FeatureOption::Optional)
-            .addExtension<MeshShaderEXT>(FeatureOption::Optional)
-            .addExtension<DescriptorHeapEXT>(FeatureOption::Optional)
-            .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
+            // General Extensions
             .addExtension<DeviceFaultEXT>(FeatureOption::Required)
-            .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional);
+            // Ray tracing
+            .addExtension<AccelerationStructure>(FeatureOption::Optional)
+            .addExtension<RayQuery>(FeatureOption::Optional)
+            .addExtension<RayTracingPipeline>(FeatureOption::Optional)
+            .addExtension<RayTracingMaintenance1>(FeatureOption::Optional)
+            .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
+            .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional)
+            // Mesh shader
+            .addExtension<MeshShaderEXT>(FeatureOption::Optional)
+            // Beta
+            .addExtension<DescriptorHeapEXT>(FeatureOption::Optional);
 
         const auto& config = Configuration::getConfig();
         mDebugFeatures  = config.rhi.debugFeatures;
@@ -229,14 +236,14 @@ namespace RHI
             .physicalDevice = mPhysicalDevice,
             .device = mDevice,
             .instance = mInstance,
-            .vulkanApiVersion = VK_API_VERSION_1_4,
+            .vulkanApiVersion = vk::ApiVersion14,
         };
 
         const auto result = vmaCreateAllocator(&createInfo, &mAllocator);
         assert(result == VK_SUCCESS);
     }
 
-    std::optional<QueueFamilyInfo> Device::findQueueFamily(vk::QueueFlags requiredFlags, vk::QueueFlags excludedFlags,
+    std::optional<QueueFamilyInfo> Device::findQueueFamily(const vk::QueueFlags requiredFlags, const vk::QueueFlags excludedFlags,
         const std::set<QueueFamily>& excludedFamilies) const noexcept
     {
         for (const std::vector queueFamilies = mPhysicalDevice.getQueueFamilyProperties();

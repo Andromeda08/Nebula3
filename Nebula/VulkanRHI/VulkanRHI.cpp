@@ -19,6 +19,8 @@ namespace RHI
         const auto vkGetInstanceProcAddr = dynamicLoader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
+        // Create Instance
+        // ==========================
         mInstance = Instance::create({ mWindow.get() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mInstance->getHandle());
 
@@ -27,21 +29,30 @@ namespace RHI
             mDebugContext = DebugContext::create({ mInstance });
         }
 
+        // Create Device
+        // ==========================
         mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
+
         mFeatureLevel = mDevice->getFeatureLevel();
 
+        // Create Swapchain
+        // ==========================
         mSwapchain = Swapchain::create({
             .window   = mWindow,
             .instance = mInstance,
             .device   = mDevice,
         });
 
+        // Create CommandQueues
+        // ==========================
         mGraphicsQueue = CommandQueue::create({
             .queue  = mDevice->getGraphicsQueue(),
             .device = mDevice,
         });
 
+        // Frame Scheduling & Sync
+        // ==========================
         mFrameSync = std::make_unique<FrameSync>(mDevice);
 
         const auto& swapchainProperties = mSwapchain->getProperties();
