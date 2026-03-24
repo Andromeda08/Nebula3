@@ -29,6 +29,7 @@ namespace RHI
 
         mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
+        mFeatureLevel = mDevice->getFeatureLevel();
 
         mSwapchain = Swapchain::create({
             .window   = mWindow,
@@ -45,7 +46,7 @@ namespace RHI
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
-            mDevice->getDeviceName(), "TODO FEATURE LEVEL", config.rhi.debugFeatures ? "Yes" : "No",
+            mDevice->getDeviceName(), getFeatureLevelName(mFeatureLevel), config.rhi.debugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 
@@ -162,7 +163,7 @@ namespace RHI
 
     UPtr<RaytracingPipeline> VulkanRHI::createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const
     {
-        if (mFeatureLevel != RHIFeatureLevel::Complete)
+        if (mFeatureLevel != FeatureLevel::Complete)
         {
             exitWithError("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
         }

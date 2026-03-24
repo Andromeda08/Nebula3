@@ -53,7 +53,7 @@ namespace RHI
         SPtr<Device> getDevice() const { return mDevice; }
         SPtr<Instance> getInstance() const { return mInstance; }
 
-        RHIFeatureLevel getFeatureLevel() const noexcept
+        FeatureLevel getFeatureLevel() const noexcept
         {
             return mFeatureLevel;
         }
@@ -63,11 +63,16 @@ namespace RHI
             return mFeatureLevel >= FeatureLevel::Complete;
         }
 
+        [[nodiscard]] bool getNVRTXSupport() const noexcept
+        {
+            return mFeatureLevel >= FeatureLevel::Nvidia;
+        }
+
         void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
 
     private:
         SPtr<IWindow>       mWindow;
-        RHIFeatureLevel     mFeatureLevel;
+        FeatureLevel        mFeatureLevel;
 
         SPtr<Instance>      mInstance;
         UPtr<DebugContext>  mDebugContext;

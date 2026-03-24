@@ -9,8 +9,7 @@ namespace RHI
     // Vulkan Device                            //
     // ======================================== //
     Device::Device(const DeviceCreateInfo& createInfo)
-    : mRHIFeatureLevel(createInfo.featureLevel)
-    , mInstance(createInfo.instance)
+    : mInstance(createInfo.instance)
     {
         mExtensions
             .addPlatformRequiredExtensions()
@@ -23,12 +22,20 @@ namespace RHI
             .addExtension<AccelerationStructureEXT>(FeatureOption::Optional)
             .addExtension<RayTracingPipelineEXT>(FeatureOption::Optional)
             .addExtension<RayQueryEXT>(FeatureOption::Optional)
-            .addExtension<MeshShaderEXT>(FeatureOption::Optional);
+            .addExtension<MeshShaderEXT>(FeatureOption::Optional)
+            .addExtension<DescriptorHeapEXT>(FeatureOption::Optional)
+            .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
+            .addExtension<DeviceFaultEXT>(FeatureOption::Required)
+            .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional);
 
         const auto& config = Configuration::getConfig();
         mDebugFeatures  = config.rhi.debugFeatures;
 
         selectPhysicalDeviceV2();
+
+        const bool isNvidia = mExtensions.getProperties().vendorID == 0x10DE;
+        mFeatureLevel = isNvidia ? FeatureLevel::Nvidia : createInfo.featureLevel;
+
         createDevice();
         createAllocator();
 

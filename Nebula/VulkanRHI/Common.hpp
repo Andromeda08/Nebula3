@@ -46,14 +46,24 @@ namespace RHI
         Vulkan,
     };
 
-    enum class RHIFeatureLevel
+    enum class FeatureLevel
     {
         Basic       = 0,
         Complete    = 1,
+        Nvidia      = 2,
     };
 
-    // TODO: alias to enum class
-    using FeatureLevel = RHIFeatureLevel;
+    [[nodiscard]] constexpr std::string_view getFeatureLevelName(const FeatureLevel level) noexcept
+    {
+        using enum FeatureLevel;
+        switch (level)
+        {
+            case Basic:     return "Basic";
+            case Complete:  return "Complete";
+            case Nvidia:    return "Complete (Nvidia)";
+        }
+        return "Unknown";
+    }
 
     enum class QueueType
     {

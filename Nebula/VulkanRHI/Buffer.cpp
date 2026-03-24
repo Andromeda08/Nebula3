@@ -18,7 +18,7 @@ namespace RHI
             .bufferType = mProperties.type,
             .bufferInfo = vk::BufferCreateInfo()
                 .setSize(createInfo.size)
-                .setUsage(getBufferUsageFlags(mProperties.type, mDevice->getFeatureLevel() >= RHIFeatureLevel::Complete)),
+                .setUsage(getBufferUsageFlags(mProperties.type, mDevice->getFeatureLevel() >= FeatureLevel::Complete)),
         };
 
         const auto allocation = mDevice->allocateBuffer(allocInfo);

@@ -235,6 +235,41 @@ namespace RHI
                 .setDescriptorHeap(true);
         }
     );
+
+    // VK_NV_ray_tracing_linear_swept_spheres
+    def_VulkanExt(
+        RayTracingLinearSweptSpheresNV,
+        vk::NVRayTracingLinearSweptSpheresExtensionName,
+        vk::PhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV()
+                .setSpheres(true)
+                .setLinearSweptSpheres(true);
+        }
+    );
+
+    // VK_EXT_device_fault
+    def_VulkanExt(
+        DeviceFaultEXT,
+        vk::EXTDeviceFaultExtensionName,
+        vk::PhysicalDeviceFaultFeaturesEXT,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceFaultFeaturesEXT()
+                .setDeviceFault(true);
+        }
+    );
+
+    // VK_EXT_ray_tracing_invocation_reorder
+    def_VulkanExtProps(
+        RayTracingInvocationReorderEXT,
+        vk::EXTRayTracingInvocationReorderExtensionName,
+        vk::PhysicalDeviceRayTracingInvocationReorderFeaturesEXT,
+        vk::PhysicalDeviceRayTracingInvocationReorderPropertiesEXT,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceRayTracingInvocationReorderFeaturesEXT()
+                .setRayTracingInvocationReorder(true);
+        }
+    );
     #pragma endregion
 }
 
