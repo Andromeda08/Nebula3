@@ -155,7 +155,7 @@ namespace RHI
     #pragma region "Extensions"
     // VK_KHR_acceleration_structure
     def_VulkanExtProps(
-        AccelerationStructure,
+        AccelerationStructureKHR,
         vk::KHRAccelerationStructureExtensionName,
         vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR,
@@ -268,6 +268,17 @@ namespace RHI
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceRayTracingInvocationReorderFeaturesEXT()
                 .setRayTracingInvocationReorder(true);
+        }
+    );
+
+    // VK_NV_ray_tracing_linear_swept_spheres
+    def_VulkanExt(
+        RayTracingPositionFetch,
+        vk::KHRRayTracingPositionFetchExtensionName,
+        vk::PhysicalDeviceRayTracingPositionFetchFeaturesKHR,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceRayTracingPositionFetchFeaturesKHR()
+                .setRayTracingPositionFetch(true);
         }
     );
     #pragma endregion

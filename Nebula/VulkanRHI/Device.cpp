@@ -24,12 +24,13 @@ namespace RHI
             // General Extensions
             .addExtension<DeviceFaultEXT>(FeatureOption::Required)
             // Ray tracing
-            .addExtension<AccelerationStructure>(FeatureOption::Optional)
+            .addExtension<AccelerationStructureKHR>(FeatureOption::Optional)
             .addExtension<RayQuery>(FeatureOption::Optional)
             .addExtension<RayTracingPipeline>(FeatureOption::Optional)
             .addExtension<RayTracingMaintenance1>(FeatureOption::Optional)
             .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
             .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional)
+            .addExtension<RayTracingPositionFetch>(FeatureOption::Optional)
             // Mesh shader
             .addExtension<MeshShaderEXT>(FeatureOption::Optional)
             // Beta
