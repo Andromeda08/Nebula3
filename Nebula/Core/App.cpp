@@ -41,7 +41,6 @@ App::App()
 
     // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
-    SplashWindow::get().setMessage(std::format("Loading Scene (zorah_main_public.gltf)..."));
     mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 
@@ -100,6 +99,18 @@ void App::run_renderPathLoop()
                     }
                     break;
                 }
+                case SDL_EVENT_GAMEPAD_ADDED: {
+                    mWindow->useGamepad(event.gdevice.which);
+                    break;
+                }
+                case SDL_EVENT_GAMEPAD_REMOVED: {
+                    mWindow->removeGamepad(event.gdevice.which);
+                    break;
+                }
+                case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
+                    spdlog::info("Pressed: {} ", event.gbutton.button);
+                }
+
                 default: {}
             }
         }
@@ -127,7 +138,7 @@ void App::run_renderPathLoop()
         // =====================================
         // User Interface
         // =====================================
-        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("ImGui"));
+        commandList->beginLabel("ImGui");
 
         /* Acquired Swapchain Image | ColorAttachment */ {
             const auto barrier = RHI::Barrier()
@@ -141,7 +152,7 @@ void App::run_renderPathLoop()
             barrier.insert(commandList);
         }
 
-        commandList->getHandle().endDebugUtilsLabelEXT();
+        commandList->endLabel();
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({

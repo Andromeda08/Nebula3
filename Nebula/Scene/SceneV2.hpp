@@ -15,6 +15,7 @@
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
+#include "Render/FullRT.hpp"
 #include "Render/FXAAPass.hpp"
 #include "Render/LightingPass.hpp"
 #include "Render/ProceduralSky.hpp"
@@ -365,6 +366,8 @@ private:
     UPtr<LightingPass>                  mLightingPass;
     UPtr<FXAAPass>                      mFXAA;
     UPtr<TonemapPass>                   mTonemapPass;
+
+    UPtr<FullRTPass>                    mRTPass;
 
     std::string                         mName = "Scene V2 Test";
 };

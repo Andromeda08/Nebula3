@@ -37,7 +37,7 @@ namespace RHI
          */
         [[nodiscard]] vk::DescriptorBufferInfo* getDescriptorInfo(const std::optional<vk::DeviceSize>& range = std::nullopt) noexcept;
 
-        void map(void* ptr) const;
+        void* map() const;
 
         void unmap() const;
 

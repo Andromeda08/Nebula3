@@ -246,9 +246,9 @@ add_executable(Nebula3
     Nebula/Scene/SceneV2.cpp
     Nebula/Window/SplashWindow.hpp
     Nebula/Window/SplashWindow.cpp
-    # Nebula/Scene/Render/FFX_Denoiser.hpp
     Nebula/Scene/Render/ProceduralSky.hpp
     Nebula/Scene/Render/ProceduralSky.cpp
+    Nebula/Scene/Render/LightDebugOverlay.hpp
     Nebula/VulkanRHI/Detail/Extensions.hpp
     Nebula/VulkanRHI/Detail/Extensions.cpp
     Nebula/VulkanRHI/Detail/DeviceExtensions.hpp
@@ -257,6 +257,10 @@ add_executable(Nebula3
     Nebula/Scene/Render/TonemapPass.cpp
     Nebula/Scene/GLTF/GLTFLoader.hpp
     Nebula/Scene/GLTF/GLTFLoader.cpp
+    Nebula/Input/DualSense.hpp
+    Nebula/Input/Gamepad.hpp
+    Nebula/Scene/Render/FullRT.hpp
+    Nebula/Scene/Render/FullRT.cpp
 )
 
 target_include_directories(Nebula3 PUBLIC

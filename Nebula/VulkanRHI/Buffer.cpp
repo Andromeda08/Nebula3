@@ -48,10 +48,10 @@ namespace RHI
         return &mDescriptorBufferInfo.value();
     }
 
-    void Buffer::map(void* ptr) const
+    void* Buffer::map() const
     {
         nbl_ASSERT_MAPPABLE_MEMORY();
-        mAllocation->mapMemory(ptr);
+        return mAllocation->getAllocationInfo().pMappedData;
     }
 
     void Buffer::unmap() const

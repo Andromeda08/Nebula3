@@ -7,9 +7,9 @@ namespace RHI
     {
     }
 
-    void Allocation::mapMemory(void* pData) const noexcept
+    void Allocation::mapMemory(void** pData) const noexcept
     {
-        vmaMapMemory(mAllocator, mAllocation, &pData);
+        vmaMapMemory(mAllocator, mAllocation, pData);
     }
 
     void Allocation::unmapMemory() const noexcept

@@ -34,6 +34,8 @@ namespace RHI
         mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
 
+        // TODO: Device promotes "Complete" to "Nvidia" based on PhysicalDevice selection.
+        // This is a bit nasty...
         mFeatureLevel = mDevice->getFeatureLevel();
 
         // Create Swapchain
@@ -174,7 +176,7 @@ namespace RHI
 
     UPtr<RaytracingPipeline> VulkanRHI::createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const
     {
-        if (mFeatureLevel != FeatureLevel::Complete)
+        if (mFeatureLevel < FeatureLevel::Complete)
         {
             exitWithError("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
         }

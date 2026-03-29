@@ -35,31 +35,32 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
         mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
 
         const std::string sceneName = "bistro.glb"; //"NewSponza_Curtains_glTF.gltf";
+        SplashWindow::get().setMessage(std::format("Loading Scene ({})...", sceneName));
 
         GLTFLoader::loadParts({
             .pTextureManager = mTextureManager.get(),
             .pSceneGeometry  = mGeometry.get(),
             .pLightSystem    = mLightSystem.get(),
             .pScene          = this,
-        }, { "bistro.glb" });
+        }, { sceneName });
         // }, { "NewSponza_Main_glTF_003.gltf", "NewSponza_Curtains_glTF.gltf" });
     }
 
     // initScene();
 
+    using enum vk::ShaderStageFlagBits;
     std::vector bindings = {
         vk::DescriptorSetLayoutBinding {
             0, vk::DescriptorType::eUniformBuffer, 1,
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+            eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR
         },
         vk::DescriptorSetLayoutBinding {
             1, vk::DescriptorType::eStorageBuffer, 1,
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eCompute
+            eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR
         },
     };
     if (mRHI->getRaytracingSupport())
     {
-        using enum vk::ShaderStageFlagBits;
         bindings.push_back({
             2, vk::DescriptorType::eAccelerationStructureKHR, 1,
             eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR
@@ -126,36 +127,44 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
         .rhi        = mRHI,
         .input      = { mFXAA->getResult() },
     });
+
+    mRTPass = FullRTPass::create({
+        .sceneDescriptor = mSceneDescriptor,
+        .resolution      = { extent.width, extent.height },
+        .rhi             = mRHI,
+    });
 }
 
 void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
 {
-    mProcSky->execute(commandList, frameData);
+    // mProcSky->execute(commandList, frameData);
 
-    mTestPass->execute(commandList, frameData);
-    mSSAO->execute(commandList, frameData);
+    // mTestPass->execute(commandList, frameData);
+    // mSSAO->execute(commandList, frameData);
     // mRTAO->execute(commandList, frameData);
-    mLightingPass->execute(commandList, frameData);
-    mFXAA->execute(commandList, frameData);
-    mTonemapPass->execute(commandList, frameData);
+    // mLightingPass->execute(commandList, frameData);
+    // mFXAA->execute(commandList, frameData);
+    // mTonemapPass->execute(commandList, frameData);
+
+    mRTPass->execute(commandList, frameData);
 
     commandList->beginLabel("Present_Blit");
     // Barriers
     const auto barrier = RHI::Barrier()
-        .addBarrier(mTonemapPass->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
+        .addBarrier(mRTPass->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
         .addBarrier(mRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
     barrier.insert(commandList);
 
     // Blit
     #pragma region
-    const auto srcExtent = mTonemapPass->getResult()->getProperties().extent;
+    const auto srcExtent = mRTPass->getResult()->getProperties().extent;
     const auto dstExtent = mRHI->getSwapchain()->getProperties().extent;
     const auto region  = vk::ImageBlit2()
         .setSrcOffsets({
             vk::Offset3D { 0, 0, 0 },
             vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
         })
-        .setSrcSubresource(mTonemapPass->getResult()->getProperties().getSubresourceLayers())
+        .setSrcSubresource(mRTPass->getResult()->getProperties().getSubresourceLayers())
         .setDstOffsets({
             vk::Offset3D { 0, 0, 0 },
             vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
@@ -163,7 +172,7 @@ void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData
         .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
 
     const auto blit = vk::BlitImageInfo2()
-        .setSrcImage(mTonemapPass->getResult()->getImage())
+        .setSrcImage(mRTPass->getResult()->getImage())
         .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
         .setDstImage(mRHI->getSwapchain()->getImage(frameData.acquiredIndex))
         .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)

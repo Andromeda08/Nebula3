@@ -14,7 +14,7 @@ namespace RHI
     public:
         explicit Allocation(const VmaAllocator& allocator);
 
-        void mapMemory(void* pData) const noexcept;
+        void mapMemory(void** pData) const noexcept;
 
         void unmapMemory() const noexcept;
 

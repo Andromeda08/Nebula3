@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "RenderPass.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -31,6 +33,14 @@ class RTAOPass : public RenderPass
         int32_t frameNumber     = 0;
     };
 
+    struct DenoisePushConstants
+    {
+        glm::ivec2 direction;
+        int32_t    kernelSize;
+        float      depthSigma;
+        float      spatialSigma;
+    };
+
 public:
     explicit RTAOPass(const RTAO_Params& params);
 
@@ -53,6 +63,7 @@ private:
     static constexpr uint32_t sGroupSize = 16;
 
     RTAO_Input              mInput;
+    bool                    mDenoise = false;
 
     // RTAO Pass
     // ============================

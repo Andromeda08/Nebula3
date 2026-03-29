@@ -4,7 +4,7 @@
 
 SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
 {
-    mRaytracing = mRHI->getFeatureLevel() == RHI::FeatureLevel::Complete;
+    mRaytracing = mRHI->getFeatureLevel() >= RHI::FeatureLevel::Complete;
     if (mRaytracing)
     {
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR asProps;
@@ -219,7 +219,7 @@ void SceneGeometry::uploadQueuedData() noexcept
             geometries.push_back(geometry);
 
             const auto buildGeometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR()
-                .setFlags(vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace)
+                .setFlags(vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace | vk::BuildAccelerationStructureFlagBitsKHR::eAllowDataAccess)
                 .setGeometryCount(1)
                 .setGeometries(geometries.back())
                 .setMode(vk::BuildAccelerationStructureModeKHR::eBuild)
