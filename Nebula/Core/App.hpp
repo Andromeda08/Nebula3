@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.hpp"
+#include "Input/Gamepad.hpp"
 #include "Math/DeltaTime.hpp"
 #include "RenderGraph/RenderGraphContext.hpp"
 #include "Scene/Scene.hpp"
@@ -25,6 +26,8 @@ private:
 
     DeltaTime                    mDeltaTime;
     SPtr<SDLWindow>              mWindow;
+    UPtr<GamepadManager>         mGamepadManager;
+
     SPtr<RHI::VulkanRHI>         mVulkanRHI;
     UPtr<UserInterface>          mUserInterface;
     SPtr<rg::RenderGraphContext> mRenderGraphContext;

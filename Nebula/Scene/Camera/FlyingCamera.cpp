@@ -38,7 +38,7 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 mMouseCaptured = false;
-                mKeyState = {};
+                mInputState = {};
                 SDL_SetWindowRelativeMouseMode(pWindow, false);
                 SDL_WarpMouseInWindow(pWindow, mSize.x / 2.0f, mSize.y / 2.0f);
             }
@@ -51,8 +51,12 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             }
             break;
         }
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
+            handleGamepadAxisEvent(event.gaxis);
+            break;
+        }
         case SDL_EVENT_WINDOW_FOCUS_LOST: {
-            mKeyState = {};
+            mInputState = {};
             mMouseCaptured = false;
             SDL_SetWindowRelativeMouseMode(pWindow, false);
             break;
@@ -66,29 +70,46 @@ void FlyingCamera::onUpdate() noexcept
 {
     const glm::vec3 right = glm::normalize(glm::cross(mOrientation, mUp));
 
-    if (mKeyState.forward)
+    if (mInputState.forward)
     {
         mEye += mSpeed * mOrientation;
     }
-    if (mKeyState.backward)
+    if (mInputState.backward)
     {
         mEye -= mSpeed * mOrientation;
     }
-    if (mKeyState.left)
+    if (mInputState.left)
     {
         mEye -= mSpeed * right;
     }
-    if (mKeyState.right)
+    if (mInputState.right)
     {
         mEye += mSpeed * right;
     }
-    if (mKeyState.up)
+    if (mInputState.up)
     {
         mEye += (mSpeed / 2.0f) * mUp;
     }
-    if (mKeyState.down)
+    if (mInputState.down)
     {
         mEye -= (mSpeed / 2.0f) * mUp;
+    }
+    
+    if (glm::abs(mInputState.leftX) > mDeadzone)
+    {
+        mEye += (mSpeed * 0.5f) * mInputState.leftX * right;
+    }
+    if (glm::abs(mInputState.leftY) > mDeadzone)
+    {
+        mEye -= (mSpeed * 0.5f) * mInputState.leftY * mOrientation;
+    }
+
+    if (glm::abs(mInputState.rightX) > mDeadzone || glm::abs(mInputState.rightY) > mDeadzone)
+    {
+        SDL_MouseMotionEvent fakeMotion {};
+        fakeMotion.xrel = mInputState.rightX * mSize.x * 0.0025f;
+        fakeMotion.yrel = mInputState.rightY * mSize.y * 0.0025f;
+        handleMouseEvent(fakeMotion);
     }
 }
 
@@ -136,27 +157,27 @@ void FlyingCamera::handleKeyEvent(const SDL_KeyboardEvent& keyEvent) noexcept
     switch (keyEvent.scancode)
     {
         case SDL_SCANCODE_W: {
-            mKeyState.forward = pressed;
+            mInputState.forward = pressed;
             break;
         }
         case SDL_SCANCODE_S: {
-            mKeyState.backward = pressed;
+            mInputState.backward = pressed;
             break;
         }
         case SDL_SCANCODE_A: {
-            mKeyState.left = pressed;
+            mInputState.left = pressed;
             break;
         }
         case SDL_SCANCODE_D: {
-            mKeyState.right = pressed;
+            mInputState.right = pressed;
             break;
         }
         case SDL_SCANCODE_SPACE: {
-            mKeyState.up = pressed;
+            mInputState.up = pressed;
             break;
         }
         case SDL_SCANCODE_LCTRL: {
-            mKeyState.down = pressed;
+            mInputState.down = pressed;
             break;
         }
         default: {
@@ -182,4 +203,31 @@ void FlyingCamera::handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noe
     }
 
     mOrientation = glm::rotate(mOrientation, glm::radians(-rotY), mUp);
+}
+
+void FlyingCamera::handleGamepadAxisEvent(const SDL_GamepadAxisEvent& axisEvent) noexcept
+{
+    const float value = axisEvent.value / 32767.0f;
+    switch (axisEvent.axis)
+    {
+        case SDL_GAMEPAD_AXIS_LEFTX: {
+            mInputState.leftX = value;
+            break;
+        }
+        case SDL_GAMEPAD_AXIS_LEFTY: {
+            mInputState.leftY = value;
+            break;
+        }
+        case SDL_GAMEPAD_AXIS_RIGHTX: {
+            mInputState.rightX = value;
+            break;
+        }
+        case SDL_GAMEPAD_AXIS_RIGHTY: {
+            mInputState.rightY = value;
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 }

@@ -25,12 +25,6 @@ public:
 
     [[nodiscard]] SDL_Window* getHandle() const noexcept;
 
-    void useGamepad(const SDL_JoystickID& joystickId) noexcept;
-
-    void removeGamepad(const SDL_JoystickID& joystickId) noexcept;
-
-    [[nodiscard]] SDL_Gamepad* getGamepad() const noexcept;
-
     // RHI Interface Implementation
 
     vk::Extent2D getFramebufferSize() const override;
@@ -45,12 +39,9 @@ public:
     }
 
 private:
-    void findGamepad() noexcept;
-
     float           mDisplayScaling  = 1.0f;
     Size2D          mWindowSize      = {};
     Size2D          mFramebufferSize = {};
     SDL_Window*     mWindow          = nullptr;
-    SDL_Gamepad*    mGamepad         = nullptr;
     std::string     mTitle           = "Nebula3 Window";
 };

@@ -21,6 +21,9 @@ App::App()
         .size  = config.app.windowSize,
         .title = config.app.windowTitle,
     });
+
+    mGamepadManager = makeUnique<GamepadManager>();
+
     SplashWindow::get().setMessage("Initializing VulkanRHI...");
     mVulkanRHI = RHI::VulkanRHI::create({
         .pWindow = mWindow,
@@ -33,13 +36,6 @@ App::App()
         .rhi      = mVulkanRHI,
     });
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
-
-    // mRenderGraphContext = rg::RenderGraphContext::create({
-    //     .rhi = mVulkanRHI,
-    // });
-    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
-
-    // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
 
     mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
@@ -66,8 +62,6 @@ void App::run_renderPathLoop()
         commandList = graphicsCommandPool->allocate();
     }
 
-    const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
-
     // Main Loop
     while (mRunning)
     {
@@ -81,6 +75,9 @@ void App::run_renderPathLoop()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            // Look for Gamepad connection events
+            mGamepadManager->onGamepadEvent(event);
+
             // Let ImGui process events
             mUserInterface->processEvents(event);
             // If ImGui didn't want to consume any input continue with Scene handlers.
@@ -99,19 +96,13 @@ void App::run_renderPathLoop()
                     }
                     break;
                 }
-                case SDL_EVENT_GAMEPAD_ADDED: {
-                    mWindow->useGamepad(event.gdevice.which);
-                    break;
-                }
-                case SDL_EVENT_GAMEPAD_REMOVED: {
-                    mWindow->removeGamepad(event.gdevice.which);
-                    break;
-                }
                 case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
                     spdlog::info("Pressed: {} ", event.gbutton.button);
+                    break;
                 }
-
-                default: {}
+                default: {
+                    break;
+                }
             }
         }
 

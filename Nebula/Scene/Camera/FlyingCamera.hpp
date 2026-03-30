@@ -28,6 +28,8 @@ private:
 
     void handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noexcept;
 
+    void handleGamepadAxisEvent(const SDL_GamepadAxisEvent& axisEvent) noexcept;
+
     glm::ivec2 mSize;
     glm::vec3  mEye;
     glm::vec3  mUp = {0, 1, 0};
@@ -39,6 +41,7 @@ private:
 
     float mSpeed {0.25f};
     float mSensitivity {50.0f};
+    float mDeadzone = 0.1f;
 
     bool mMouseCaptured = false;
 
@@ -49,5 +52,10 @@ private:
         bool right    = false;
         bool up       = false;
         bool down     = false;
-    } mKeyState;
+
+        float leftX   = 0.0f;
+        float leftY   = 0.0f;
+        float rightX  = 0.0f;
+        float rightY  = 0.0f;
+    } mInputState;
 };
