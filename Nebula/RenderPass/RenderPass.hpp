@@ -2,7 +2,6 @@
 
 #include "Pass.hpp"
 
-#include "HelloTrianglePass.hpp"
 #include "Molecule/SDFComputePass.hpp"
 #include "Molecule/SDFRaymarchPass.hpp"
 #include "Molecule/StructurePass.hpp"

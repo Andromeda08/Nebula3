@@ -2,7 +2,6 @@
 
 #include "Configuration.hpp"
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
-#include "RenderPass/HelloTrianglePass.hpp"
 #include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
 #include "Scene/Scenes/MoleculeScene/MoleculeScene.hpp"

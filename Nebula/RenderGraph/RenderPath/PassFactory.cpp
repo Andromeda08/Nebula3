@@ -7,7 +7,6 @@
 #include "RenderGraph/Node.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
-#include "RenderPass/HelloTrianglePass.hpp"
 #include "RenderPass/Molecule/SDFComputePass.hpp"
 #include "RenderPass/Special/ScenePass.hpp"
 
@@ -25,9 +24,6 @@ namespace rg
         {
             case NodeType::Scene: {
                 return makeUnique<ScenePass>();
-            }
-            case NodeType::HelloTrianglePresent: {
-                return makeUnique<HelloTrianglePass>(mRHI);
             }
             default: {
                 throw std::runtime_error(std::format("[PassFactory] Error: NodeType {} is not implemented", toString(pNode->getNodeType())));

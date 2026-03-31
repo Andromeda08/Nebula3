@@ -102,7 +102,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.cpp
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp
-    Nebula/RenderPass/HelloTrianglePass.hpp
     Nebula/RenderGraph/RenderGraph.hpp
     Nebula/RenderGraph/RGConfiguration.hpp
     Nebula/RenderGraph/RenderGraphTraits.hpp

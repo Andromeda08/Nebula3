@@ -234,9 +234,6 @@ namespace rg
         builder.setName("Initial_RenderGraph");
 
         auto* sourceNode        = builder.addNode(NodeType::Scene);
-        auto* helloTriangleNode = builder.addNode(NodeType::HelloTrianglePresent);
-
-        auto result = builder.addEdge(sourceNode, "Scene Data", helloTriangleNode, "Scene Data");
 
         const auto compilerResult = builder.compile();
         queueRenderPath(compilerResult);
