@@ -25,11 +25,12 @@ void SceneInfoComponent::draw()
     if (ImGui::SmallButton("Add"))
     {
         mLightIndex = lights->addLight({
-            .position    = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
+            .vector      = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
             .color       = Random::getVector<glm::vec3>(),
             .intensity   = 1500.0f,
-            .enabled     = true,
+            .isEnabled   = true,
             .castsShadow = true,
+            .radius      = 10.0f,
             .type        = LightType::Point,
             .name        = "Light",
         });

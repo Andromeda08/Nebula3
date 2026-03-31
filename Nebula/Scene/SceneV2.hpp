@@ -184,20 +184,22 @@ private:
 
         mLightSystem->addLight({});
         mLightSystem->addLight({
-            .position = { -45.0f, 50.0f, -50.0f },
-            .color = { 185.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
-            .intensity = 1500.0f,
-            .enabled = true,
+            .vector      = { -45.0f, 50.0f, -50.0f },
+            .color       = { 185.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
+            .intensity   = 1500.0f,
+            .isEnabled   = true,
             .castsShadow = true,
-            .type = LightType::Point
+            .radius      = 10.0f,
+            .type        = LightType::Point,
         });
         mLightSystem->addLight({
-            .position = { -17, 50, 35 },
-            .color = { 23.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
-            .intensity = 1500.0f,
-            .enabled = true,
+            .vector      = { -17, 50, 35 },
+            .color       = { 23.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
+            .intensity   = 1500.0f,
+            .isEnabled   = true,
             .castsShadow = true,
-            .type = LightType::Point
+            .radius      = 10.0f,
+            .type        = LightType::Point,
         });
 
         const auto geoCube = mGeometry->addGeometry<Cube>(Cube::Params {});
