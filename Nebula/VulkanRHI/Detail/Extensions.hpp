@@ -224,18 +224,6 @@ namespace RHI
         }
     );
 
-    // VK_EXT_descriptor_heap
-    def_VulkanExtProps(
-        DescriptorHeapEXT,
-        vk::EXTDescriptorHeapExtensionName,
-        vk::PhysicalDeviceDescriptorHeapFeaturesEXT,
-        vk::PhysicalDeviceDescriptorHeapPropertiesEXT,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceDescriptorHeapFeaturesEXT()
-                .setDescriptorHeap(true);
-        }
-    );
-
     // VK_NV_ray_tracing_linear_swept_spheres
     def_VulkanExt(
         RayTracingLinearSweptSpheresNV,

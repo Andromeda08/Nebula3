@@ -22,7 +22,7 @@ namespace RHI
             .addExtension(vk::KHRSwapchainExtensionName, FeatureOption::Required)
             .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Required)
             // General Extensions
-            .addExtension<DeviceFaultEXT>(FeatureOption::Required)
+            .addExtension<DeviceFaultEXT>(FeatureOption::Optional)
             // Ray tracing
             .addExtension<AccelerationStructureKHR>(FeatureOption::Optional)
             .addExtension<RayQuery>(FeatureOption::Optional)
@@ -32,9 +32,7 @@ namespace RHI
             .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional)
             .addExtension<RayTracingPositionFetch>(FeatureOption::Optional)
             // Mesh shader
-            .addExtension<MeshShaderEXT>(FeatureOption::Optional)
-            // Beta
-            .addExtension<DescriptorHeapEXT>(FeatureOption::Optional);
+            .addExtension<MeshShaderEXT>(FeatureOption::Optional);
 
         const auto& config = Configuration::getConfig();
         mDebugFeatures  = config.rhi.debugFeatures;
