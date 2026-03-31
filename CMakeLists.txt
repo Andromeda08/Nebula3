@@ -12,7 +12,6 @@ nrt_build()
 add_subdirectory(External/fastgltf  EXCLUDE_FROM_ALL)
 add_subdirectory(External/glm       EXCLUDE_FROM_ALL)
 add_subdirectory(External/json      EXCLUDE_FROM_ALL)
-add_subdirectory(External/ktx       EXCLUDE_FROM_ALL)
 add_subdirectory(External/vma       EXCLUDE_FROM_ALL)
 add_subdirectory(External/gemmi     EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
@@ -293,7 +292,6 @@ target_link_libraries(Nebula3 PUBLIC
     SDL3::SDL3
     SDL3_ttf::SDL3_ttf
     spdlog::spdlog
-    ktx
     fastgltf::fastgltf
 )
 
