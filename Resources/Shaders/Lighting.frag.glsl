@@ -7,14 +7,15 @@
 
 struct GPULightData
 {
-    vec4  position;
-    vec4  color;
+    vec3  vector;
+    int   lightType;
+    vec3  color;
     float intensity;
+    float radius;
     int   enabled;
     int   castsShadow;
     int   _p0;
 };
-
 // Input Attributes
 // ========================================
 layout (location = 0) in vec2 inUV;
@@ -97,14 +98,14 @@ float castSoftShadow(vec3 origin, GPULightData light, float r)
     float shadow = 0.0;
     const int samples = 16;
 
-    vec3 lightDir = light.position.xyz - origin;
+    vec3 lightDir = light.vector.xyz - origin;
     vec3 b1, b2;
     branchlessONB(lightDir, b1, b2);
 
     for (int i = 0; i < samples; i++)
     {
         vec2 rnd = randomDisk(i, samples);
-        vec3 jitteredLightPos = light.position.xyz + r * (rnd.x * b1 + rnd.y * b2);
+        vec3 jitteredLightPos = light.vector.xyz + r * (rnd.x * b1 + rnd.y * b2);
 
         vec3  dir  = jitteredLightPos - origin.xyz;
         vec3  L    = normalize(dir);
@@ -172,7 +173,7 @@ void main()
 
         GPULightData light = lights.data[i];
 
-        vec3  lightDir = light.position.xyz - wPos;
+        vec3  lightDir = light.vector.xyz - wPos;
         float dist     = length(lightDir);
         vec3  L        = normalize(lightDir);
 

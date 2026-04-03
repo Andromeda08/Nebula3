@@ -34,10 +34,9 @@ struct Object
     virtual void onUpdate(float dt) noexcept {}
 
     // Properties
-    SPtr<Geometry> pGeometry    = nullptr;
+    GeometryView   geometry;
     int32_t        textureIndex = -1;
     int32_t        normalIndex   = -1;
-    int32_t        geometryIndex = -1;
     int32_t        instanceIndex = -1;
     glm::vec4      solidColor   = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
     Transform      transform    = {};
@@ -56,8 +55,8 @@ struct Object
             .model         = transform.getModel(),
             .solidColor    = solidColor,
             .textureIndex  = textureIndex,
-            .geometryIndex = geometryIndex,
-            .blasAddress   = 0,
+            .geometryIndex = geometry.metadata->index,
+            .blasAddress   = geometry.metadata->blasAddress,
             .normalIndex   = normalIndex,
             ._p0           = 0,
         };
@@ -105,13 +104,7 @@ public:
             obj->onUpdate(dt);
             if (obj->transform.isDirty() || isFirstUpdate)
             {
-                auto instanceData = obj->getInstanceData();
-                if (mRHI->getRaytracingSupport())
-                {
-                    instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
-                }
-
-                mInstancePool->update(obj->instanceIndex, instanceData);
+                mInstancePool->update(obj->instanceIndex, obj->getInstanceData());
             }
         }
         mInstancePool->flush(pCommandList);
@@ -149,22 +142,14 @@ public:
 
     template <class T>
     requires std::is_base_of_v<Object, T>
-    void addObject(const SPtr<Geometry>& geometry, const int32_t tex, const Transform transform, const int32_t normalTex = -1) noexcept
+    void addObject(const GeometryIndex geometryIndex, const int32_t tex, const Transform transform, const int32_t normalTex = -1) noexcept
     {
         auto obj = makeUnique<T>();
-        obj->pGeometry = geometry;
-        obj->textureIndex = tex;
-        obj->normalIndex = normalTex;
-        obj->transform = transform;
-        obj->geometryIndex = mGeometry->getGeometryIndex(geometry->getName());
-
-        auto instanceData = obj->getInstanceData();
-        if (mRHI->getRaytracingSupport())
-        {
-            instanceData.blasAddress = mGeometry->getGeometryBLAS(obj->pGeometry->getName())->getAddress();
-        }
-
-        obj->instanceIndex = mInstancePool->acquire(instanceData);
+        obj->geometry      = mGeometry->getGeometryView(geometryIndex);
+        obj->transform     = transform;
+        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
+        obj->textureIndex  = tex;
+        obj->normalIndex   = normalTex;
 
         mObjects.push_back(std::move(obj));
 
@@ -203,12 +188,12 @@ private:
         });
 
         const auto geoCube = mGeometry->addGeometry<Cube>(Cube::Params {});
-        mGeometry->onUpdate();
+        mGeometry->commit();
 
         const auto geoSphere = mGeometry->addGeometry<Sphere>(Sphere::Params {});
         const auto geoCylinder = mGeometry->addGeometry<Cylinder>(Cylinder::Params {});
 
-        mGeometry->onUpdate();
+        mGeometry->commit();
 
         mTextureManager->loadTexture("missingTexture.png", 1);
         mTextureManager->loadTexture("missingTexture.png", 2);
@@ -263,17 +248,18 @@ private:
 
     void buildDrawCommands(const RHI::CommandList* pCommandList) noexcept
     {
-        std::unordered_map<Geometry*, std::vector<uint32_t>> groups;
+        std::unordered_map<GeometryIndex, std::vector<uint32_t>> groups;
         for (const auto& obj : mObjects)
         {
-            groups[obj->pGeometry.get()].push_back(obj->instanceIndex);
+            groups[obj->geometry.metadata->index].push_back(obj->instanceIndex);
         }
 
         std::vector<uint32_t> instanceMap;
         std::vector<vk::DrawIndexedIndirectCommand> draws;
-        for (auto& [geometry, instanceIndices] : groups)
+        for (auto& [geometryIndex, instanceIndices] : groups)
         {
-            auto& info = mGeometry->getGeometryInfo(geometry->getName());
+            // Redundant query, fix later, obj already has this data
+            auto geometryView = mGeometry->getGeometryView(geometryIndex);
 
             const auto firstInstance = static_cast<uint32_t>(instanceMap.size());
             for (auto instanceIndex : instanceIndices)
@@ -282,15 +268,15 @@ private:
             }
 
             const auto cmd = vk::DrawIndexedIndirectCommand()
-                .setIndexCount(info.indexRegion.indexCount)
+                .setIndexCount(geometryView.metadata->indexCount)
                 .setInstanceCount(instanceIndices.size())
-                .setFirstIndex(info.indexRegion.firstIndex)
-                .setVertexOffset(static_cast<int32_t>(info.vertexRegion.firstVertex))
+                .setFirstIndex(geometryView.metadata->firstIndex)
+                .setVertexOffset(static_cast<int32_t>(geometryView.metadata->firstVertex))
                 .setFirstInstance(firstInstance);
             draws.push_back(cmd);
         }
 
-        mDrawCount = mGeometry->getCount();
+        mDrawCount = mGeometry->getGeometryCount();
 
         const auto drawSize = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
         mDrawCmdBuffer = mRHI->createBuffer({
@@ -341,10 +327,17 @@ private:
     SPtr<RHI::VulkanRHI>                mRHI;
     UserInterface*                      mUserInterface;
 
+    // Vertex, Index, BLAS and GeometryInfo buffers
+    // Referenced by (via Index):
+    // - Objects
+    // - InstancePool data
+    // ============================================================
     UPtr<SceneGeometry>                 mGeometry;
     UPtr<InstancePool>                  mInstancePool;
-    UPtr<TextureManager>                mTextureManager;
+
     UPtr<TLASManager>                   mTLASManager;
+
+    UPtr<TextureManager>                mTextureManager;
 
     UPtr<LightSystem>                   mLightSystem;
 

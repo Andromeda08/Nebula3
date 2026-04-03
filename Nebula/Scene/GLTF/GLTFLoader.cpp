@@ -509,7 +509,7 @@ void GLTFLoader::s3_loadMeshes(fastgltf::Asset& asset) noexcept
             }
 
             mMeshMap[meshIndex].push_back({
-                .geometry       = geometry,
+                .geometryIndex  = geometry,
                 .baseColor      = baseColor,
                 .textureIndex   = texSlot,
                 .textureUV      = texUV,
@@ -575,14 +575,14 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
                 // Color from emissive, fallback to base color
                 const auto c = Random::getColor();
 
-                mLightSystem->addLight({
-                    .position    = position,
-                    .color       = { c[0], c[1], c[2] },
-                    .intensity   = 25.0f,
-                    .enabled     = true,
-                    .castsShadow = false,
-                    .type        = LightType::Point,
-                });
+                // mLightSystem->addLight({
+                //     .position    = position,
+                //     .color       = { c[0], c[1], c[2] },
+                //     .intensity   = 25.0f,
+                //     .enabled     = true,
+                //     .castsShadow = false,
+                //     .type        = LightType::Point,
+                // });
             }
         }
 
@@ -612,7 +612,7 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
             for (const auto& prim : it->second)
             {
                 auto t = Transform().setModel(model);
-                mScene->addObject<Object>(prim.geometry, prim.textureIndex, t, prim.normalMapIndex);
+                mScene->addObject<Object>(prim.geometryIndex, prim.textureIndex, t, prim.normalMapIndex);
                 // TODO: fix obj construction
                 // obj->solidColor = prim.baseColor;
                 // obj->name = node.name.empty() ? fmt::format("gltf_node_{}", nodeIndex) : std::string(node.name);

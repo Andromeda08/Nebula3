@@ -17,42 +17,14 @@ SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
     }
 }
 
-const SPtr<Geometry>& SceneGeometry::getGeometry(const std::string& name) const noexcept
-{
-    exitOnAssert(mGeometryLookup.contains(name), "Invalid Geometry name: {}", name);
-    return mGeometryLookup.at(name);
-}
-
-uint32_t SceneGeometry::getGeometryIndex(const std::string& name) const noexcept
-{
-    const auto it = std::ranges::find_if(mGeometries, [&name](const auto& geom){ return geom->getName() == name; });
-    exitOnAssert(it != std::end(mGeometries), "Invalid Geometry name: {}", name);
-    return std::distance(std::begin(mGeometries), it);
-}
-
-const SPtr<RHI::AccelerationStructure>& SceneGeometry::getGeometryBLAS(const std::string& name) const noexcept
-{
-    const auto it = std::ranges::find_if(mGeometries, [&name](const auto& geom){ return geom->getName() == name; });
-    exitOnAssert(it != std::end(mGeometries), "Invalid Geometry name: {}", name);
-    return mBottomLevel[std::distance(std::begin(mGeometries), it)];
-}
-
-void SceneGeometry::onUpdate() noexcept
-{
-    if (!mUploadQueue.empty())
-    {
-        uploadQueuedData();
-    }
-}
-
-void SceneGeometry::uploadQueuedData() noexcept
+void SceneGeometry::uploadQueuedGeometries()
 {
     uint64_t addVtxSize = 0;
     uint64_t addIdxSize = 0;
     for (const auto& info : mUploadQueue)
     {
-        addVtxSize += info.vertexRegion.vertexCount * sizeof(Vertex);
-        addIdxSize += info.indexRegion.indexCount   * sizeof(uint32_t);
+        addVtxSize += info.vertexCount * sizeof(Vertex);
+        addIdxSize += info.indexCount  * sizeof(uint32_t);
     }
 
     // Vertex and Index data
@@ -77,8 +49,10 @@ void SceneGeometry::uploadQueuedData() noexcept
 
     for (const auto& info : mUploadQueue)
     {
+        auto* pGeometry = mGeometries[info.index].get();
+
         const auto vtxSize = info.getVertexSize();
-        dataStaging->setData(info.geometry->getVertices().data(), vtxSize, vtxOffset);
+        dataStaging->setData(pGeometry->getVertices().data(), vtxSize, vtxOffset);
 
         const auto vtxCopy = vk::BufferCopy2()
             .setSrcOffset(vtxOffset)
@@ -89,7 +63,7 @@ void SceneGeometry::uploadQueuedData() noexcept
         vtxOffset += vtxSize;
 
         const auto idxSize = info.getIndexSize();
-        dataStaging->setData(info.geometry->getIndices().data(), idxSize, idxOffset);
+        dataStaging->setData(pGeometry->getIndices().data(), idxSize, idxOffset);
 
         const auto idxCopy = vk::BufferCopy2()
             .setSrcOffset(idxOffset)
@@ -197,7 +171,7 @@ void SceneGeometry::uploadQueuedData() noexcept
             const auto buildRangeInfo = vk::AccelerationStructureBuildRangeInfoKHR()
                 .setFirstVertex(0)
                 .setPrimitiveCount(geometryInfo.getPrimitiveCount())
-                .setPrimitiveOffset(geometryInfo.indexRegion.firstIndex * sizeof(uint32_t))
+                .setPrimitiveOffset(geometryInfo.firstIndex * sizeof(uint32_t))
                 .setTransformOffset(0);
             buildRangeInfos.push_back(buildRangeInfo);
 
@@ -207,7 +181,7 @@ void SceneGeometry::uploadQueuedData() noexcept
                 .setVertexData(mVertexBuffer->getAddress() + vertexBufferOffset)
                 .setVertexFormat(vk::Format::eR32G32B32Sfloat)
                 .setVertexStride(sizeof(Vertex))
-                .setMaxVertex(geometryInfo.geometry->getVertexCount())
+                .setMaxVertex(geometryInfo.vertexCount)
                 .setPNext(nullptr);
             triangleDatas.push_back(triangleData);
 
@@ -332,20 +306,23 @@ void SceneGeometry::uploadQueuedData() noexcept
         mBottomLevel     = std::move(newBottomLevel);
         mBottomLevelData = std::move(newBottomLevelData);
 
-        if (mRaytracing)
-        {
-            spdlog::debug("BLAS count: {} -> {}", oldBlasCount, newBlasCount);
-        }
+        spdlog::debug("BLAS count: {} -> {}", oldBlasCount, newBlasCount);
     }
 
     // Cleanup
     // ================================================
+    for (auto i = 0; i < mUploadQueue.size(); ++i)
+    {
+        mUploadQueue[i].blasAddress = mRaytracing ? mBottomLevel[mCommittedCount + i]->getAddress() : 0;
+    }
 
     // Add new committed GeometryInfo structs to meta
     mInfos.append_range(mUploadQueue);
 
     spdlog::debug("Queued geometry data committed.\n\t- count: {}\n\t- (vertex) {} -> {}\n\t- (index) {} -> {}",
         mUploadQueue.size(), oldVtxSize, oldVtxSize + addVtxSize, oldIdxSize, oldIdxSize + addIdxSize);
+
+    mCommittedCount += mUploadQueue.size();
 
     // Clear upload queue
     mUploadQueue.clear();

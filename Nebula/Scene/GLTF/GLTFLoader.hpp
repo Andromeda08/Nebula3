@@ -10,6 +10,7 @@
 
 #include "Core/Types.hpp"
 #include "Core/Util.hpp"
+#include "Scene/SceneGeometry.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
 class LightSystem;
@@ -49,6 +50,8 @@ class GLTFLoader
     struct MeshGeometryInfo
     {
         SPtr<Geometry>  geometry;
+        GeometryIndex   geometryIndex;
+
         glm::vec4       baseColor;
         int32_t         textureIndex;
         int32_t         textureUV;

@@ -66,9 +66,11 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         mPipeline->pushConstants(commandBuffer, &pc);
 
         static constexpr vk::DeviceSize offsets[1] = { 0 };
-        const std::array vertexBuffers{ mScene->mGeometry->getVertexBuffer()->getHandle() };
+        const auto [ vertexBuffer, indexBuffer, _ ] = mScene->mGeometry->getBuffers();
+
+        const std::array vertexBuffers { vertexBuffer->getHandle() };
         commandBuffer.bindVertexBuffers(0, 1, vertexBuffers.data(), offsets);
-        commandBuffer.bindIndexBuffer(mScene->mGeometry->getIndexBuffer()->getHandle(), 0, vk::IndexType::eUint32);
+        commandBuffer.bindIndexBuffer(indexBuffer->getHandle(), 0, vk::IndexType::eUint32);
 
         commandBuffer.drawIndexedIndirect(
             mScene->mDrawCmdBuffer->getHandle(),

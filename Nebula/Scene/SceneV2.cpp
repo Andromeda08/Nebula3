@@ -112,7 +112,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
 
     mLightingPass = LightingPass::create({
         .resolution = { extent.width, extent.height },
-        .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult(), mProcSky->getCubeMap(), mProcSky->getSkyDataBuffer() },
+        .input      = { mTestPass->getPosition(), mTestPass->getNormal(), mTestPass->getAlbedo(), mSceneDescriptor, mSSAO->getResult(), mTLASManager.get(), mProcSky->getCubeMap(), mProcSky->getSkyDataBuffer() },
         .rhi        = mRHI,
     });
 
@@ -137,34 +137,34 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
 
 void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
 {
-    // mProcSky->execute(commandList, frameData);
+    mProcSky->execute(commandList, frameData);
 
-    // mTestPass->execute(commandList, frameData);
-    // mSSAO->execute(commandList, frameData);
+    mTestPass->execute(commandList, frameData);
+    mSSAO->execute(commandList, frameData);
     // mRTAO->execute(commandList, frameData);
-    // mLightingPass->execute(commandList, frameData);
-    // mFXAA->execute(commandList, frameData);
-    // mTonemapPass->execute(commandList, frameData);
+    mLightingPass->execute(commandList, frameData);
+    mFXAA->execute(commandList, frameData);
+    mTonemapPass->execute(commandList, frameData);
 
-    mRTPass->execute(commandList, frameData);
+    // mRTPass->execute(commandList, frameData);
 
     commandList->beginLabel("Present_Blit");
     // Barriers
     const auto barrier = RHI::Barrier()
-        .addBarrier(mRTPass->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
+        .addBarrier(mTonemapPass->getResult()->getBarrier(RHI::ImageUsage::TransferSrc))
         .addBarrier(mRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
     barrier.insert(commandList);
 
     // Blit
     #pragma region
-    const auto srcExtent = mRTPass->getResult()->getProperties().extent;
+    const auto srcExtent = mTonemapPass->getResult()->getProperties().extent;
     const auto dstExtent = mRHI->getSwapchain()->getProperties().extent;
     const auto region  = vk::ImageBlit2()
         .setSrcOffsets({
             vk::Offset3D { 0, 0, 0 },
             vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
         })
-        .setSrcSubresource(mRTPass->getResult()->getProperties().getSubresourceLayers())
+        .setSrcSubresource(mTonemapPass->getResult()->getProperties().getSubresourceLayers())
         .setDstOffsets({
             vk::Offset3D { 0, 0, 0 },
             vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
@@ -172,7 +172,7 @@ void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData
         .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
 
     const auto blit = vk::BlitImageInfo2()
-        .setSrcImage(mRTPass->getResult()->getImage())
+        .setSrcImage(mTonemapPass->getResult()->getImage())
         .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
         .setDstImage(mRHI->getSwapchain()->getImage(frameData.acquiredIndex))
         .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <map>
 #include <vector>
 
 #include "Core/Types.hpp"
@@ -8,118 +7,185 @@
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
-struct VertexBufferRegion
-{
-    uint64_t firstVertex;
-    uint64_t vertexCount;
-};
+/**
+ * Aliased type for geometry indices
+ */
+using GeometryIndex = int32_t;
 
-struct IndexBufferRegion
-{
-    uint64_t firstIndex;
-    uint64_t indexCount;
-};
-
+/**
+ * CPU and GPU side Geometry metadata
+ */
 struct GeometryInfo
 {
-    SPtr<Geometry>      geometry;
-    VertexBufferRegion  vertexRegion;
-    IndexBufferRegion   indexRegion;
+    // Geometry Index
+    int32_t  index      = -1;
+    int32_t  _pad0      = -1;
 
+    // VertexBuffer Region
+    uint64_t firstVertex = std::numeric_limits<uint64_t>::max();
+    uint64_t vertexCount = 0;
+
+    // IndexBuffer Region
+    uint64_t firstIndex = std::numeric_limits<uint64_t>::max();
+    uint64_t indexCount = 0;
+
+    // Bottom-Level AS Address
+    uint64_t blasAddress = 0;
+
+    /**
+     * @return Size of geometry vertex data in bytes
+     */
     [[nodiscard]] uint64_t getVertexSize() const noexcept
     {
-        return geometry->getVertexCount() * sizeof(Vertex);
+        return vertexCount * sizeof(Vertex);
     }
 
+    /**
+     * @return Size of geometry index data in bytes
+     */
     [[nodiscard]] uint64_t getIndexSize() const noexcept
     {
-        return geometry->getIndexCount() * sizeof(uint32_t);
+        return indexCount * sizeof(uint32_t);
     }
 
+    /**
+     * @return Primitive count calculated from index count
+     */
     [[nodiscard]] uint32_t getPrimitiveCount() const noexcept
     {
-        return static_cast<uint32_t>(indexRegion.indexCount) / 3;
+        return static_cast<uint32_t>(indexCount) / 3;
     }
 };
+static_assert(sizeof(GeometryInfo) % 16 == 0);
 
-// Geometry Management
-// ========================
+/**
+ * Group buffers into a single struct for getter method
+ */
+struct SceneGeometryBuffers
+{
+    const SPtr<RHI::Buffer>& vertex;
+    const SPtr<RHI::Buffer>& index;
+    const SPtr<RHI::Buffer>& metadata;
+};
+
+/**
+ * Non-owning group of all data related to a specific Geometry
+ */
+struct GeometryView
+{
+    Geometry*                   geometry;
+    const GeometryInfo*         metadata;
+    RHI::AccelerationStructure* accelerationStructure;
+};
+
+/**
+ * Geometry Management
+ * - Scene-scoped vertex, index and metadata buffers
+ * - Bottom-level Acceleration Structures
+ */
 class SceneGeometry
 {
 public:
     explicit SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi);
 
+    [[deprecated("Use commit() instead")]] void onUpdate()
+    {
+        commit();
+    }
+
     /**
-     * Add a new Geometry type.
+     * Commit the staged geometries to the GPU-side buffers
+     * via an immediately executed command list.
+     */
+    void commit()
+    {
+        if (!mUploadQueue.empty())
+        {
+            uploadQueuedGeometries();
+        }
+    }
+
+    /**
+     * Add a new Geometry type, stages a GPU upload for its data.
      * @param args Geometry subclass ctor params
+     * @return Index of the Geometry
      */
     template <class T, class... Args>
     requires std::is_base_of_v<Geometry, T>
-    SPtr<Geometry> addGeometry(Args&&... args) noexcept
+    GeometryIndex addGeometry(Args&&... args) noexcept
     {
-        SPtr<Geometry> geometry = makeShared<T>(std::forward<Args>(args)...);
-        mGeometries.push_back(geometry);
-        mGeometryLookup.insert_or_assign(geometry->getName(), geometry);
-
-        const auto vertexCount = geometry->getVertexCount();
-        const auto indexCount = geometry->getIndexCount();
+        mGeometries.push_back(makeShared<T>(std::forward<Args>(args)...));
+        const auto& geometry = mGeometries.back();
 
         const GeometryInfo info = {
-            .geometry     = geometry,
-            .vertexRegion = { mLastVertex, vertexCount },
-            .indexRegion  = { mLastIndex, indexCount },
+            .index       = static_cast<int32_t>(mGeometries.size() - 1),
+            .firstVertex = mLastVertex,
+            .vertexCount = geometry->getVertexCount(),
+            .firstIndex  = mLastIndex,
+            .indexCount  = geometry->getIndexCount(),
+            // BLAS is invalid until it has been built, no GPU commands are executed in this function
+            .blasAddress = 0,
         };
-
-        mLastVertex += vertexCount;
-        mLastIndex  += indexCount;
-
         mUploadQueue.push_back(info);
 
-        return geometry;
+        mLastVertex += info.vertexCount;
+        mLastIndex  += info.indexCount;
+
+        return info.index;
     }
 
-    [[nodiscard]] const SPtr<Geometry>& getGeometry(const std::string& name) const noexcept;
-
-    [[nodiscard]] uint32_t getGeometryIndex(const std::string& name) const noexcept;
-
-    [[nodiscard]] const GeometryInfo& getGeometryInfo(const std::string& name) const noexcept
+    /**
+     * @return Grouped getter for Vertex, Index and Metadata buffers
+     */
+    [[nodiscard]] SceneGeometryBuffers getBuffers() const noexcept
     {
-        return mInfos[getGeometryIndex(name)];
+        return {
+            .vertex   = mVertexBuffer,
+            .index    = mIndexBuffer,
+            .metadata = mGeometryInfoBuffer,
+        };
     }
 
-    [[nodiscard]] const SPtr<RHI::AccelerationStructure>& getGeometryBLAS(const std::string& name) const noexcept;
-
-    [[nodiscard]] const SPtr<RHI::Buffer>& getVertexBuffer() const noexcept
+    /**
+     * @param index Geometry Index
+     * @return All data related to a specific Geometry
+     */
+    [[nodiscard]] GeometryView getGeometryView(const GeometryIndex index) const noexcept
     {
-        return mVertexBuffer;
+        return {
+            .geometry               = mGeometries[index].get(),
+            .metadata               = &mInfos[index],
+            .accelerationStructure  = mRaytracing ? nullptr : mBottomLevel[index].get(),
+        };
     }
 
-    [[nodiscard]] const SPtr<RHI::Buffer>& getIndexBuffer() const noexcept
-    {
-        return mIndexBuffer;
-    }
-
-    [[nodiscard]] uint32_t getCount() const noexcept
+    /**
+     * @return Number of geometries
+     */
+    [[nodiscard]] uint32_t getGeometryCount() const noexcept
     {
         return static_cast<uint32_t>(mGeometries.size());
     }
 
-    void onUpdate() noexcept;
-
 private:
-    std::map<std::string, SPtr<Geometry>> mGeometryLookup;
-    std::vector<SPtr<Geometry>>           mGeometries;
+    SPtr<RHI::VulkanRHI>        mRHI;
 
-    // GPU resources & meta
-    // ========================
+    // Geometry and Metadata (1-1)
+    // ======================================
+    std::vector<SPtr<Geometry>> mGeometries;
     std::vector<GeometryInfo>   mInfos;
-    uint64_t                    mLastVertex   = 0;
-    SPtr<RHI::Buffer>           mVertexBuffer = nullptr;
-    uint64_t                    mLastIndex    = 0;
-    SPtr<RHI::Buffer>           mIndexBuffer  = nullptr;
+    uint64_t                    mCommittedCount = 0;
 
-    // Raytracing
-    // ========================
+    // GPU-side Resources and Trackers
+    // ======================================
+    uint64_t                    mLastVertex         = 0;
+    SPtr<RHI::Buffer>           mVertexBuffer       = nullptr;
+    uint64_t                    mLastIndex          = 0;
+    SPtr<RHI::Buffer>           mIndexBuffer        = nullptr;
+    SPtr<RHI::Buffer>           mGeometryInfoBuffer = nullptr;
+
+    // RT Acceleration Structures
+    // ======================================
     bool                                            mRaytracing = false;
     uint64_t                                        mBLAlignment = 0;
     std::vector<SPtr<RHI::AccelerationStructure>>   mBottomLevel;
@@ -130,12 +196,13 @@ private:
         return (x + mBLAlignment - 1) & ~(mBLAlignment - 1);
     }
 
-    // Updates
-    // ========================
+    // Uploading to the GPU
+    // ======================================
     std::vector<GeometryInfo>   mUploadQueue;
 
-    // Resize buffers and upload queued geometry data
-    void uploadQueuedData() noexcept;
-
-    SPtr<RHI::VulkanRHI>        mRHI;
+    /**
+     * 1. Grow the Vertex, Index and Metadata buffers to fit incoming geometries.
+     * 2. Upload queued Geometries to the GPU.
+     */
+    void uploadQueuedGeometries();
 };
