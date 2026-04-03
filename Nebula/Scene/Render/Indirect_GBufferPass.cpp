@@ -182,8 +182,8 @@ void Indirect_GBufferPass::createPipeline() noexcept
                 stateInfo.addBindingDescriptions<Vertex>(0);
             })
             .addDefaultAttachmentStates(3))
-        .addShader({ "Resources/Shaders/bin/IndirectDrawGBuffer.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/IndirectDrawGBuffer.frag.spv", vk::ShaderStageFlagBits::eFragment })
+        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
+        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mPositionDepthBuffer->getProperties().format)
         .addColorAttachmentFormat(mNormalBuffer->getProperties().format)
         .addColorAttachmentFormat(mAlbedoBuffer->getProperties().format)

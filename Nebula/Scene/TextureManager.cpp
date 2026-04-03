@@ -38,11 +38,11 @@ uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::
 
     const auto path = Configuration::getTextureFilePath(textureFile);
     int32_t width, height, channels;
-    stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load(path.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
     if (!pixels)
     {
-        spdlog::error("Failed to load texture: {}", path);
+        spdlog::error("Failed to load texture: {}", path.string());
         return std::numeric_limits<int32_t>::max();
     }
 
@@ -212,7 +212,7 @@ void TextureManager::createDescriptor()
                 .setDescriptorType(vk::DescriptorType::eStorageImage)
                 .setStageFlags(vk::ShaderStageFlagBits::eFragment),
         },
-        .setCount = RHI::gMaxConcurrentFrames,
+        .setCount = RHI::gFramesInFlight,
         .debugName = "TextureDescriptor",
     });
 }

@@ -1,13 +1,12 @@
 #pragma once
 
+#include <filesystem>
 #include <nlohmann/json.hpp>
 
 #include "Macro.hpp"
 #include "Core/AppSpecification.hpp"
 #include "Core/Types.hpp"
 #include "RenderGraph/RGConfiguration.hpp"
-#include "Scene/SceneConfiguration.hpp"
-#include "VulkanRHI/RHIConfiguration.hpp"
 
 constexpr auto gConfigurationPath = "nbl.json";
 
@@ -16,13 +15,20 @@ constexpr auto gConfigurationPath = "nbl.json";
  */
 struct ConfigurationData
 {
-    uint32_t            version     = 1u;  // ConfigurationData version tag
     AppSpecification    app         = {};
-    RHIConfiguration    rhi         = {};
-    RGConfiguration     renderGraph = {};
-    SceneConfiguration  scenes      = {};
+
+    // Vulkan RHI Options
+    bool                enableDebugFeatures = true;
+
+    // File paths
+    std::string         baseDirPath         = "../Resources";
+    std::string         scenesDirName       = "Scenes";
+    std::string         fontsDirName        = "Fonts";
+    std::string         shadersDirName      = "Shaders";
+    std::string         shadersBinDirName   = "Shaders/bin";
+    std::string         texturesDirName     = "Textures";
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, version, app, rhi, renderGraph, scenes);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, app);
 
 /**
  * Configuration reading & loading (singleton) class.
@@ -40,14 +46,15 @@ public:
     static ConfigurationData& getConfig();
 
     // Quick-access utilities
-    static std::string getShaderFilePath(const std::string& shaderFile) noexcept;
+    static std::filesystem::path getSceneFilePath(const std::string& sceneFile) noexcept;
 
-    static std::string getTextureFilePath(const std::string& textureFile) noexcept;
+    static std::filesystem::path getFontFilePath(const std::string& fontFile) noexcept;
 
-    static std::string getMoleculeFile() noexcept
-    {
-        return std::format("{}/{}", sInstance->mData.scenes.moleculesDir, sInstance->mData.scenes.molecule);
-    }
+    static std::filesystem::path getShaderFilePath(const std::string& shaderFile) noexcept;
+
+    static std::filesystem::path getShaderSourceFilePath(const std::string& shaderFile) noexcept;
+
+    static std::filesystem::path getTextureFilePath(const std::string& textureFile) noexcept;
 
 private:
     Configuration();

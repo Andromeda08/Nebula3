@@ -12,7 +12,7 @@ namespace RHI
             .setPApplicationName(config.app.appName.c_str())
             .setPEngineName("Nebula3");
 
-        if (config.rhi.debugFeatures)
+        if (config.enableDebugFeatures)
         {
             // mLayers.push_back(gVulkanValidationLayerName);
             mExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

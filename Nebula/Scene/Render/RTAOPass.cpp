@@ -65,7 +65,7 @@ void RTAOPass::createResources_RTAO() noexcept
         .addDescriptorSetLayout(mRTAO_Descriptor->getLayout())
         .addDescriptorSetLayout(mInput.sceneDescriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(PushConstants) })
-        .setComputeShader(Configuration::getShaderFilePath("RTAO.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("RTAO.comp.spv").string())
         .setDebugName("RTAO_Pipeline");
     mRTAO_Pipeline = mRHI->createComputePipeline(pipelineCreateInfo);
 }
@@ -100,7 +100,7 @@ void RTAOPass::createResources_Denoise() noexcept
     auto pipelineCreateInfo = RHI::ComputePipelineCreateInfo()
         .addDescriptorSetLayout(mDenoise_Descriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(DenoisePushConstants) })
-        .setComputeShader(Configuration::getShaderFilePath("RTAO_Denoise.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("RTAO_Denoise.comp.spv").string())
         .setDebugName("RTAO_Denoise_Pipeline");
     mDenoise_Pipeline = mRHI->createComputePipeline(pipelineCreateInfo);
 }

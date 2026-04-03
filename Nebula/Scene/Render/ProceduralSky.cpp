@@ -110,7 +110,7 @@ void ProceduralSkyPass::createPipeline() noexcept
     auto pipelineCreateInfo = RHI::ComputePipelineCreateInfo()
         .addDescriptorSetLayout(mDescriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(SkyParams) })
-        .setComputeShader(Configuration::getShaderFilePath("RayleighMieSky.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("RayleighMieSky.comp.spv").string())
         .setDebugName("ProceduralSky_Pipeline");
     mPipeline = mRHI->createComputePipeline(pipelineCreateInfo);
 }

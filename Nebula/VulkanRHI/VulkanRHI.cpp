@@ -13,7 +13,7 @@ namespace RHI
     : mWindow(createInfo.pWindow)
     {
         const auto& config = Configuration::getConfig();
-        mFeatureLevel = config.rhi.featureLevel;
+        mFeatureLevel = Platform::isApple ? FeatureLevel::Basic : FeatureLevel::Complete;
 
         const vk::detail::DynamicLoader dynamicLoader;
         const auto vkGetInstanceProcAddr = dynamicLoader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
@@ -24,7 +24,7 @@ namespace RHI
         mInstance = Instance::create({ mWindow.get() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mInstance->getHandle());
 
-        if (config.rhi.debugFeatures)
+        if (config.enableDebugFeatures)
         {
             mDebugContext = DebugContext::create({ mInstance });
         }
@@ -59,7 +59,7 @@ namespace RHI
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}]",
-            mDevice->getDeviceName(), getFeatureLevelName(mFeatureLevel), config.rhi.debugFeatures ? "Yes" : "No",
+            mDevice->getDeviceName(), getFeatureLevelName(mFeatureLevel), config.enableDebugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode));
     }
 

@@ -23,7 +23,7 @@ TLASManager::TLASManager(const TLASManagerCreateInfo& createInfo)
     });
 
     auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-        .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv").string())
         .addDescriptorSetLayout(mUpdateDescriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(TLASUpdatePushConstants) })
         .setDebugName("TLAS_Instance_Update");

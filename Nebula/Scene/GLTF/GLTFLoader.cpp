@@ -108,7 +108,7 @@ namespace tangent
 
 GLTFLoader::GLTFLoader(const GLTFLoaderLoadParams& params)
 {
-    mFileName  = std::filesystem::path(params.fileName);
+    mFileName  = Configuration::getSceneFilePath(params.fileName);
     mSceneName = mFileName.filename().stem().string();
 
     mTextureManager = params.pTextureManager;

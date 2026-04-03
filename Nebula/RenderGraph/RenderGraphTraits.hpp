@@ -2,7 +2,6 @@
 
 #include <set>
 #include <nlohmann/json.hpp>
-#include "VulkanRHI/RHIConfiguration.hpp"
 
 namespace rg
 {

@@ -102,7 +102,7 @@ namespace Molecule
             static_cast<uint32_t>(glm::ceil(static_cast<double>(mTextureExtent.depth)  / 4.0)),
         };
         auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-            .setComputeShader({ Configuration::getShaderFilePath("viz.comp.spv"), vk::ShaderStageFlagBits::eCompute, "main" })
+            .setComputeShader({ Configuration::getShaderFilePath("viz.comp.spv").string(), vk::ShaderStageFlagBits::eCompute, "main" })
             .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(PushConstants) })
             .addDescriptorSetLayout(mDescriptor->getLayout())
             .setDebugName("SDFComputePass");
