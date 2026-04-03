@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
 
 // RHI Resource ctor macro
 // ============================
@@ -32,20 +33,12 @@ namespace RHI::Platform
 namespace RHI
 {
     constexpr uint64_t gFramesInFlight = 2;
-
-    // TODO: completely replace gFramesInFlight
-    constexpr uint64_t gMaxConcurrentFrames = gFramesInFlight;
 }
 
 // RHI Common Types
 // ============================
 namespace RHI
 {
-    enum class Backend
-    {
-        Vulkan,
-    };
-
     enum class FeatureLevel
     {
         Basic       = 0,
@@ -71,25 +64,4 @@ namespace RHI
         Compute,
         Transfer,
     };
-}
-
-// RHI::Platform
-// ============================
-namespace RHI::Platform
-{
-    // Get the preferred backend for the current Platform
-    [[nodiscard]] constexpr Backend getPreferredBackend() noexcept
-    {
-        return Backend::Vulkan;
-    }
-
-    // Get the RHI feature level for the current Platform given a specific Backend
-    [[nodiscard]] inline FeatureLevel getRHIFeatureLevel(const Backend backend) noexcept
-    {
-        if (isApple && backend == Backend::Vulkan)
-        {
-            return FeatureLevel::Basic;
-        }
-        return FeatureLevel::Complete;
-    }
 }

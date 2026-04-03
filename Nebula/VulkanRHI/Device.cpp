@@ -34,8 +34,7 @@ namespace RHI
             // Mesh shader
             .addExtension<MeshShaderEXT>(FeatureOption::Optional);
 
-        const auto& config = Configuration::getConfig();
-        mDebugFeatures  = config.rhi.debugFeatures;
+        mDebugFeatures  = Configuration::getConfig().enableDebugFeatures;
 
         selectPhysicalDeviceV2();
 

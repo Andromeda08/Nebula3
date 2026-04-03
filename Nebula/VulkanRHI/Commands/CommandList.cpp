@@ -8,7 +8,7 @@ namespace RHI
     CommandList::CommandList(const CommandListCreateInfo& createInfo)
     : mCommandBuffer(createInfo.commandBuffer)
     , mSingleTime(createInfo.singleTimeSubmit)
-    , mDebug(Configuration::getConfig().rhi.debugFeatures)
+    , mDebug(Configuration::getConfig().enableDebugFeatures)
     {
     }
 
