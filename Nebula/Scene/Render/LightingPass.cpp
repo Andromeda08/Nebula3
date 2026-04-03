@@ -28,16 +28,24 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
         .insert(pCommandList);
 
     {
-        const auto barrier = vk::BufferMemoryBarrier2()
+        const auto skyDataBarrier = vk::BufferMemoryBarrier2()
             .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
             .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader)
             .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
             .setDstAccessMask(vk::AccessFlagBits2::eShaderRead)
             .setBuffer(mInput.skyData->getHandle())
             .setSize(VK_WHOLE_SIZE);
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setBufferMemoryBarriers(barrier);
-        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
+
+        const auto waitTlasBuild = vk::BufferMemoryBarrier2()
+            .setBuffer(mInput.tlasManager->getBackingBuffer()->getHandle())
+            .setSize(VK_WHOLE_SIZE)
+            .setSrcAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR | vk::PipelineStageFlagBits2::eAccelerationStructureCopyKHR)
+            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureReadKHR)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader);
+
+        const std::array barriers = { skyDataBarrier, waitTlasBuild };
+        pCommandList->getHandle().pipelineBarrier2(vk::DependencyInfo().setBufferMemoryBarriers(barriers));
     }
 
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
