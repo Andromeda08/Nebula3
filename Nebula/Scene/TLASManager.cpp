@@ -238,7 +238,14 @@ void TLASManager::execute_TLASBuild(const RHI::CommandList* pCommandList) const 
             .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
             .setBuffer(mBackingBuffer->getHandle())
             .setSize(VK_WHOLE_SIZE);
-        const std::array barriers = { b1, b2 };
+        const auto b3 = vk::BufferMemoryBarrier2()
+            .setBuffer(mInstanceBuffer->getHandle())
+            .setSize(VK_WHOLE_SIZE)
+            .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
+            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureReadKHR | vk::AccessFlagBits2::eShaderRead)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR | vk::PipelineStageFlagBits2::eAccelerationStructureCopyKHR);
+        const std::array barriers = { b1, b2, b3 };
         const auto dependencyInfo = vk::DependencyInfo()
             .setBufferMemoryBarriers(barriers);
         pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
