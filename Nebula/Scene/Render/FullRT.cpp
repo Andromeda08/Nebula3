@@ -63,9 +63,9 @@ void FullRTPass::createPipeline() noexcept
     const auto pipelineCreateInfo = RHI::RaytracingPipelineCreateInfo()
         .addDescriptorSetLayout(mSceneDescriptor->getLayout())
         .addDescriptorSetLayout(mDescriptor->getLayout())
-        .addShader({ Configuration::getShaderFilePath("rt.rgen.spv"), vk::ShaderStageFlagBits::eRaygenKHR, "main" })
-        .addShader({ Configuration::getShaderFilePath("rt.rmiss.spv"), vk::ShaderStageFlagBits::eMissKHR, "main" })
-        .addShader({ Configuration::getShaderFilePath("rt.rchit.spv"), vk::ShaderStageFlagBits::eClosestHitKHR, "main" })
+        .addShader({ Configuration::getShaderFilePath("rt.rgen.spv").string(), vk::ShaderStageFlagBits::eRaygenKHR, "main" })
+        .addShader({ Configuration::getShaderFilePath("rt.rmiss.spv").string(), vk::ShaderStageFlagBits::eMissKHR, "main" })
+        .addShader({ Configuration::getShaderFilePath("rt.rchit.spv").string(), vk::ShaderStageFlagBits::eClosestHitKHR, "main" })
         .setRayDepth(1)
         .setDebugName("RT_Pipeline");
 
