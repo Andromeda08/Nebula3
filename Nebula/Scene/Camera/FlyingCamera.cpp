@@ -55,6 +55,11 @@ void FlyingCamera::onEvent(const SDL_Event& event) noexcept
             handleGamepadAxisEvent(event.gaxis);
             break;
         }
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+        case SDL_EVENT_GAMEPAD_BUTTON_UP: {
+            handleGamepadButtonEvent(event.gbutton);
+            break;
+        }
         case SDL_EVENT_WINDOW_FOCUS_LOST: {
             mInputState = {};
             mMouseCaptured = false;
@@ -203,6 +208,26 @@ void FlyingCamera::handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noe
     }
 
     mOrientation = glm::rotate(mOrientation, glm::radians(-rotY), mUp);
+}
+
+void FlyingCamera::handleGamepadButtonEvent(const SDL_GamepadButtonEvent& buttonEvent) noexcept
+{
+    const bool pressed = (buttonEvent.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN);
+
+    switch (buttonEvent.button)
+    {
+        case 9: {
+            mInputState.down = pressed;
+            break;
+        }
+        case 10: {
+            mInputState.up = pressed;
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 }
 
 void FlyingCamera::handleGamepadAxisEvent(const SDL_GamepadAxisEvent& axisEvent) noexcept

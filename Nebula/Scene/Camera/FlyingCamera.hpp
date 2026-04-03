@@ -28,6 +28,8 @@ private:
 
     void handleMouseEvent(const SDL_MouseMotionEvent& motionEvent) noexcept;
 
+    void handleGamepadButtonEvent(const SDL_GamepadButtonEvent& buttonEvent) noexcept;
+
     void handleGamepadAxisEvent(const SDL_GamepadAxisEvent& axisEvent) noexcept;
 
     glm::ivec2 mSize;
