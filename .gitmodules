@@ -34,8 +34,8 @@
 [submodule "External/SDL_ttf"]
 	path = External/SDL_ttf
 	url = https://github.com/libsdl-org/SDL_ttf
-[submodule "external/mikktspace"]
-	path = external/mikktspace
+[submodule "External/mikktspace"]
+	path = External/mikktspace
 	url = https://github.com/mmikk/MikkTSpace.git
 [submodule "External/DLSS"]
 	path = External/DLSS
