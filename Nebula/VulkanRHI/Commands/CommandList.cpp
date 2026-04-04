@@ -87,4 +87,38 @@ namespace RHI
 
         mCommandBuffer.copyBufferToImage2(copyBufferToImageInfo);
     }
+
+    void CommandList::copyBuffer(const BufferCopyInfo& bufferCopyInfo) const
+    {
+        if (!bufferCopyInfo.src)
+        {
+            spdlog::error("copyBuffer src is null");
+            return;
+        }
+        if (!bufferCopyInfo.dst)
+        {
+            spdlog::error("copyBuffer dst is null");
+            return;
+        }
+
+        std::vector<vk::BufferCopy2> regions;
+        if (bufferCopyInfo.regions.empty())
+        {
+            regions.push_back({ 0, 0, bufferCopyInfo.src->getSize() });
+        }
+        else
+        {
+            for (const auto& region : bufferCopyInfo.regions)
+            {
+                regions.push_back({ region.srcOffset, region.dstOffset, region.size });
+            }
+        }
+
+        const auto copyInfo = vk::CopyBufferInfo2()
+            .setSrcBuffer(bufferCopyInfo.src->getHandle())
+            .setDstBuffer(bufferCopyInfo.dst->getHandle())
+            .setRegions(regions);
+
+        mCommandBuffer.copyBuffer2(copyInfo);
+    }
 }
