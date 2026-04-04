@@ -95,7 +95,7 @@ void ImGuiRenderPass::init_ImGui() const noexcept
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     const ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontFromFileTTF(mFontFile.c_str(), 16.0f);
+    io.Fonts->AddFontFromFileTTF(Configuration::getFontFilePath(mFontFile).c_str(), 16.0f);
 
     ImGui::StyleColorsDark();
 

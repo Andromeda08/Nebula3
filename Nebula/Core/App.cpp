@@ -30,7 +30,7 @@ App::App()
 
     SplashWindow::get().setMessage("Initializing UserInterface...");
     mUserInterface = UserInterface::create({
-        .fontFile = "Resources/Fonts/GeistMono-Regular.ttf",
+        .fontFile = "GeistMono-Regular.ttf",
         .window   = mWindow,
         .rhi      = mVulkanRHI,
     });
