@@ -160,8 +160,8 @@ void GLTFLoader::load()
         spdlog::debug("Loaded meshes ({}s)", mStats.meshLoadSeconds);
     }
 
-    // Must be called before walking nodes & creation objects or BLAS references are be null
-    mSceneGeometry->onUpdate();
+    // Must be called before walking nodes & creation objects
+    mSceneGeometry->commit();
 
     {
         auto nodeWalkTime = DeltaTime().initialize();
