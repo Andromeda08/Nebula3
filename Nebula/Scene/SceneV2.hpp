@@ -354,7 +354,7 @@ private:
     SPtr<RHI::Buffer>                   mInstanceMapBuffer;
     uint32_t                            mDrawCount = 0;
 
-    UPtr<Indirect_GBufferPass>          mTestPass;
+    UPtr<Indirect_GBufferPass>          mGBufferPass;
     UPtr<SSAOPass>                      mSSAO;
     UPtr<RTAOPass>                      mRTAO;
     UPtr<ProceduralSkyPass>             mProcSky;
