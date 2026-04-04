@@ -1,7 +1,9 @@
 #version 460
 
+#ifdef nbl_RT
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_ray_query : enable
+#endif
 
 #define MAX_LIGHTS 256
 
@@ -40,7 +42,9 @@ layout (set = 0, binding = 1) readonly buffer LightUniform {
     GPULightData data[MAX_LIGHTS];
 } lights;
 
+#ifdef nbl_RT
 layout (set = 0, binding = 2) uniform accelerationStructureEXT topLevelAS;
+#endif
 
 layout (set = 1, binding = 0) uniform sampler2D   uPositionDepth;
 layout (set = 1, binding = 1) uniform sampler2D   uNormal;
@@ -76,6 +80,8 @@ vec2 randomDisk(int i, int numSamples)
 
     return vec2(r * cos(theta), r * sin(theta));
 }
+
+#ifdef nbl_RT
 
 // Return shadowFactor or 1.0f
 float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
@@ -116,6 +122,8 @@ float castSoftShadow(vec3 origin, GPULightData light, float r)
 
     return shadow / float(samples);
 }
+
+#endif
 
 void main()
 {
@@ -159,7 +167,9 @@ void main()
 
     if (shadowMode != 0 && sunNdotL > 0.0)
     {
+        #ifdef nbl_RT
         sunContrib *= castShadow(wPos, sunDirection, 0.01, 1000.0);
+        #endif
     }
 
     finalColor += sunContrib;
@@ -187,6 +197,7 @@ void main()
             continue;
         }
 
+        #ifdef nbl_RT
         if (shadowMode != 0 && light.castsShadow == 1)
         {
             vec3 origin = wPos;
@@ -203,6 +214,7 @@ void main()
                 color *= castSoftShadow(origin, light, 1.0);
             }
         }
+        #endif
 
         finalColor += color.rgb;
     }
