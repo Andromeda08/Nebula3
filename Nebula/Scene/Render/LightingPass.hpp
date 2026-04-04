@@ -39,12 +39,9 @@ public:
 
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
-    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
 
-    void setShadowMode(const int32_t mode) noexcept
-    {
-        mPushConstants.shadowMode = mode;
-    }
+    void setShadowMode(int32_t mode) noexcept;
 
 private:
     void createResources() noexcept;

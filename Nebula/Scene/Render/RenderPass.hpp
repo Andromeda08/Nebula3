@@ -34,6 +34,11 @@ public:
 
     virtual void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept = 0;
 
+    virtual SPtr<RHI::Image> getResult() const noexcept
+    {
+        return nullptr;
+    }
+
 protected:
     void setScissorViewport(const RHI::CommandList* pCommandList) const noexcept
     {

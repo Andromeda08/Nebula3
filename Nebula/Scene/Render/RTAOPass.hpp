@@ -51,7 +51,7 @@ public:
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
     // Get the current RTAO result image
-    [[nodiscard]] const SPtr<RHI::Image>& getResult() const noexcept;
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
 
 private:
     void createResources_RTAO() noexcept;

@@ -37,7 +37,7 @@ void SSAOPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameDat
     pCommandList->endLabel();
 }
 
-const SPtr<RHI::Image>& SSAOPass::getResult() const noexcept
+SPtr<RHI::Image> SSAOPass::getResult() const noexcept
 {
     return mRunBlurPass ? mBlur_Result : mSSAO_Result;
 }
@@ -171,8 +171,8 @@ void SSAOPass::createResources_SSAO() noexcept
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
             .setCullMode(vk::CullModeFlagBits::eNone)
             .addDefaultAttachmentStates(1))
-        .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/SSAO.frag.spv", vk::ShaderStageFlagBits::eFragment })
+        .addShader({ Configuration::getShaderFilePath("FSQuad.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
+        .addShader({ Configuration::getShaderFilePath("SSAO.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mSSAO_Result->getProperties().format)
         .setDebugName("SSAO_Pipeline");
 

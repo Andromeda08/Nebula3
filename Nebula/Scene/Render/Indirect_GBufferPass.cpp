@@ -61,6 +61,11 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
     pCommandList->endLabel();
 }
 
+SPtr<RHI::Image> Indirect_GBufferPass::getResult() const noexcept
+{
+    return mAlbedoBuffer;
+}
+
 const SPtr<RHI::Image>& Indirect_GBufferPass::getPosition() const noexcept
 {
     return mPositionDepthBuffer;
@@ -105,7 +110,7 @@ void Indirect_GBufferPass::createResources() noexcept
     mDepthBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eD32Sfloat,
-        .usageFlags    = eDepthStencilAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
+        .usageFlags    = eDepthStencilAttachment | eSampled | eTransferSrc | eTransferDst,
         .debugName     = "Indirect_GBuffer_DepthBuffer"
     });
 }

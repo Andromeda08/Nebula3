@@ -27,6 +27,8 @@ public:
 
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
+
     [[nodiscard]] const SPtr<RHI::Image>& getPosition() const noexcept;
 
     [[nodiscard]] const SPtr<RHI::Image>& getNormal() const noexcept;

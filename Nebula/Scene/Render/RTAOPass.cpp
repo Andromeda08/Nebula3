@@ -29,7 +29,7 @@ void RTAOPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameDat
     pCommandList->endLabel();
 }
 
-const SPtr<RHI::Image>& RTAOPass::getResult() const noexcept
+SPtr<RHI::Image> RTAOPass::getResult() const noexcept
 {
     return mDenoise ? mDenoise_Result : mRTAO_Result;
 }

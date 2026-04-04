@@ -52,6 +52,11 @@ SPtr<RHI::Image> LightingPass::getResult() const noexcept
     return mOutput;
 }
 
+void LightingPass::setShadowMode(const int32_t mode) noexcept
+{
+    mPushConstants.shadowMode = mode;
+}
+
 void LightingPass::createResources() noexcept
 {
     using enum vk::ImageUsageFlagBits;

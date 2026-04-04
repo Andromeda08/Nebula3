@@ -86,8 +86,8 @@ void FXAAPass::createPipeline() noexcept
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
             .setCullMode(vk::CullModeFlagBits::eNone)
             .addDefaultAttachmentStates(1))
-        .addShader({ "Resources/Shaders/bin/FXAA.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/FXAA.frag.spv", vk::ShaderStageFlagBits::eFragment })
+        .addShader({ Configuration::getShaderFilePath("FXAA.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
+        .addShader({ Configuration::getShaderFilePath("FXAA.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mOutput->getProperties().format)
         .setDebugName("FXAA_Pipeline");
 
