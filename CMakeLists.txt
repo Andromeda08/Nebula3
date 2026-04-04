@@ -249,7 +249,6 @@ add_executable(Nebula3
     Nebula/Window/SplashWindow.cpp
     Nebula/Scene/Render/ProceduralSky.hpp
     Nebula/Scene/Render/ProceduralSky.cpp
-    Nebula/Scene/Render/LightDebugOverlay.hpp
     Nebula/VulkanRHI/Detail/Extensions.hpp
     Nebula/VulkanRHI/Detail/Extensions.cpp
     Nebula/VulkanRHI/Detail/DeviceExtensions.hpp
