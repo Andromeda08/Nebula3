@@ -28,28 +28,9 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         .addBarrier(mNormalBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mAlbedoBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
+        .addBarrier(mScene->mInstanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead ))
+        .addBarrier(mScene->mDrawCmdBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
         .insert(pCommandList);
-
-    {
-        const auto b1 = vk::BufferMemoryBarrier2()
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eAllTransfer)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eVertexShader)
-            .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderStorageRead)
-            .setBuffer(mScene->mInstanceMapBuffer->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-        const auto b2 = vk::BufferMemoryBarrier2()
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eAllTransfer)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eVertexShader | vk::PipelineStageFlagBits2::eDrawIndirect)
-            .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderStorageRead | vk::AccessFlagBits2::eIndirectCommandRead)
-            .setBuffer(mScene->mDrawCmdBuffer->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-        std::array barriers = { b1, b2 };
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setBufferMemoryBarriers(barriers);
-        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
-    }
 
     // RenderPass
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {

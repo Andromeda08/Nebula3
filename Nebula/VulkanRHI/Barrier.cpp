@@ -10,6 +10,12 @@ namespace RHI
         return *this;
     }
 
+    Barrier& Barrier::addBarrier(const vk::BufferMemoryBarrier2& bufferBarrier)
+    {
+        mBufferBarriers.push_back(bufferBarrier);
+        return *this;
+    }
+
     Barrier& Barrier::addImageBarrier(const ImageBarrier& imageBarrier)
     {
         const auto barrier = imageBarrier.image->getBarrier(imageBarrier.dstUsage);
@@ -34,7 +40,8 @@ namespace RHI
     void Barrier::insert(const vk::CommandBuffer& commandBuffer) const
     {
         const auto dependencyInfo = vk::DependencyInfo()
-            .setImageMemoryBarriers(mImageBarriers);
+            .setImageMemoryBarriers(mImageBarriers)
+            .setBufferMemoryBarriers(mBufferBarriers);
         commandBuffer.pipelineBarrier2(dependencyInfo);
     }
 }

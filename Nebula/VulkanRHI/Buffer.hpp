@@ -45,6 +45,8 @@ namespace RHI
 
         void readBack(void* pData, uint64_t size, uint64_t offset = 0) const;
 
+        [[nodiscard]] vk::BufferMemoryBarrier2 getBarrier(BufferUsage srcUsage, BufferUsage dstUsage) const;
+
         const vk::Buffer& getHandle()    const { return mBuffer; }
         uint64_t          getSize()      const { return mProperties.size; }
         BufferType        getType()      const { return mProperties.type; }

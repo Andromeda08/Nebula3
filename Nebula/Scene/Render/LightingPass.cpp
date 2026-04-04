@@ -18,35 +18,22 @@ UPtr<LightingPass> LightingPass::create(const Lighting_Params& params) noexcept
 void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     pCommandList->beginLabel("Lighting_Pass");
-    RHI::Barrier()
+
+    auto barriers = RHI::Barrier()
         .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mInput.position->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.normal->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.albedo->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.ssao->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.cubeMap->getBarrier(RHI::ImageUsage::ShaderReadOnly))
-        .insert(pCommandList);
+        .addBarrier(mInput.skyData->getBarrier(RHI::BufferUsage::Compute, RHI::BufferUsage::Fragment));
 
+    if (mRHI->getRaytracingSupport())
     {
-        const auto skyDataBarrier = vk::BufferMemoryBarrier2()
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader)
-            .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderRead)
-            .setBuffer(mInput.skyData->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-
-        const auto waitTlasBuild = vk::BufferMemoryBarrier2()
-            .setBuffer(mInput.tlasManager->getBackingBuffer()->getHandle())
-            .setSize(VK_WHOLE_SIZE)
-            .setSrcAccessMask(vk::AccessFlagBits2::eAccelerationStructureWriteKHR)
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR | vk::PipelineStageFlagBits2::eAccelerationStructureCopyKHR)
-            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureReadKHR)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader);
-
-        const std::array barriers = { skyDataBarrier, waitTlasBuild };
-        pCommandList->getHandle().pipelineBarrier2(vk::DependencyInfo().setBufferMemoryBarriers(barriers));
+        barriers.addBarrier(mInput.tlasManager->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
     }
+
+    barriers.insert(pCommandList);
 
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mPipeline->bind(commandBuffer);

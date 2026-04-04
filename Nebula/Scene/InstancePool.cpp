@@ -1,5 +1,7 @@
 #include "InstancePool.hpp"
 
+#include "VulkanRHI/Barrier.hpp"
+
 InstancePool::InstancePool(const SPtr<RHI::VulkanRHI>& rhi, const uint32_t initialCapacity)
 : mRHI(rhi)
 , mCapacity(initialCapacity)
@@ -90,18 +92,9 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
         .setDstBuffer(mInstanceBuffer->getHandle())
         .setRegions(regions);
 
-    {
-        const auto barrier = vk::BufferMemoryBarrier2()
-            .setSrcAccessMask(vk::AccessFlagBits2::eShaderStorageRead)
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
-            .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eCopy)
-            .setBuffer(mInstanceBuffer->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setBufferMemoryBarriers(barrier);
-        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
-    }
+    RHI::Barrier()
+        .addBarrier(mInstanceBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::TransferDst))
+        .insert(pCommandList);
 
     pCommandList->getHandle().copyBuffer2(copyInfo);
     pCommandList->endLabel();

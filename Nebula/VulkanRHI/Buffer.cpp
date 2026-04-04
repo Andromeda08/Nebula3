@@ -73,4 +73,17 @@ namespace RHI
         const auto result = vmaCopyAllocationToMemory(mDevice->getAllocator(), mAllocation->getAllocation(), offset, pData, size);
         nbl_ASSERT(result == VK_SUCCESS, "Failed to copy from memory to allocation!");
     }
+
+    vk::BufferMemoryBarrier2 Buffer::getBarrier(const BufferUsage srcUsage, const BufferUsage dstUsage) const
+    {
+        const auto [ srcAccess, srcStage ] = getBarrierFlagsForBufferUsage(srcUsage);
+        const auto [ dstAccess, dstStage ] = getBarrierFlagsForBufferUsage(dstUsage);
+        return vk::BufferMemoryBarrier2()
+            .setBuffer(mBuffer)
+            .setSize(VK_WHOLE_SIZE)
+            .setSrcAccessMask(srcAccess)
+            .setDstAccessMask(dstAccess)
+            .setSrcStageMask(srcStage)
+            .setDstStageMask(dstStage);
+    }
 }

@@ -26,6 +26,8 @@ namespace RHI
     public:
         Barrier& addBarrier(const vk::ImageMemoryBarrier2& imageBarrier);
 
+        Barrier& addBarrier(const vk::BufferMemoryBarrier2& bufferBarrier);
+
         Barrier& addImageBarrier(const ImageBarrier& imageBarrier);
 
         Barrier& addBufferBarrier(const BufferBarrier& bufferBarrier);
