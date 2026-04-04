@@ -155,7 +155,7 @@ public:
         return {
             .geometry               = mGeometries[index].get(),
             .metadata               = &mInfos[index],
-            .accelerationStructure  = mRaytracing ? nullptr : mBottomLevel[index].get(),
+            .accelerationStructure  = mRaytracing ? mBottomLevel[index].get() : nullptr,
         };
     }
 

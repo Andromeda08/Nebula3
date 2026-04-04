@@ -187,12 +187,12 @@ void TLASManager::execute_TLASUpdateInstances(const RHI::CommandList* pCommandLi
 
     const TLASUpdatePushConstants pc = { .size = mInstancePool->getSize() };
 
-    mUpdatePipeline->bind(pCommandList->getHandle());
-    mUpdatePipeline->bindDescriptorSet(pCommandList->getHandle(), mUpdateDescriptor->getSet(0));
-    mUpdatePipeline->pushConstants(pCommandList->getHandle(), &pc);
+    mUpdatePipeline->bind(pCommandList);
+    mUpdatePipeline->bindDescriptorSet(pCommandList, mUpdateDescriptor->getSet(0));
+    mUpdatePipeline->pushConstants(pCommandList, &pc);
 
     const auto x = (pc.size + 63) / 64;
-    mUpdatePipeline->dispatch(pCommandList->getHandle(), x, 1, 1);
+    mUpdatePipeline->dispatch(pCommandList, x, 1, 1);
 
     pCommandList->endLabel();
 }
