@@ -124,8 +124,9 @@ namespace nbl
     {
         #if defined(nbl_Neon)
         cwiseMinMax_x4_neon(pCurrent, vectors);
-        #elif defined(nbl_AVX2)
-        cwiseMinMax_x4_avx2(pCurrent, vectors);
+        #elif defined(nbl_AVX)
+        // cwiseMinMax_x4_avx2(pCurrent, vectors);
+        cwiseMinMax_x4_vanilla(pCurrent, vectors);
         #else
         cwiseMinMax_x4_vanilla(pCurrent, vectors);
         #endif

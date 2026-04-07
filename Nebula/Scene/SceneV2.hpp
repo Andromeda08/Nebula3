@@ -14,6 +14,7 @@
 #include "Core/Ranges.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
+#include "Math/BoundingBox.hpp"
 #include "Math/Transform.hpp"
 #include "Render/AABBOverlayPass.hpp"
 #include "Render/FullRT.hpp"
@@ -282,6 +283,27 @@ private:
             groups[obj->geometry.metadata->index].push_back(obj->instanceIndex);
         }
 
+        // Frustum Cull
+        #pragma region
+        const auto cameraData = mCamera->getCameraData();
+        const auto vp = cameraData.proj * cameraData.view;
+        const auto vpt = glm::transpose(vp);
+
+        const std::array<glm::vec4, 6> frustumPlanes = {
+            // left, right, bottom, top
+            (vpt[3] + vpt[0]),
+            (vpt[3] - vpt[0]),
+            (vpt[3] + vpt[1]),
+            (vpt[3] - vpt[1]),
+            // near, far
+            (vpt[3] + vpt[2]),
+            (vpt[3] - vpt[2]),
+        };
+        #pragma endregion
+
+        uint32_t totalInstanceCount = 0;
+        uint32_t totalVisibleInstanceCount = 0;
+
         std::vector<uint32_t> instanceMap;
         std::vector<vk::DrawIndexedIndirectCommand> draws;
         for (auto& [geometryIndex, instanceIndices] : groups)
@@ -290,14 +312,24 @@ private:
             auto geometryView = mGeometry->getGeometryView(geometryIndex);
 
             const auto firstInstance = static_cast<uint32_t>(instanceMap.size());
+
+            uint32_t visibleInstanceCount = 0;
             for (auto instanceIndex : instanceIndices)
             {
-                instanceMap.push_back(instanceIndex);
+                const auto instanceData = mInstancePool->getData().at(instanceIndex);
+                if (BoundingBox::isVisible(instanceData.min, instanceData.max, frustumPlanes))
+                {
+                    visibleInstanceCount += 1;
+                    instanceMap.push_back(instanceIndex);
+                }
             }
+
+            totalInstanceCount += instanceIndices.size();
+            totalVisibleInstanceCount += visibleInstanceCount;
 
             const auto cmd = vk::DrawIndexedIndirectCommand()
                 .setIndexCount(geometryView.metadata->indexCount)
-                .setInstanceCount(instanceIndices.size())
+                .setInstanceCount(visibleInstanceCount)
                 .setFirstIndex(geometryView.metadata->firstIndex)
                 .setVertexOffset(static_cast<int32_t>(geometryView.metadata->firstVertex))
                 .setFirstInstance(firstInstance);
@@ -347,6 +379,8 @@ private:
             .setDstBuffer(mInstanceMapBuffer->getHandle())
             .setRegions(mapCopy);
         pCommandList->getHandle().copyBuffer2(mapCopyInfo);
+
+        spdlog::debug("Visible instances: {}/{} (culled={})", totalVisibleInstanceCount, totalInstanceCount, totalInstanceCount - totalVisibleInstanceCount);
     }
 
     friend class Indirect_GBufferPass;
