@@ -13,6 +13,8 @@ struct GPUInstanceData
     uint64_t blasAddress;
     int      normalIndex;
     int      _p0, _p1, _p2;
+    vec4     min;
+    vec4     max;
 };
 
 struct AccelerationStructureInstanceKHR

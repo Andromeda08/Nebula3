@@ -18,6 +18,8 @@ add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL_ttf   EXCLUDE_FROM_ALL)
 add_subdirectory(External/spdlog    EXCLUDE_FROM_ALL)
 
+add_compile_options(/arch:AVX2)
+
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
     ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
