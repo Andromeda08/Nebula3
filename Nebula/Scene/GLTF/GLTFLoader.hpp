@@ -10,6 +10,7 @@
 
 #include "Core/Types.hpp"
 #include "Core/Util.hpp"
+#include "Math/vec.hpp"
 #include "Scene/SceneGeometry.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
@@ -57,6 +58,8 @@ class GLTFLoader
         int32_t         textureUV;
         int32_t         normalMapIndex;
         int32_t         normalUV;
+
+        nbl::MinMaxResult aabb;
     };
 
     struct TextureInfo

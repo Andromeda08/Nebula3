@@ -263,6 +263,9 @@ add_executable(Nebula3
     Nebula/Scene/Render/FullRT.cpp
     Nebula/Input/Gamepad.cpp
     Nebula/Math/BoundingBox.hpp
+    Nebula/Math/vec.hpp
+    Nebula/Scene/Render/AABBOverlayPass.cpp
+    Nebula/Scene/Render/AABBOverlayPass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

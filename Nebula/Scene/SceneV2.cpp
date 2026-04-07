@@ -128,6 +128,12 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
         .input      = { mFXAA->getResult() },
     });
 
+    mAABBPass = AABBOverlayPass::create({
+        .input      = { mTonemapPass->getResult(), this, mGBufferPass->getDepth() },
+        .resolution = { extent.width, extent.height },
+        .rhi        = mRHI,
+    });
+
     if (mRHI->getRaytracingSupport())
     {
         mRTAO = RTAOPass::create({
@@ -155,9 +161,11 @@ void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData
     mFXAA->execute(commandList, frameData);
     mTonemapPass->execute(commandList, frameData);
 
+    mAABBPass->execute(commandList, frameData);
+
     // mRTPass->execute(commandList, frameData);
 
-    const auto presentMe = mTonemapPass->getResult();
+    const auto presentMe = mAABBPass->getResult();
 
     commandList->beginLabel("Present_Blit");
     // Barriers

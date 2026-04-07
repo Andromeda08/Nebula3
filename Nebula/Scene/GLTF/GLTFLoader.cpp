@@ -388,6 +388,12 @@ void GLTFLoader::s3_loadMeshes(fastgltf::Asset& asset) noexcept
             fastgltf::iterateAccessorWithIndex<glm::vec3>(asset, posAccessor,
                 [&](glm::vec3 pos, const auto i) -> void { vertices[i].position = pos; });
 
+            // Compute AABB
+            const auto aabbInput = vertices
+                | std::views::transform([](const Vertex& v){ return glm::vec4(v.position, 1.0f); })
+                | std::ranges::to<std::vector>();
+            const auto aabb = nbl::cwiseMinMax(aabbInput);
+
             // Normal
             if (const auto* attr = prim.findAttribute(sAttrNormal); attr != prim.attributes.end())
             {
@@ -515,6 +521,7 @@ void GLTFLoader::s3_loadMeshes(fastgltf::Asset& asset) noexcept
                 .textureUV      = texUV,
                 .normalMapIndex = normalSlot,
                 .normalUV       = normalUV,
+                .aabb           = aabb,
             });
         }
     }
@@ -612,7 +619,7 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
             for (const auto& prim : it->second)
             {
                 auto t = Transform().setModel(model);
-                mScene->addObject<Object>(prim.geometryIndex, prim.textureIndex, t, prim.normalMapIndex);
+                mScene->addObject<Object>(prim.geometryIndex, prim.textureIndex, t, prim.aabb.min, prim.aabb.max, prim.normalMapIndex);
                 // TODO: fix obj construction
                 // obj->solidColor = prim.baseColor;
                 // obj->name = node.name.empty() ? fmt::format("gltf_node_{}", nodeIndex) : std::string(node.name);

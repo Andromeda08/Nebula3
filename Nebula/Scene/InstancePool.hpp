@@ -16,6 +16,8 @@ struct GPUInstanceData
     int32_t   _p0 = 0;
     int32_t   _p1 = 0;
     int32_t   _p2 = 0;
+    glm::vec4 min;
+    glm::vec4 max;
 };
 
 using InstanceIndex = uint32_t;

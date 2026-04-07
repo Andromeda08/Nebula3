@@ -1,16 +1,12 @@
 #include <spdlog/spdlog.h>
 #include "Core/App.hpp"
 #include "Core/Configuration.hpp"
-#include "Math/BoundingBox.hpp"
 #include "Window/SplashWindow.hpp"
 
 UPtr<App> lApplication;
 
 int main()
 {
-    test_cwiseMin();
-    return 0;
-
     // 0. Initial logger config
     spdlog::set_pattern("[%^%l%$] %v");
     #ifdef NDEBUG

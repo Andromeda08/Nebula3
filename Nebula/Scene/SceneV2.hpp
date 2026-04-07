@@ -15,6 +15,7 @@
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/Transform.hpp"
+#include "Render/AABBOverlayPass.hpp"
 #include "Render/FullRT.hpp"
 #include "Render/FXAAPass.hpp"
 #include "Render/LightingPass.hpp"
@@ -41,6 +42,10 @@ struct Object
     glm::vec4      solidColor   = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
     Transform      transform    = {};
 
+    // AABB
+    glm::vec4      min;
+    glm::vec4      max;
+
     // Raytracing Properties
     uint32_t        rt_hitGroup  = 0;
     uint32_t        rt_mask      = 0xff;
@@ -59,6 +64,10 @@ struct Object
             .blasAddress   = geometry.metadata->blasAddress,
             .normalIndex   = normalIndex,
             ._p0           = 0,
+            ._p1           = 0,
+            ._p2           = 0,
+            .min           = min,
+            .max           = max,
         };
     }
 };
@@ -140,16 +149,35 @@ public:
 
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
+    const std::vector<UPtr<Object>>& getObjects() const noexcept { return mObjects; }
+
     template <class T>
     requires std::is_base_of_v<Object, T>
-    void addObject(const GeometryIndex geometryIndex, const int32_t tex, const Transform transform, const int32_t normalTex = -1) noexcept
+    void addObject(const GeometryIndex geometryIndex, const int32_t tex, const Transform transform, const glm::vec4& min, const glm::vec4& max, const int32_t normalTex = -1) noexcept
     {
         auto obj = makeUnique<T>();
         obj->geometry      = mGeometry->getGeometryView(geometryIndex);
         obj->transform     = transform;
-        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
         obj->textureIndex  = tex;
         obj->normalIndex   = normalTex;
+
+        const auto model = obj->transform.getModel();
+        glm::vec4 worldMin = model[3];
+        glm::vec4 worldMax = model[3];
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                float a = model[j][i] * min[j];
+                float b = model[j][i] * max[j];
+                worldMin[i] += glm::min(a, b);
+                worldMax[i] += glm::max(a, b);
+            }
+        }
+        obj->min = worldMin;
+        obj->max = worldMax;
+
+        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
 
         mObjects.push_back(std::move(obj));
 
@@ -199,9 +227,9 @@ private:
         mTextureManager->loadTexture("missingTexture.png", 2);
         mTextureManager->loadTexture("missingTexture.png", 3);
 
-        addObject<ExampleObject>(geoCube, 1, Transform().translate({ 5.0f, 0.0f, 0.0f }));
-        addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }));
-        addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }));
+        addObject<ExampleObject>(geoCube, 1, Transform().translate({ 5.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
+        addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
+        addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
 
         for (uint32_t i = 0; i < 256; i++)
         {
@@ -221,7 +249,7 @@ private:
                     Random::get(-64.0f, 64.0f),
                     Random::get(-64.0f, 64.0f),
                 });
-            addObject<ExampleObject>(geometry, 1, transform);
+            addObject<ExampleObject>(geometry, 1, transform, glm::vec4(0.0f), glm::vec4(0.0f));
             mObjects.back()->solidColor = Random::getColor();
         }
 
@@ -241,7 +269,7 @@ private:
         for (const auto& voxel : terrainGenerator.getResult())
         {
             auto t = Transform().setScale(voxel.scale).setTranslate(voxel.position);
-            addObject<Object>(geoCube, 1, t);
+            addObject<Object>(geoCube, 1, t, glm::vec4(0.0f), glm::vec4(0.0f));
             mObjects.back()->solidColor = glm::vec4(voxel.color, 1.0f);
         }
     }
@@ -361,6 +389,7 @@ private:
     UPtr<LightingPass>                  mLightingPass;
     UPtr<FXAAPass>                      mFXAA;
     UPtr<TonemapPass>                   mTonemapPass;
+    UPtr<AABBOverlayPass>               mAABBPass;
 
     UPtr<FullRTPass>                    mRTPass;
 
