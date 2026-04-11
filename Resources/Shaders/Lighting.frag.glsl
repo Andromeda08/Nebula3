@@ -1,5 +1,7 @@
 #version 460
 
+#define nbl_RT
+
 #ifdef nbl_RT
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_ray_query : enable
@@ -34,6 +36,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
     mat4  viewInverse;
     mat4  projInverse;
     vec4  eye;
+    vec4  frustumPlanes[6];
     float nearPlane;
     float farPlane;
 } camera;

@@ -28,6 +28,13 @@ namespace RHI
         commandList.endRendering();
     }
 
+    void RenderPass::execute(const CommandList* commandList, const std::function<void(const CommandList*)>& lambda) const
+    {
+        commandList->getHandle().beginRendering(&mRenderingInfo);
+        lambda(commandList);
+        commandList->getHandle().endRendering();
+    }
+
     void RenderPass::setColorAttachment(const uint32_t index, const Attachment& attachment)
     {
         assert(index < mColorAttachments.size());

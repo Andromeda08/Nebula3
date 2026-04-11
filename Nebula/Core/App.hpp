@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.hpp"
+#include "Cleanup/SceneManager.hpp"
 #include "Input/Gamepad.hpp"
 #include "Math/DeltaTime.hpp"
 #include "RenderGraph/RenderGraphContext.hpp"
@@ -9,6 +10,9 @@
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/SDLWindow.hpp"
+
+#include "Cleanup/Geometry/GeometrySystem.hpp"
+#include "Cleanup/Geometry/GeometrySystemDebugRenderPass.hpp"
 
 class App
 {
@@ -32,6 +36,12 @@ private:
     UPtr<UserInterface>          mUserInterface;
     SPtr<rg::RenderGraphContext> mRenderGraphContext;
     UPtr<SceneV2>                mScene;
+
+    // Scene and Data Management v2
+    UPtr<nbl::GeometrySystem>    mGeometrySystem;
+    UPtr<nbl::SceneManager>      mSceneManager;
+
+    UPtr<nbl::GeometrySystemDebugRenderPass> mGeometrySystemDebugRenderPass;
 };
 
 extern App* gApplication;

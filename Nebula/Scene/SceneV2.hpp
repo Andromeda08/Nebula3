@@ -190,6 +190,11 @@ public:
         return mSceneDescriptor;
     }
 
+    [[nodiscard]] uint64_t getCurrentCameraBufferAddress(const uint32_t i) const
+    {
+        return mCameraUniformBuffers[i]->getAddress();
+    }
+
 private:
     void initScene() noexcept
     {

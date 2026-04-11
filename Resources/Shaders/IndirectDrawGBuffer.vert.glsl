@@ -53,6 +53,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
     mat4  viewInverse;
     mat4  projInverse;
     vec4  eye;
+    vec4  frustumPlanes[6];
     float nearPlane;
     float farPlane;
 } camera;

@@ -1,16 +1,18 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "../Cleanup/Math/Transform.hpp"
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
-#include "Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "Window/SplashWindow.hpp"
 
 App* gApplication = nullptr;
+
+nbl::Transform gTestTransform = {};
 
 App::App()
 {
@@ -38,6 +40,21 @@ App::App()
 
     mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+
+    // Version 2
+    mUserInterface->addComponent<nbl::TransformEditorComponent>(&gTestTransform);
+
+    const auto geometrySystemConfig = nbl::GeometrySystemConfig {
+        .generateMeshlets = true,
+        .createBLAS       = mVulkanRHI->getRaytracingSupport(),
+    };
+    mGeometrySystem = makeUnique<nbl::GeometrySystem>(geometrySystemConfig, mVulkanRHI);
+
+    mSceneManager = makeUnique<nbl::SceneManager>(mGeometrySystem.get());
+
+    mSceneManager->loadScene(Configuration::getSceneFilePath("bistro.glb"));
+
+    mGeometrySystemDebugRenderPass = makeUnique<nbl::GeometrySystemDebugRenderPass>(mVulkanRHI, mSceneManager->getActiveScene(), mGeometrySystem.get(), mScene->getSceneDescriptor().get());
 
     mWindow->reveal();
 }
@@ -124,6 +141,8 @@ void App::run_renderPathLoop()
         // pRenderPath->execute(commandList, frameData);
 
         mScene->onRender(commandList, frameData);
+
+        mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
 
         // =====================================
         // User Interface

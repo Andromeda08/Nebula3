@@ -17,6 +17,7 @@ add_subdirectory(External/gemmi     EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL_ttf   EXCLUDE_FROM_ALL)
 add_subdirectory(External/spdlog    EXCLUDE_FROM_ALL)
+add_subdirectory(External/meshopt   EXCLUDE_FROM_ALL)
 
 add_compile_options(/arch:AVX2)
 
@@ -268,6 +269,31 @@ add_executable(Nebula3
     Nebula/Math/vec.hpp
     Nebula/Scene/Render/AABBOverlayPass.cpp
     Nebula/Scene/Render/AABBOverlayPass.hpp
+    Nebula/Cleanup/Scene.hpp
+    Nebula/Cleanup/Geometry/GeometrySystem.hpp
+    Nebula/Cleanup/VertexTypes.hpp
+    Nebula/Cleanup/VertexTypes.cpp
+    Nebula/Cleanup/Math/BoundingBox.hpp
+    Nebula/Cleanup/Math/BoundingBox.cpp
+    Nebula/Cleanup/Geometry/Geometry.hpp
+    Nebula/Cleanup/Geometry/Meshlet.hpp
+    Nebula/Cleanup/Geometry/Geometry.cpp
+    Nebula/Cleanup/SceneManager.hpp
+    Nebula/Cleanup/IO/SceneLoader.hpp
+    Nebula/Cleanup/SceneManager.cpp
+    Nebula/Cleanup/IO/SceneLoader.cpp
+    Nebula/Cleanup/Geometry/TangentGeneration.hpp
+    Nebula/Cleanup/Geometry/TangentGeneration.cpp
+    Nebula/Cleanup/Timer.hpp
+    Nebula/Cleanup/Timer.cpp
+    Nebula/Cleanup/Math/Transform.hpp
+    Nebula/Cleanup/Math/Transform.cpp
+    Nebula/Cleanup/Object.hpp
+    Nebula/Cleanup/Material/Material.hpp
+    Nebula/Cleanup/Material/MaterialSystem.hpp
+    Nebula/Cleanup/Instance/InstancePool.hpp
+    Nebula/Cleanup/Geometry/GeometrySystem.cpp
+    Nebula/Cleanup/Geometry/GeometrySystemDebugRenderPass.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -279,6 +305,7 @@ target_include_directories(Nebula3 PUBLIC
     External/imgui/misc/cpp
     External/imnodes
     External/json/include
+    External/meshopt/src
     External/mikktspace
     External/stb
     External/vma/include
@@ -299,6 +326,7 @@ target_link_libraries(Nebula3 PUBLIC
     SDL3_ttf::SDL3_ttf
     spdlog::spdlog
     fastgltf::fastgltf
+    meshoptimizer
 )
 
 target_compile_definitions(Nebula3 PUBLIC
