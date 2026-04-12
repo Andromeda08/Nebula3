@@ -1,5 +1,6 @@
 #include "Device.hpp"
 
+#include <vulkan/vk_enum_string_helper.h>
 #include "Texture.hpp"
 #include "Core/Ranges.hpp"
 
@@ -67,7 +68,11 @@ namespace RHI
         const VkBufferCreateInfo bufferCreateInfo = allocInfo.bufferInfo;
         const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, pHandle,
             &alloc->mAllocation, &alloc->mAllocationInfo);
-        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Buffer and allocate memory!");
+
+        if (result != VK_SUCCESS)
+        {
+            exitWithError("Failed to create Buffer and allocate memory: {}", string_VkResult(result));
+        }
 
         mAllocations.push_back(alloc);
         return alloc;

@@ -16,7 +16,6 @@ void SceneInfoComponent::draw()
     ImGui::Begin("Scene Info");
     ImGui::Text("Name: %s", mScene->mName.c_str());
 
-    // ============================
     // Lights
     // ============================
     auto* lights = mScene->mLightSystem.get();
@@ -82,8 +81,9 @@ void SceneInfoComponent::draw()
         }
     }
 
-    ImGui::Separator();
-    ImGui::Text("Set Shadow Mode");
+    // Shadows
+    // ============================
+    ImGui::SeparatorText("Shadows");
     if (ImGui::SmallButton("Disable"))
     {
         mScene->mLightingPass->setShadowMode(0);
@@ -93,5 +93,17 @@ void SceneInfoComponent::draw()
     {
         mScene->mLightingPass->setShadowMode(1);
     }
+
+    // Culling
+    // ============================
+    ImGui::SeparatorText("Culling");
+    ImGui::Checkbox("Enable Culling", &mScene->mEnableCulling);
+    ImGui::Checkbox("Visualize AABBs", &mScene->mVisualizeAABBs);
+
+    ImGui::SeparatorText("Culling Stats");
+    ImGui::Text("Object Count: %d", mScene->mLastCull.totalObjectCount);
+    ImGui::Text("Culled Count: %d (%.3f)", mScene->mLastCull.culledCount, mScene->mLastCull.percent);
+    ImGui::Text("Time: %.3fms", mScene->mLastCull.cullTimeMs);
+
     ImGui::End();
 }

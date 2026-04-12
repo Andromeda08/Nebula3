@@ -19,6 +19,8 @@ UPtr<Indirect_GBufferPass> Indirect_GBufferPass::create(const Indirect_GBuffer_P
 void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     pCommandList->beginLabel("Indirect_GBufferPass");
+    const auto& drawCommandsBuffer = mScene->mDrawCmdBuffer[frameData.currentFrame];
+    const auto& instanceMapBuffer = mScene->mInstanceMapBuffer[frameData.currentFrame];
 
     setScissorViewport(pCommandList);
 
@@ -28,33 +30,33 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         .addBarrier(mNormalBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mAlbedoBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
-        .addBarrier(mScene->mInstanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead ))
-        .addBarrier(mScene->mDrawCmdBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
+        .addBarrier(instanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead ))
+        .addBarrier(drawCommandsBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
         .insert(pCommandList);
 
     // RenderPass
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
         const PushConstants pc = {
             .instanceBufferAddress = mScene->mInstancePool->getBuffer()->getAddress(),
-            .instanceMapAddress    = mScene->mInstanceMapBuffer->getAddress(),
+            .instanceMapAddress    = instanceMapBuffer->getAddress(),
         };
 
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSets(commandBuffer, {
+        mPipeline->bind(cmd);
+        mPipeline->bindDescriptorSets(cmd, {
             mScene->getSceneDescriptor()->getSet(frameData.currentFrame),
             mScene->mTextureManager->getDescriptor()->getSet(0),
         });
-        mPipeline->pushConstants(commandBuffer, &pc);
+        mPipeline->pushConstants(cmd, &pc);
 
         static constexpr vk::DeviceSize offsets[1] = { 0 };
         const auto [ vertexBuffer, indexBuffer, _ ] = mScene->mGeometry->getBuffers();
 
         const std::array vertexBuffers { vertexBuffer->getHandle() };
-        commandBuffer.bindVertexBuffers(0, 1, vertexBuffers.data(), offsets);
-        commandBuffer.bindIndexBuffer(indexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+        cmd->getHandle().bindVertexBuffers(0, 1, vertexBuffers.data(), offsets);
+        cmd->getHandle().bindIndexBuffer(indexBuffer->getHandle(), 0, vk::IndexType::eUint32);
 
-        commandBuffer.drawIndexedIndirect(
-            mScene->mDrawCmdBuffer->getHandle(),
+        cmd->getHandle().drawIndexedIndirect(
+            drawCommandsBuffer->getHandle(),
             0, mScene->mDrawCount, sizeof(vk::DrawIndexedIndirectCommand));
     });
 

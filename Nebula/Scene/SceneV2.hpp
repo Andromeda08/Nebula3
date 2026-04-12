@@ -10,11 +10,13 @@
 #include "TextureManager.hpp"
 #include "TLASManager.hpp"
 #include "Camera/FlyingCamera.hpp"
+#include "Components/CullStats.hpp"
 #include "Core/Random.hpp"
 #include "Core/Ranges.hpp"
 #include "Core/Types.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/BoundingBox.hpp"
+#include "Math/DeltaTime.hpp"
 #include "Math/Transform.hpp"
 #include "Render/AABBOverlayPass.hpp"
 #include "Render/FullRT.hpp"
@@ -37,6 +39,7 @@ struct Object
 
     // Properties
     GeometryView   geometry;
+    int32_t        geometryIndex = -1;
     int32_t        textureIndex = -1;
     int32_t        normalIndex   = -1;
     int32_t        instanceIndex = -1;
@@ -104,49 +107,7 @@ public:
         }
     }
 
-    void onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
-    {
-        static bool isFirstUpdate = true;
-
-        // Update Instance Data
-        for (const auto& obj : mObjects)
-        {
-            obj->onUpdate(dt);
-            if (obj->transform.isDirty() || isFirstUpdate)
-            {
-                mInstancePool->update(obj->instanceIndex, obj->getInstanceData());
-            }
-        }
-        mInstancePool->flush(pCommandList);
-
-        // Update Top-Level AS
-        if (mRHI->getRaytracingSupport())
-        {
-            mTLASManager->onUpdate(pCommandList);
-
-            const auto descriptorWrite = RHI::DescriptorWrite()
-                    .writeAccelerationStructure(2, mTLASManager->getTLAS());
-            mSceneDescriptor->write(frameData.currentFrame, descriptorWrite);
-        }
-
-        // Update Camera Data
-        if (mCamera)
-        {
-            mCamera->onUpdate();
-
-            const auto cameraData = mCamera->getCameraData();
-            mCameraUniformBuffers[frameData.currentFrame]->setData(&cameraData, sizeof(CameraData));
-        }
-
-        // Update draw commands
-        if (mObjectCountChanged || isFirstUpdate)
-        {
-            buildDrawCommands(pCommandList);
-        }
-
-        mObjectCountChanged = false;
-        isFirstUpdate = false;
-    }
+    void onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept;
 
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
@@ -157,6 +118,7 @@ public:
     void addObject(const GeometryIndex geometryIndex, const int32_t tex, const Transform transform, const glm::vec4& min, const glm::vec4& max, const int32_t normalTex = -1) noexcept
     {
         auto obj = makeUnique<T>();
+        obj->geometryIndex = geometryIndex;
         obj->geometry      = mGeometry->getGeometryView(geometryIndex);
         obj->transform     = transform;
         obj->textureIndex  = tex;
@@ -280,113 +242,9 @@ private:
         }
     }
 
-    void buildDrawCommands(const RHI::CommandList* pCommandList) noexcept
-    {
-        std::unordered_map<GeometryIndex, std::vector<uint32_t>> groups;
-        for (const auto& obj : mObjects)
-        {
-            groups[obj->geometry.metadata->index].push_back(obj->instanceIndex);
-        }
+    void buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept;
 
-        // Frustum Cull
-        #pragma region
-        const auto cameraData = mCamera->getCameraData();
-        const auto vp = cameraData.proj * cameraData.view;
-        const auto vpt = glm::transpose(vp);
-
-        const std::array<glm::vec4, 6> frustumPlanes = {
-            // left, right, bottom, top
-            (vpt[3] + vpt[0]),
-            (vpt[3] - vpt[0]),
-            (vpt[3] + vpt[1]),
-            (vpt[3] - vpt[1]),
-            // near, far
-            (vpt[3] + vpt[2]),
-            (vpt[3] - vpt[2]),
-        };
-        #pragma endregion
-
-        uint32_t totalInstanceCount = 0;
-        uint32_t totalVisibleInstanceCount = 0;
-
-        std::vector<uint32_t> instanceMap;
-        std::vector<vk::DrawIndexedIndirectCommand> draws;
-        for (auto& [geometryIndex, instanceIndices] : groups)
-        {
-            // Redundant query, fix later, obj already has this data
-            auto geometryView = mGeometry->getGeometryView(geometryIndex);
-
-            const auto firstInstance = static_cast<uint32_t>(instanceMap.size());
-
-            uint32_t visibleInstanceCount = 0;
-            for (auto instanceIndex : instanceIndices)
-            {
-                const auto instanceData = mInstancePool->getData().at(instanceIndex);
-                if (BoundingBox::isVisible(instanceData.min, instanceData.max, frustumPlanes))
-                {
-                    visibleInstanceCount += 1;
-                    instanceMap.push_back(instanceIndex);
-                }
-            }
-
-            totalInstanceCount += instanceIndices.size();
-            totalVisibleInstanceCount += visibleInstanceCount;
-
-            const auto cmd = vk::DrawIndexedIndirectCommand()
-                .setIndexCount(geometryView.metadata->indexCount)
-                .setInstanceCount(visibleInstanceCount)
-                .setFirstIndex(geometryView.metadata->firstIndex)
-                .setVertexOffset(static_cast<int32_t>(geometryView.metadata->firstVertex))
-                .setFirstInstance(firstInstance);
-            draws.push_back(cmd);
-        }
-
-        mDrawCount = mGeometry->getGeometryCount();
-
-        const auto drawSize = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
-        mDrawCmdBuffer = mRHI->createBuffer({
-            .size  = drawSize,
-            .type  = RHI::BufferType::Indirect,
-            .label = "Scene_Draw_Commands",
-        });
-
-        const auto mapSize = instanceMap.size() * sizeof(uint32_t);
-        mInstanceMapBuffer = mRHI->createBuffer({
-            .size  = mapSize,
-            .type  = RHI::BufferType::Storage,
-            .label = "Scene_Instance_Map"
-        });
-
-        mDrawStaging = mRHI->createBuffer({
-            .size  = drawSize + mapSize,
-            .type  = RHI::BufferType::Staging,
-            .label = "Scene_Staging",
-        });
-        mDrawStaging->setData(draws.data(), drawSize, 0);
-        mDrawStaging->setData(instanceMap.data(), mapSize, drawSize);
-
-        const auto drawCopy = vk::BufferCopy2()
-            .setSrcOffset(0)
-            .setDstOffset(0)
-            .setSize(drawSize);
-        const auto drawCopyInfo = vk::CopyBufferInfo2()
-            .setSrcBuffer(mDrawStaging->getHandle())
-            .setDstBuffer(mDrawCmdBuffer->getHandle())
-            .setRegions(drawCopy);
-        pCommandList->getHandle().copyBuffer2(drawCopyInfo);
-
-        const auto mapCopy = vk::BufferCopy2()
-            .setSrcOffset(drawSize)
-            .setDstOffset(0)
-            .setSize(mapSize);
-        const auto mapCopyInfo = vk::CopyBufferInfo2()
-            .setSrcBuffer(mDrawStaging->getHandle())
-            .setDstBuffer(mInstanceMapBuffer->getHandle())
-            .setRegions(mapCopy);
-        pCommandList->getHandle().copyBuffer2(mapCopyInfo);
-
-        spdlog::debug("Visible instances: {}/{} (culled={})", totalVisibleInstanceCount, totalInstanceCount, totalInstanceCount - totalVisibleInstanceCount);
-    }
+    void initCubeScene();
 
     friend class Indirect_GBufferPass;
     friend class SceneInfoComponent;
@@ -417,9 +275,12 @@ private:
     bool                                mObjectCountChanged = false;
 
     SPtr<RHI::Buffer>                   mDrawStaging;
-    SPtr<RHI::Buffer>                   mDrawCmdBuffer;
-    SPtr<RHI::Buffer>                   mInstanceMapBuffer;
+    PerFrameArray<SPtr<RHI::Buffer>>    mDrawCmdBuffer;
+    PerFrameArray<SPtr<RHI::Buffer>>    mInstanceMapBuffer;
     uint32_t                            mDrawCount = 0;
+    bool                                mEnableCulling = true;
+    bool                                mVisualizeAABBs = false;
+    CullStats                           mLastCull = {};
 
     UPtr<Indirect_GBufferPass>          mGBufferPass;
     UPtr<SSAOPass>                      mSSAO;

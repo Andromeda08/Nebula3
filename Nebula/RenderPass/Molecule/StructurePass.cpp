@@ -105,13 +105,13 @@ namespace Molecule
                 const std::array vertexBuffers{ mCIFData->mSphereVertexBuffer->getHandle(), mCIFData->mSphereInstanceBuffer->getHandle() };
                 commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
                 commandBuffer.bindIndexBuffer(mCIFData->mSphereIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-                commandBuffer.drawIndexed(mCIFData->mCID.sphere->indexCount(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
+                commandBuffer.drawIndexed(mCIFData->mCID.sphere->getIndexCount(), mCIFData->mCID.sphereTransforms.size(), 0, 0, 0);
             }
             /* Cylinders */ {
                 const std::array vertexBuffers{ mCIFData->mCylinderVertexBuffer->getHandle(), mCIFData->mCylinderInstanceBuffer->getHandle() };
                 commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
                 commandBuffer.bindIndexBuffer(mCIFData->mCylinderIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-                commandBuffer.drawIndexed(mCIFData->mCID.cylinder->indexCount(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
+                commandBuffer.drawIndexed(mCIFData->mCID.cylinder->getIndexCount(), mCIFData->mCID.cylinderTransforms.size(), 0, 0, 0);
             }
         });
 

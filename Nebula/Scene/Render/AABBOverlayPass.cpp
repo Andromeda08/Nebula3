@@ -18,6 +18,8 @@ void AABBOverlayPass::execute(const RHI::CommandList* pCommandList, const RHI::F
 {
     pCommandList->beginLabel("Lighting_Pass");
 
+    setScissorViewport(pCommandList);
+
     RHI::Barrier()
         .addBarrier(mInput.image->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mInput.depthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))

@@ -41,7 +41,7 @@ void Voxel_GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI:
         const std::array vertexBuffers{ mScene->mVertexBuffer->getHandle(), mScene->mInstanceBuffer->getHandle() };
         commandBuffer.bindVertexBuffers(0, 2, vertexBuffers.data(), offsets);
         commandBuffer.bindIndexBuffer(mScene->mIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
-        commandBuffer.drawIndexed(mScene->mCube->indexCount(), mScene->mInstanceData.size(), 0, 0, 0);
+        commandBuffer.drawIndexed(mScene->mCube->getIndexCount(), mScene->mInstanceData.size(), 0, 0, 0);
     });
 
     pCommandList->endLabel();
