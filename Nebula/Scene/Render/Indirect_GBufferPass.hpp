@@ -46,6 +46,8 @@ private:
     SPtr<RHI::Image>        mPositionDepthBuffer;
     SPtr<RHI::Image>        mNormalBuffer;
     SPtr<RHI::Image>        mAlbedoBuffer;
+    SPtr<RHI::Image>        mEmissiveBuffer;
+    SPtr<RHI::Image>        mMotionVectors;
     SPtr<RHI::Image>        mDepthBuffer;
 
     SPtr<RHI::Pipeline>     mPipeline;

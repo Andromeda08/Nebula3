@@ -29,6 +29,7 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         .addBarrier(mPositionDepthBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mNormalBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mAlbedoBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
+        .addBarrier(mEmissiveBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
         .addBarrier(instanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead ))
         .addBarrier(drawCommandsBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
@@ -109,6 +110,18 @@ void Indirect_GBufferPass::createResources() noexcept
         .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_Albedo",
     });
+    mEmissiveBuffer = mRHI->createImage({
+        .extent        = mRenderResolution,
+        .format        = vk::Format::eR32G32B32A32Sfloat,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
+        .debugName     = "Indirect_GBuffer_Emissive",
+    });
+    mMotionVectors = mRHI->createImage({
+        .extent        = mRenderResolution,
+        .format        = vk::Format::eR32G32Sfloat,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
+        .debugName     = "Indirect_GBuffer_MotionVectors",
+    });
     mDepthBuffer = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eD32Sfloat,
@@ -148,6 +161,24 @@ void Indirect_GBufferPass::createPipeline() noexcept
                     .setImageView(mAlbedoBuffer->getImageView())
                     .setLoadOp(vk::AttachmentLoadOp::eClear)
                     .setStoreOp(vk::AttachmentStoreOp::eStore)
+            },
+            RHI::Attachment {
+                .image = mEmissiveBuffer->getImage(),
+                .attachmentInfo = vk::RenderingAttachmentInfo()
+                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                    .setImageView(mEmissiveBuffer->getImageView())
+                    .setLoadOp(vk::AttachmentLoadOp::eClear)
+                    .setStoreOp(vk::AttachmentStoreOp::eStore)
+            },
+            RHI::Attachment {
+                .image = mMotionVectors->getImage(),
+                .attachmentInfo = vk::RenderingAttachmentInfo()
+                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                    .setImageView(mMotionVectors->getImageView())
+                    .setLoadOp(vk::AttachmentLoadOp::eClear)
+                    .setStoreOp(vk::AttachmentStoreOp::eStore)
             }
         },
         .depthAttachment  = RHI::Attachment {
@@ -177,6 +208,8 @@ void Indirect_GBufferPass::createPipeline() noexcept
         .addColorAttachmentFormat(mPositionDepthBuffer->getProperties().format)
         .addColorAttachmentFormat(mNormalBuffer->getProperties().format)
         .addColorAttachmentFormat(mAlbedoBuffer->getProperties().format)
+        .addColorAttachmentFormat(mEmissiveBuffer->getProperties().format)
+        .addColorAttachmentFormat(mMotionVectors->getProperties().format)
         .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
         .setDebugName("Indirect_GBuffer_Pipeline");
 
