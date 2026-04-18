@@ -25,17 +25,17 @@ void AABBOverlayPass::execute(const RHI::CommandList* pCommandList, const RHI::F
         .addBarrier(mInput.depthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
         .insert(pCommandList);
 
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mPipeline->bind(commandBuffer);
-        mPipeline->bindDescriptorSets(commandBuffer, {
-            mInput.pScene->getSceneDescriptor()->getSet(frameData.currentFrame),
-        });
-
-        for (auto i = 0; i < 256; ++i)
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
+        mPipeline->bind(cmd);
+        mPipeline->bindDescriptorSet(cmd, mInput.pScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+        for (auto i = 0; i < mInput.pScene->getObjects().size(); ++i)
         {
-            PushConstants pushConstants = { mInput.pScene->getObjects()[i]->min, mInput.pScene->getObjects()[i]->max };
-            mPipeline->pushConstants(commandBuffer, &pushConstants);
-            commandBuffer.draw(24, 1, 0, 0);
+            PushConstants pushConstants = {
+                .min = glm::vec4(mInput.pScene->getObjects()[i]->boundingBox.getMin(), 1.0f),
+                .max = glm::vec4(mInput.pScene->getObjects()[i]->boundingBox.getMax(), 1.0f),
+            };
+            mPipeline->pushConstants(cmd, &pushConstants);
+            cmd->getHandle().draw(24, 1, 0, 0);
         }
     });
     pCommandList->endLabel();

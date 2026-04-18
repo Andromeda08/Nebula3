@@ -25,7 +25,7 @@ layout (set = 1, binding = 0) uniform CameraUniform {
     float farPlane;
 } camera;
 
-layout(set = 1, binding = 2) uniform accelerationStructureEXT topLevelAS;
+layout(set = 1, binding = 3) uniform accelerationStructureEXT topLevelAS;
 
 layout(push_constant) uniform AoControl {
     float aoRadius;

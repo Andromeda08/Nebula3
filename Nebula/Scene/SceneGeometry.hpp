@@ -146,6 +146,11 @@ public:
         };
     }
 
+    [[nodiscard]] uint64_t getBlasAddress(const GeometryIndex index) const noexcept
+    {
+        return mBottomLevel[index]->getAddress();
+    }
+
     /**
      * @param index Geometry Index
      * @return All data related to a specific Geometry

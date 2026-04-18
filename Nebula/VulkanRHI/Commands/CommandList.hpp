@@ -55,6 +55,8 @@ namespace RHI
         void beginLabel(const std::string& name) const;
         void endLabel() const;
 
+        void setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const;
+
         void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;
 
         void copyBuffer(const BufferCopyInfo& bufferCopyInfo) const;

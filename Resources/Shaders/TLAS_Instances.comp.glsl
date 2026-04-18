@@ -6,15 +6,12 @@ layout (local_size_x = 64) in;
 
 struct GPUInstanceData
 {
-    mat4     model;
-    vec4     solidColor;
-    int      textureIndex;
-    int      geometryIndex;
-    uint64_t blasAddress;
-    int      normalIndex;
-    int      _p0, _p1, _p2;
-    vec4     min;
-    vec4     max;
+    mat4      model;
+    vec4      boundsMin;
+    vec4      boundsMax;
+    uint64_t  blasAddress;
+    int       materialIndex;
+    int       geometryIndex;
 };
 
 struct AccelerationStructureInstanceKHR

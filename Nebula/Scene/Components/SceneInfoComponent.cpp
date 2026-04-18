@@ -69,9 +69,9 @@ void SceneInfoComponent::draw()
         ImGui::InputText("Name", &light.name);
 
         bool changed = false;
-        changed |= ImGui::InputFloat3(posLabel.data(), glm::value_ptr(light.vector));
+        changed |= ImGui::DragFloat3(posLabel.data(), glm::value_ptr(light.vector), 0.1f, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
         changed |= ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
-        changed |= ImGui::InputFloat("Intensity", &light.intensity);
+        changed |= ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, std::numeric_limits<float>::max());
         changed |= ImGui::Checkbox("Enabled", &light.isEnabled);
         changed |= ImGui::Checkbox("Shadows", &light.castsShadow);
 

@@ -42,6 +42,8 @@ namespace RHI
 
         ~Image();
 
+        const vk::ImageView& getMipView(size_t i) const noexcept;
+
         /**
          * Create an ImageMemoryBarrier to the dstState.
          * @param dstUsage
@@ -80,6 +82,8 @@ namespace RHI
         vk::ImageView           mImageView;
         vk::Sampler             mSampler;
         ImageState              mState;
+
+        std::vector<vk::ImageView> mMipViews;
 
         bool                    mHasMemory      = false;
         VmaAllocation           mAllocation     = {};

@@ -14,7 +14,7 @@ struct CameraData
 [[vk::binding(0, 0)]]
 ConstantBuffer<CameraData> camera;
 
-[[vk::binding(2, 0)]]
+[[vk::binding(3, 0)]]
 RaytracingAccelerationStructure tlas;
 
 [[vk::binding(0, 1)]]

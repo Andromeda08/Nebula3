@@ -33,7 +33,7 @@ namespace RHI
             .setUsage(createInfo.usageFlags)
             .setTiling(vk::ImageTiling::eOptimal)
             .setArrayLayers(createInfo.cubeMap ? 6 : 1)
-            .setMipLevels(1)
+            .setMipLevels(mProperties.levelCount)
             .setImageType(vk::ImageType::e2D)
             .setSharingMode(vk::SharingMode::eExclusive)
             .setInitialLayout(vk::ImageLayout::eUndefined);
@@ -70,7 +70,7 @@ namespace RHI
         const auto viewCreateInfo = vk::ImageViewCreateInfo()
             .setFormat(mProperties.format)
             .setImage(mImage)
-            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, static_cast<uint32_t>(createInfo.cubeMap ? 6 : 1) })
+            .setSubresourceRange({ mProperties.aspectFlags, 0, 1, 0, static_cast<uint32_t>(createInfo.cubeMap ? 6 : 1) })
             .setViewType(createInfo.cubeMap ? vk::ImageViewType::eCube : vk::ImageViewType::e2D);
 
         mImageView = mDevice->getHandle().createImageView(viewCreateInfo);
@@ -79,6 +79,25 @@ namespace RHI
             .debugName = std::format("{} View", mDebugName),
             .handle    = mImageView,
         });
+
+        if (createInfo.mipmapping)
+        {
+            mMipViews.resize(mProperties.levelCount);
+            for (uint32_t i = 0; i < mProperties.levelCount; i++)
+            {
+                const auto mipViewInfo = vk::ImageViewCreateInfo()
+                    .setFormat(mProperties.format)
+                    .setImage(mImage)
+                    .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, 1 })
+                    .setViewType(createInfo.cubeMap ? vk::ImageViewType::eCube : vk::ImageViewType::e2D);
+                mMipViews[i] = mDevice->getHandle().createImageView(mipViewInfo);
+
+                mDevice->nameObject<vk::ImageView>({
+                    .debugName = std::format("{} View [mip={}]", mDebugName, i),
+                    .handle    = mMipViews[i],
+                });
+            }
+        }
 
         /**
          * Create Sampler
@@ -132,6 +151,11 @@ namespace RHI
         mDevice->getHandle().destroyImageView(mImageView);
 
         vmaDestroyImage(mDevice->getAllocator(), mImage, mAllocation);
+    }
+
+    const vk::ImageView& Image::getMipView(size_t i) const noexcept
+    {
+        return mMipViews[i];
     }
 
     void Image::useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo)

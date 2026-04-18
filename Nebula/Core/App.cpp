@@ -42,19 +42,19 @@ App::App()
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 
     // Version 2
-    mUserInterface->addComponent<nbl::TransformEditorComponent>(&gTestTransform);
+    // mUserInterface->addComponent<nbl::TransformEditorComponent>(&gTestTransform);
 
-    const auto geometrySystemConfig = nbl::GeometrySystemConfig {
-        .generateMeshlets = true,
-        .createBLAS       = mVulkanRHI->getRaytracingSupport(),
-    };
-    mGeometrySystem = makeUnique<nbl::GeometrySystem>(geometrySystemConfig, mVulkanRHI);
-
-    mSceneManager = makeUnique<nbl::SceneManager>(mGeometrySystem.get());
-
-    mSceneManager->loadScene(Configuration::getSceneFilePath("bistro.glb"));
-
-    mGeometrySystemDebugRenderPass = makeUnique<nbl::GeometrySystemDebugRenderPass>(mVulkanRHI, mSceneManager->getActiveScene(), mGeometrySystem.get(), mScene->getSceneDescriptor().get());
+    // const auto geometrySystemConfig = nbl::GeometrySystemConfig {
+    //     .generateMeshlets = true,
+    //     .createBLAS       = mVulkanRHI->getRaytracingSupport(),
+    // };
+    // mGeometrySystem = makeUnique<nbl::GeometrySystem>(geometrySystemConfig, mVulkanRHI);
+    //
+    // mSceneManager = makeUnique<nbl::SceneManager>(mGeometrySystem.get());
+    //
+    // mSceneManager->loadScene(Configuration::getSceneFilePath("bistro.glb"));
+    //
+    // mGeometrySystemDebugRenderPass = makeUnique<nbl::GeometrySystemDebugRenderPass>(mVulkanRHI, mSceneManager->getActiveScene(), mGeometrySystem.get(), mScene->getSceneDescriptor().get());
 
     mWindow->reveal();
 }
@@ -142,7 +142,7 @@ void App::run_renderPathLoop()
 
         mScene->onRender(commandList, frameData);
 
-        mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+        // mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
 
         // =====================================
         // User Interface

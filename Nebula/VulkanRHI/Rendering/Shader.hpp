@@ -11,7 +11,7 @@ namespace RHI
 {
     struct ShaderInfo
     {
-        std::string             filePath;
+        std::filesystem::path   filePath;
         vk::ShaderStageFlagBits shaderStage;
         const char*             entryPoint = "main";
     };
@@ -28,7 +28,7 @@ namespace RHI
 
     struct Shader
     {
-        static std::vector<char> readShaderFile(const std::string& filePath);
+        static std::vector<char> readShaderFile(const std::filesystem::path& filePath);
 
         static CompiledShader compileShader(const Device* pDevice, const ShaderInfo& shaderInfo);
 

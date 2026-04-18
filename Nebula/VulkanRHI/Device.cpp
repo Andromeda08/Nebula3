@@ -32,6 +32,9 @@ namespace RHI
             .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
             .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional)
             .addExtension<RayTracingPositionFetch>(FeatureOption::Optional)
+            .addExtension<RayTracingValidation>(FeatureOption::Optional)
+            // NVIDIA
+            .addExtension(vk::NVXImageViewHandleExtensionName, FeatureOption::Optional)
             // Mesh shader
             .addExtension<MeshShaderEXT>(FeatureOption::Optional);
 

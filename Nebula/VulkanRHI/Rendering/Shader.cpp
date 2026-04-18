@@ -13,10 +13,10 @@ namespace RHI
             | std::ranges::to<std::vector<vk::PipelineShaderStageCreateInfo>>();
     }
 
-    std::vector<char> Shader::readShaderFile(const std::string& filePath)
+    std::vector<char> Shader::readShaderFile(const std::filesystem::path& filePath)
     {
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-        exitOnAssert(file.is_open(), "Failed to open file: {}", filePath);
+        exitOnAssert(file.is_open(), "Failed to open file: {}", filePath.string().c_str());
 
         const std::streamsize fileSize = file.tellg();
         std::vector<char> buffer(fileSize);
@@ -46,7 +46,7 @@ namespace RHI
         };
 
         pDevice->nameObject<vk::ShaderModule>({
-            .debugName = shaderInfo.filePath,
+            .debugName = shaderInfo.filePath.string().c_str(),
             .handle    = shaderModule,
         });
 

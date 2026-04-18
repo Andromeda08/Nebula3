@@ -69,6 +69,12 @@ namespace RHI
         mCommandBuffer.endDebugUtilsLabelEXT();
     }
 
+    void CommandList::setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const
+    {
+        mCommandBuffer.setScissor(0, scissor);
+        mCommandBuffer.setViewport(0, viewport);
+    }
+
     void CommandList::copyBufferToImage(const BufferImageCopyInfo& copyInfo) const
     {
         const auto imageProperties = copyInfo.pDstImage->getProperties();

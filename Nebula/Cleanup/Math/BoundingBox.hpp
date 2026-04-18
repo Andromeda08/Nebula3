@@ -59,8 +59,22 @@ namespace nbl
 
         bool operator==(const BoundingBox& other) const noexcept;
 
+        /**
+         * Create a BoundingBox from a list of points
+         */
+        [[nodiscard]] static BoundingBox fromPoints(const std::vector<glm::vec3>& points)
+        {
+            BoundingBox result;
+            result.reset();
+            for (const auto& p : points)
+            {
+                result.expandBy(p);
+            }
+            return result;
+        }
+
     private:
-        glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::max());
-        glm::vec3 mMax = glm::vec3(std::numeric_limits<float>::lowest());
+        glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::infinity());
+        glm::vec3 mMax = glm::vec3(-std::numeric_limits<float>::infinity());
     };
 }

@@ -6,11 +6,10 @@ use crate::util;
 pub struct NSTParams {
     src:     std::path::PathBuf,
     bin_dir: std::path::PathBuf,
-    debug:   bool,
 }
 
 fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
-    let debug = args.contains(&String::from("-d"));
+    // let debug = args.contains(&String::from("-d"));
     let cwd = match env::current_dir() {
         Ok(p) => p,
         Err(e) => {
@@ -46,7 +45,6 @@ fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
     Ok(NSTParams {
         src: std::path::PathBuf::new().join(cwd.clone()).join(src),
         bin_dir: std::path::PathBuf::new().join(cwd.clone()).join(bin?),
-        debug,
     })
 }
 

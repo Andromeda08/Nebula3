@@ -13,6 +13,7 @@ add_subdirectory(External/fastgltf  EXCLUDE_FROM_ALL)
 add_subdirectory(External/glm       EXCLUDE_FROM_ALL)
 add_subdirectory(External/json      EXCLUDE_FROM_ALL)
 add_subdirectory(External/vma       EXCLUDE_FROM_ALL)
+add_subdirectory(External/fmt       EXCLUDE_FROM_ALL)
 add_subdirectory(External/gemmi     EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL_ttf   EXCLUDE_FROM_ALL)
@@ -294,6 +295,14 @@ add_executable(Nebula3
     Nebula/Cleanup/Instance/InstancePool.hpp
     Nebula/Cleanup/Geometry/GeometrySystem.cpp
     Nebula/Cleanup/Geometry/GeometrySystemDebugRenderPass.hpp
+    Nebula/Scene/Renderer/Pass.hpp
+    Nebula/Scene/Renderer/GBufferPass.hpp
+    Nebula/Scene/Renderer/GBufferPass.cpp
+    Nebula/Scene/Renderer/SceneRenderer.hpp
+    Nebula/Scene/Render/BloomPass.hpp
+    Nebula/Scene/Render/BloomPass.cpp
+    Nebula/Scene/DataV2/SlotPool.hpp
+    Nebula/Scene/DataV2/MaterialPool.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC

@@ -114,6 +114,7 @@ GLTFLoader::GLTFLoader(const GLTFLoaderLoadParams& params)
     mTextureManager = params.pTextureManager;
     mSceneGeometry  = params.pSceneGeometry;
     mLightSystem    = params.pLightSystem;
+    mMaterialPool   = params.pMaterialPool;
     mScene          = params.pScene;
 }
 
@@ -390,9 +391,9 @@ void GLTFLoader::s3_loadMeshes(fastgltf::Asset& asset) noexcept
 
             // Compute AABB
             const auto aabbInput = vertices
-                | std::views::transform([](const Vertex& v){ return glm::vec4(v.position, 1.0f); })
+                | std::views::transform([](const Vertex& v){ return v.position; })
                 | std::ranges::to<std::vector>();
-            const auto aabb = nbl::cwiseMinMax(aabbInput);
+            const auto aabb = nbl::BoundingBox::fromPoints(aabbInput);
 
             // Normal
             if (const auto* attr = prim.findAttribute(sAttrNormal); attr != prim.attributes.end())
@@ -479,49 +480,50 @@ void GLTFLoader::s3_loadMeshes(fastgltf::Asset& asset) noexcept
             SplashWindow::get().setMessage(std::format("Loaded geometry: {}", geometryName), mSceneName);
 
             // Material
-            int32_t   texSlot      = -1;
-            int32_t   texUV        =  0;
-            int32_t   normalSlot   = -1;
-            int32_t   normalUV     =  0;
-            glm::vec4 baseColor(0.8f, 0.8f, 0.8f, 1.0f);
+            MaterialData material = {};
 
             if (prim.materialIndex.has_value())
             {
-                auto& mat = asset.materials[*prim.materialIndex];
-                auto& pbr = mat.pbrData;
+                const auto& mat = asset.materials[*prim.materialIndex];
+                const auto& pbr = mat.pbrData;
 
-                baseColor = glm::vec4(
-                    pbr.baseColorFactor[0], pbr.baseColorFactor[1],
-                    pbr.baseColorFactor[2], pbr.baseColorFactor[3]);
+                material.solidColor       = glm::make_vec4(&pbr.baseColorFactor[0]);
+                material.pMetallicFactor  = pbr.metallicFactor;
+                material.pRoughnessFactor = pbr.roughnessFactor;
 
                 if (pbr.baseColorTexture.has_value())
                 {
-                    texUV = pbr.baseColorTexture->texCoordIndex;
+                    // texUV = pbr.baseColorTexture->texCoordIndex;
                     const auto gltfTexIdx = static_cast<int32_t>(pbr.baseColorTexture->textureIndex);
                     if (mTextureMap.contains(gltfTexIdx))
                     {
-                        texSlot = mTextureMap[gltfTexIdx];
+                        material.hTexture = mTextureMap[gltfTexIdx];
                     }
                 }
                 if (mat.normalTexture.has_value())
                 {
-                    normalUV = mat.normalTexture->texCoordIndex;
+                    // normalUV = mat.normalTexture->texCoordIndex;
                     const auto gltfTexIdx = static_cast<int32_t>(mat.normalTexture->textureIndex);
                     if (mTextureMap.contains(gltfTexIdx))
                     {
-                        normalSlot = mTextureMap[gltfTexIdx];
+                        material.hNormalMap = mTextureMap[gltfTexIdx];
+                    }
+                }
+                if (pbr.metallicRoughnessTexture.has_value())
+                {
+                    // mrUV = pbr.metallicRoughnessTexture->texCoordIndex;
+                    const auto gltfTexIdx = static_cast<int32_t>(pbr.metallicRoughnessTexture->textureIndex);
+                    if (mTextureMap.contains(gltfTexIdx))
+                    {
+                        material.hMetallicRoughnessMap = mTextureMap[gltfTexIdx];
                     }
                 }
             }
 
             mMeshMap[meshIndex].push_back({
-                .geometryIndex  = geometry,
-                .baseColor      = baseColor,
-                .textureIndex   = texSlot,
-                .textureUV      = texUV,
-                .normalMapIndex = normalSlot,
-                .normalUV       = normalUV,
-                .aabb           = aabb,
+                .geometryIndex = geometry,
+                .hMaterial     = mMaterialPool->acquire(material),
+                .aabb          = aabb,
             });
         }
     }
@@ -543,12 +545,13 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
     auto& node = asset.nodes[nodeIndex];
     const glm::mat4 model = getWorldTransform(node.transform, parentModel);
 
+    bool isStringLight = false;
     if (node.meshIndex.has_value())
     {
         std::string meshName(asset.meshes[*node.meshIndex].name);
         std::string nodeName(node.name);
-
         bool isEmissive = nodeName.contains("Light") || meshName.contains("Light");
+        isStringLight = nodeName.contains("StringLight");
 
         std::unordered_set<size_t> spawnedLightNodes;
         // Spawn lights at emissive mesh locations
@@ -612,17 +615,21 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
         //    }
         //}
 
-
-        const auto it = mMeshMap.find(static_cast<int32_t>(*node.meshIndex));
-        if (it != mMeshMap.end())
+        if (const auto it = mMeshMap.find(static_cast<int32_t>(*node.meshIndex)); it != mMeshMap.end())
         {
             for (const auto& prim : it->second)
             {
-                auto t = Transform().setModel(model);
-                mScene->addObject<Object>(prim.geometryIndex, prim.textureIndex, t, prim.aabb.min, prim.aabb.max, prim.normalMapIndex);
-                // TODO: fix obj construction
-                // obj->solidColor = prim.baseColor;
-                // obj->name = node.name.empty() ? fmt::format("gltf_node_{}", nodeIndex) : std::string(node.name);
+                if (isStringLight)
+                {
+                    mMaterialPool->modify(prim.hMaterial, [](MaterialData& data) -> void {
+                        data.pIsEmissive = true;
+                    });
+                }
+                const auto generatedName = node.name.empty()
+                    ? fmt::format("gltf_node_{}", nodeIndex)
+                    : std::string(node.name);
+                auto transform = Transform().setModel(model);
+                mScene->addObject<Object>(prim.geometryIndex, transform, prim.hMaterial, prim.aabb, generatedName);
             }
         }
     }

@@ -81,7 +81,7 @@ namespace RHI
                 return { A::eShaderStorageRead, S::eAllGraphics };
             }
             case All: {
-                return { A::eShaderWrite | A::eShaderWrite, S::eAllCommands };
+                return { A::eShaderWrite | A::eShaderRead | A::eTransferRead | A::eTransferWrite, S::eAllCommands };
             }
             default: {
                 exitWithError("Unhandled BufferUsage case");

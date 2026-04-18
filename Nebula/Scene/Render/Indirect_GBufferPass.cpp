@@ -30,8 +30,10 @@ void Indirect_GBufferPass::execute(const RHI::CommandList* pCommandList, const R
         .addBarrier(mNormalBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mAlbedoBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mEmissiveBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
+        .addBarrier(mLightingParamsBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
+        .addBarrier(mMotionVectors->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
-        .addBarrier(instanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead ))
+        .addBarrier(instanceMapBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead))
         .addBarrier(drawCommandsBuffer->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
         .insert(pCommandList);
 
@@ -116,6 +118,12 @@ void Indirect_GBufferPass::createResources() noexcept
         .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
         .debugName     = "Indirect_GBuffer_Emissive",
     });
+    mLightingParamsBuffer = mRHI->createImage({
+        .extent        = mRenderResolution,
+        .format        = vk::Format::eR32G32B32A32Sfloat,
+        .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst | eStorage,
+        .debugName     = "Indirect_GBuffer_LightingParams",
+    });
     mMotionVectors = mRHI->createImage({
         .extent        = mRenderResolution,
         .format        = vk::Format::eR32G32Sfloat,
@@ -172,6 +180,15 @@ void Indirect_GBufferPass::createPipeline() noexcept
                     .setStoreOp(vk::AttachmentStoreOp::eStore)
             },
             RHI::Attachment {
+                .image = mLightingParamsBuffer->getImage(),
+                .attachmentInfo = vk::RenderingAttachmentInfo()
+                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
+                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                    .setImageView(mLightingParamsBuffer->getImageView())
+                    .setLoadOp(vk::AttachmentLoadOp::eClear)
+                    .setStoreOp(vk::AttachmentStoreOp::eStore)
+            },
+            RHI::Attachment {
                 .image = mMotionVectors->getImage(),
                 .attachmentInfo = vk::RenderingAttachmentInfo()
                     .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
@@ -194,7 +211,7 @@ void Indirect_GBufferPass::createPipeline() noexcept
     });
 
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-        .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants) })
+        .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstants) })
         .addDescriptorSetLayout(mScene->getSceneDescriptor()->getLayout())
         .addDescriptorSetLayout(mScene->mTextureManager->getDescriptor()->getLayout())
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
@@ -202,13 +219,14 @@ void Indirect_GBufferPass::createPipeline() noexcept
                 stateInfo.addAttributeDescriptions<Vertex>(0, 0);
                 stateInfo.addBindingDescriptions<Vertex>(0);
             })
-            .addDefaultAttachmentStates(3))
-        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
-        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
+            .addDefaultAttachmentStates(6))
+        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.vert.spv"), vk::ShaderStageFlagBits::eVertex })
+        .addShader({ Configuration::getShaderFilePath("IndirectDrawGBuffer.frag.spv"), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mPositionDepthBuffer->getProperties().format)
         .addColorAttachmentFormat(mNormalBuffer->getProperties().format)
         .addColorAttachmentFormat(mAlbedoBuffer->getProperties().format)
         .addColorAttachmentFormat(mEmissiveBuffer->getProperties().format)
+        .addColorAttachmentFormat(mLightingParamsBuffer->getProperties().format)
         .addColorAttachmentFormat(mMotionVectors->getProperties().format)
         .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
         .setDebugName("Indirect_GBuffer_Pipeline");

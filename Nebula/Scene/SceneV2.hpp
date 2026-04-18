@@ -14,16 +14,19 @@
 #include "Core/Random.hpp"
 #include "Core/Ranges.hpp"
 #include "Core/Types.hpp"
+#include "DataV2/MaterialPool.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/BoundingBox.hpp"
 #include "Math/DeltaTime.hpp"
 #include "Math/Transform.hpp"
 #include "Render/AABBOverlayPass.hpp"
+#include "Render/BloomPass.hpp"
 #include "Render/FullRT.hpp"
 #include "Render/FXAAPass.hpp"
 #include "Render/LightingPass.hpp"
 #include "Render/ProceduralSky.hpp"
 #include "Render/RTAOPass.hpp"
+
 #include "Render/SSAOPass.hpp"
 #include "Render/TonemapPass.hpp"
 #include "Scene/Render/Indirect_GBufferPass.hpp"
@@ -32,46 +35,48 @@
 #include "Voxel/Features/FoliageGenerator.hpp"
 #include "VulkanRHI/Barrier.hpp"
 
+namespace nbl
+{
+    class GBufferPass;
+}
+
+enum SceneBindings : int32_t
+{
+    SceneBindings_Camera      = 0,
+    SceneBindings_Lights      = 1,
+    SceneBindings_Materials   = 2,
+    SceneBindings_TopLevelAS  = 3,
+};
+
 struct Object
 {
     virtual      ~Object() = default;
     virtual void onUpdate(float dt) noexcept {}
 
     // Properties
-    GeometryView   geometry;
-    int32_t        geometryIndex = -1;
-    int32_t        textureIndex = -1;
-    int32_t        normalIndex   = -1;
-    int32_t        instanceIndex = -1;
-    glm::vec4      solidColor   = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
-    Transform      transform    = {};
-
-    // AABB
-    glm::vec4      min;
-    glm::vec4      max;
+    int32_t          geometryIndex    = -1;
+    int32_t          instanceIndex    = -1;
+    Handle           hMaterial        = {};
+    Transform        transform        = {};
+    nbl::BoundingBox boundingBox      = {};
 
     // Raytracing Properties
-    uint32_t        rt_hitGroup  = 0;
-    uint32_t        rt_mask      = 0xff;
+    uint64_t         blasAddress  = 0;
+    uint32_t         rt_mask      = 0xff;
 
     // General
-    int32_t         id;
-    std::string     name;
+    int32_t          id;
+    std::string      name;
 
-    [[nodiscard]] GPUInstanceData getInstanceData() noexcept
+    [[nodiscard]] GPUInstanceData getInstanceData(const MaterialPool* pMaterialPool) noexcept
     {
         return {
-            .model         = transform.getModel(),
-            .solidColor    = solidColor,
-            .textureIndex  = textureIndex,
-            .geometryIndex = geometry.metadata->index,
-            .blasAddress   = geometry.metadata->blasAddress,
-            .normalIndex   = normalIndex,
-            ._p0           = 0,
-            ._p1           = 0,
-            ._p2           = 0,
-            .min           = min,
-            .max           = max,
+            .model          = transform.getModel(),
+            .min            = glm::vec4(boundingBox.getMin(), 1.0f),
+            .max            = glm::vec4(boundingBox.getMax(), 1.0f),
+            .blasAddress    = blasAddress,
+            .materialIndex  = hMaterial.isNull() ? -1 : static_cast<int32_t>(pMaterialPool->getGpuIndex(hMaterial)),
+            .geometryIndex  = geometryIndex,
         };
     }
 };
@@ -107,7 +112,7 @@ public:
         }
     }
 
-    void onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept;
+    void onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept;
 
     void onRender(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
@@ -115,32 +120,28 @@ public:
 
     template <class T>
     requires std::is_base_of_v<Object, T>
-    void addObject(const GeometryIndex geometryIndex, const int32_t tex, const Transform transform, const glm::vec4& min, const glm::vec4& max, const int32_t normalTex = -1) noexcept
+    void addObject(
+        const GeometryIndex     geometryIndex,
+        const Transform&        transform,
+        const Handle            hMaterial,
+        const nbl::BoundingBox& geometryBoundingBox,
+        const std::string&      name
+    ) noexcept
     {
         auto obj = makeUnique<T>();
+        obj->name          = name;
+
+        // Set handles and indices
         obj->geometryIndex = geometryIndex;
-        obj->geometry      = mGeometry->getGeometryView(geometryIndex);
+        obj->hMaterial     = hMaterial;
+        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData(mMaterialPool.get()));
+
+        // Set object transform and compute initial transformed AABB
         obj->transform     = transform;
-        obj->textureIndex  = tex;
-        obj->normalIndex   = normalTex;
+        obj->boundingBox   = geometryBoundingBox.getTransformed(obj->transform.getModel());
 
-        const auto model = obj->transform.getModel();
-        glm::vec4 worldMin = model[3];
-        glm::vec4 worldMax = model[3];
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                float a = model[j][i] * min[j];
-                float b = model[j][i] * max[j];
-                worldMin[i] += glm::min(a, b);
-                worldMax[i] += glm::max(a, b);
-            }
-        }
-        obj->min = worldMin;
-        obj->max = worldMax;
-
-        obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData());
+        // Ray Tracing
+        obj->blasAddress   = mRHI->getRaytracingSupport() ? mGeometry->getBlasAddress(geometryIndex) : 0,
 
         mObjects.push_back(std::move(obj));
 
@@ -152,101 +153,11 @@ public:
         return mSceneDescriptor;
     }
 
-    [[nodiscard]] uint64_t getCurrentCameraBufferAddress(const uint32_t i) const
-    {
-        return mCameraUniformBuffers[i]->getAddress();
-    }
-
 private:
-    void initScene() noexcept
-    {
-        const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
-        mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
-
-        mLightSystem->addLight({});
-        mLightSystem->addLight({
-            .vector      = { -45.0f, 50.0f, -50.0f },
-            .color       = { 185.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
-            .intensity   = 1500.0f,
-            .isEnabled   = true,
-            .castsShadow = true,
-            .radius      = 10.0f,
-            .type        = LightType::Point,
-        });
-        mLightSystem->addLight({
-            .vector      = { -17, 50, 35 },
-            .color       = { 23.0f / 255.0f, 173.0f / 255.0f, 93.0f / 255.0f },
-            .intensity   = 1500.0f,
-            .isEnabled   = true,
-            .castsShadow = true,
-            .radius      = 10.0f,
-            .type        = LightType::Point,
-        });
-
-        const auto geoCube = mGeometry->addGeometry<Cube>(Cube::Params {});
-        mGeometry->commit();
-
-        const auto geoSphere = mGeometry->addGeometry<Sphere>(Sphere::Params {});
-        const auto geoCylinder = mGeometry->addGeometry<Cylinder>(Cylinder::Params {});
-
-        mGeometry->commit();
-
-        mTextureManager->loadTexture("missingTexture.png", 1);
-        mTextureManager->loadTexture("missingTexture.png", 2);
-        mTextureManager->loadTexture("missingTexture.png", 3);
-
-        addObject<ExampleObject>(geoCube, 1, Transform().translate({ 5.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
-        addObject<ExampleObject>(geoSphere, 2, Transform().translate({ 0.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
-        addObject<ExampleObject>(geoCylinder, 3, Transform().translate({ -5.0f, 0.0f, 0.0f }), glm::vec4(0.0f), glm::vec4(0.0f));
-
-        for (uint32_t i = 0; i < 256; i++)
-        {
-            auto geometry = geoCube;
-            if (Random::get(0, 128) % 2 == 0)
-            {
-                geometry = geoSphere;
-            }
-            if (Random::get(0, 128) % 3 == 0)
-            {
-                geometry = geoCylinder;
-            }
-
-            const auto transform = Transform()
-                .translate({
-                    Random::get(-64.0f, 64.0f),
-                    Random::get(-64.0f, 64.0f),
-                    Random::get(-64.0f, 64.0f),
-                });
-            addObject<ExampleObject>(geometry, 1, transform, glm::vec4(0.0f), glm::vec4(0.0f));
-            mObjects.back()->solidColor = Random::getColor();
-        }
-
-        auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 96, true });
-        terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
-            .patchCount             = 12,
-            .patchRadius            = 12,
-            .radiusVariance         = 3,
-            .density                = 0.65f,
-            .patchDensityVariance   = true,
-            .instanceRandomOffset   = true,
-            .instanceRandomScale    = true,
-        });
-
-        terrainGenerator.generate();
-
-        for (const auto& voxel : terrainGenerator.getResult())
-        {
-            auto t = Transform().setScale(voxel.scale).setTranslate(voxel.position);
-            addObject<Object>(geoCube, 1, t, glm::vec4(0.0f), glm::vec4(0.0f));
-            mObjects.back()->solidColor = glm::vec4(voxel.color, 1.0f);
-        }
-    }
-
     void buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept;
 
-    void initCubeScene();
-
     friend class Indirect_GBufferPass;
+    friend class nbl::GBufferPass;
     friend class SceneInfoComponent;
 
     SPtr<RHI::VulkanRHI>                mRHI;
@@ -266,6 +177,8 @@ private:
 
     UPtr<LightSystem>                   mLightSystem;
 
+    UPtr<MaterialPool>                  mMaterialPool;
+
     UPtr<ICamera>                       mCamera;
     PerFrameArray<SPtr<RHI::Buffer>>    mCameraUniformBuffers;
 
@@ -274,7 +187,7 @@ private:
     std::vector<UPtr<Object>>           mObjects;
     bool                                mObjectCountChanged = false;
 
-    SPtr<RHI::Buffer>                   mDrawStaging;
+    PerFrameArray<SPtr<RHI::Buffer>>    mDrawStaging;
     PerFrameArray<SPtr<RHI::Buffer>>    mDrawCmdBuffer;
     PerFrameArray<SPtr<RHI::Buffer>>    mInstanceMapBuffer;
     uint32_t                            mDrawCount = 0;
@@ -287,8 +200,9 @@ private:
     UPtr<RTAOPass>                      mRTAO;
     UPtr<ProceduralSkyPass>             mProcSky;
     UPtr<LightingPass>                  mLightingPass;
-    UPtr<FXAAPass>                      mFXAA;
+    UPtr<BloomPass>                     mBloomPass;
     UPtr<TonemapPass>                   mTonemapPass;
+    UPtr<FXAAPass>                      mFXAA;
     UPtr<AABBOverlayPass>               mAABBPass;
 
     UPtr<FullRTPass>                    mRTPass;
