@@ -11,24 +11,26 @@ A cross-platform rendering engine built with Vulkan.
 - GPU-driven rendering
 - Vulkan raytracing support
 - User interface with ImGui
-- [wip] RenderGraph system with a node editor and support for serialization
 - GLTF loading
 - Basic Scene system
+  - Slot pools with generational handles for data management
   - Geometry
     - Single Vertex and Index buffer
     - Bottom-Level AS management with a single backing buffer
   - Instanced rendering
   - Textures
+  - Materials
   - Top-Level AS Management
     - Compute-based data updates using the existing instance data
-- Toy voxel terrain generator for test scenes
 - Rendering techniques
   - Deferred shading
   - Screen-space and raytraced ambient occlusion
+  - PBR Lighting
   - Raytraced shadows
   - Anti-aliasing (FXAA)
   - Rayleigh-Mie Procedural Sky
-  - Molecule rendering (CIF files via instanced rendering and ray marching)
-- WIP implementations of features from old engine versions
-  - Pure Raytracing with shadows and reflections
-  - GPU-Driven hair rendering with mesh shaders
+  - Frustum Culling
+    - Debug Shader for AABB visualization
+  - [WIP] Dual Kawase blur bloom for emissive materials.
+  - [WIP] Pure Raytracing with shadows and reflections
+- Toy voxel terrain generator for test scenes
