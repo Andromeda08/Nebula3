@@ -12,6 +12,7 @@ A cross-platform rendering engine built with Vulkan.
 - Vulkan raytracing support
 - User interface with ImGui
 - GLTF loading
+- Gamepad Support
 - Basic Scene system
   - Slot pools with generational handles for data management
   - Geometry
