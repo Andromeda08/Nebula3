@@ -1,7 +1,3 @@
-// include/pbr.glsl
-#ifndef PBR_GLSL
-#define PBR_GLSL
-
 const float PI = 3.14159265359;
 
 // Normal Distribution Function — GGX/Trowbridge-Reitz
@@ -43,12 +39,12 @@ vec3 evaluateBRDF(vec3 N, vec3 V, vec3 L, vec3 albedo, float metallic, float rou
     float NdotH = max(dot(N, H), 0.0);
     float VdotH = max(dot(V, H), 0.0);
 
-    // Dielectrics ≈ 0.04 reflectance at normal incidence; metals use albedo
+    // Dielectrics 0.04 reflectance at normal incidence; metals use albedo
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     float D = D_GGX(NdotH, roughness);
     float G = G_Smith(NdotV, NdotL, roughness);
-    vec3  F = F_Schlick(VdotH, F0);
+    vec3 F = F_Schlick(VdotH, F0);
 
     // Specular — Cook-Torrance
     vec3 specular = (D * G * F) / max(4.0 * NdotV * NdotL, 0.0001);
@@ -59,5 +55,3 @@ vec3 evaluateBRDF(vec3 N, vec3 V, vec3 L, vec3 albedo, float metallic, float rou
 
     return (diffuse + specular) * NdotL;
 }
-
-#endif
