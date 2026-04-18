@@ -51,6 +51,17 @@ Geometry::Geometry(const GeometryCreateInfo& createInfo)
 {
     mVertexCount = static_cast<uint32_t>(mVertices.size());
     mIndexCount  = static_cast<uint32_t>(mIndices.size());
+
+    computeBoundingBox();
+}
+
+void Geometry::computeBoundingBox()
+{
+    mBoundingBox.reset();
+    for (const auto& vertex : mVertices)
+    {
+        mBoundingBox.expandBy(vertex.position);
+    }
 }
 
 Cube::Cube(const Params& params)

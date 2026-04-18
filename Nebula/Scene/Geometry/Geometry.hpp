@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+
+#include "Cleanup/Math/BoundingBox.hpp"
 #include "Scene/Types/Vertex.hpp"
 
 struct GeometryCreateInfo
@@ -18,6 +20,11 @@ public:
 
     virtual ~Geometry() = default;
 
+    [[nodiscard]] const nbl::BoundingBox& getBoundingBox() const noexcept
+    {
+        return mBoundingBox;
+    }
+
     [[nodiscard]] const std::vector<Vertex>& getVertices() const noexcept
     {
         return mVertices;
@@ -27,24 +34,10 @@ public:
         return mIndices;
     }
 
-    [[deprecated("Use getVertexCount instead")]]
-    [[nodiscard]] uint32_t vertexCount() const noexcept
-    {
-        return mVertexCount;
-    }
-
     [[nodiscard]] uint32_t getVertexCount() const noexcept
     {
         return mVertexCount;
     }
-
-    [[deprecated("Use getIndexCount instead")]]
-    [[nodiscard]] uint32_t indexCount() const noexcept
-    {
-        return mIndexCount;
-    }
-
-
     [[nodiscard]] uint32_t getIndexCount() const noexcept
     {
         return mIndexCount;
@@ -58,10 +51,13 @@ public:
 protected:
     Geometry() = default;
 
+    void computeBoundingBox();
+
     std::vector<Vertex>     mVertices    = {};
     uint32_t                mVertexCount = 0;
     std::vector<uint32_t>   mIndices     = {};
     uint32_t                mIndexCount  = 0;
+    nbl::BoundingBox        mBoundingBox = {};
     std::string             mName        = "Unknown Geometry";
 };
 

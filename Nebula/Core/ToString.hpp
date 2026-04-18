@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 
 #include "Types.hpp"
-#include "VulkanRHI/RHIConfiguration.hpp"
 
 constexpr std::string toString(const bool value) noexcept
 {

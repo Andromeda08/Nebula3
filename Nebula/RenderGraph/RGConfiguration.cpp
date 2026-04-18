@@ -34,10 +34,6 @@ namespace rg
                 .cTitleBar        = { 255,  32,  86 },
                 .cTitleBarSpecial = { 255,  99, 126 },
             };
-            styles[HelloTrianglePresent] = {
-                .cTitleBar        = {  98, 116, 143 },
-                .cTitleBarSpecial = { 144, 161, 185 },
-            };
             styles[GBufferPass] = {
                 .cTitleBar        = {   0, 184, 219 },
                 .cTitleBarSpecial = {   0, 211, 242 },

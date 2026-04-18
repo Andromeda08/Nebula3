@@ -5,6 +5,90 @@
 
 namespace RHI
 {
+    enum class BufferUsage
+    {
+        Compute,
+        Compute_Read,
+        Compute_Write,
+        Fragment,
+        Fragment_ReadWrite,
+        AS_BuildUpdate,
+        AS_Traverse,
+        SBT_Read,
+        TransferSrc,
+        TransferDst,
+        DrawIndirect,
+        Vertex,
+        Index,
+        StorageRead,
+        All,
+    };
+
+    struct BufferState
+    {
+        vk::AccessFlags2        access;
+        vk::PipelineStageFlags2 stage;
+    };
+
+    [[nodiscard]] constexpr BufferState getBarrierFlagsForBufferUsage(const BufferUsage bufferUsage)
+    {
+        using A = vk::AccessFlagBits2;
+        using S = vk::PipelineStageFlagBits2;
+
+        using enum BufferUsage;
+        switch (bufferUsage)
+        {
+            case Compute: {
+                return { A::eShaderRead | A::eShaderWrite, S::eComputeShader };
+            }
+            case Compute_Read: {
+                return { A::eShaderRead, S::eComputeShader };
+            }
+            case Compute_Write: {
+                return { A::eShaderWrite, S::eComputeShader };
+            }
+            case Fragment: {
+                return { A::eShaderRead, S::eFragmentShader};
+            }
+            case Fragment_ReadWrite: {
+                return { A::eShaderRead | A::eShaderWrite, S::eFragmentShader};
+            }
+            case AS_BuildUpdate: {
+                return { A::eAccelerationStructureWriteKHR, S::eAccelerationStructureBuildKHR | S::eAccelerationStructureCopyKHR };
+            }
+            case AS_Traverse: {
+                return { A::eAccelerationStructureReadKHR, S::eAllGraphics };
+            }
+            case SBT_Read: {
+                return { A::eShaderBindingTableReadKHR, S::eAllGraphics };
+            }
+            case TransferSrc: {
+                return { A::eTransferRead, S::eAllTransfer };
+            }
+            case TransferDst: {
+                return { A::eTransferWrite, S::eAllTransfer };
+            }
+            case DrawIndirect: {
+                return { A::eIndirectCommandRead, S::eDrawIndirect };
+            }
+            case Vertex: {
+                return { A::eVertexAttributeRead, S::eVertexInput };
+            }
+            case Index: {
+                return { A::eIndexRead, S::eVertexInput };
+            }
+            case StorageRead: {
+                return { A::eShaderStorageRead, S::eAllGraphics };
+            }
+            case All: {
+                return { A::eShaderWrite | A::eShaderRead | A::eTransferRead | A::eTransferWrite, S::eAllCommands };
+            }
+            default: {
+                exitWithError("Unhandled BufferUsage case");
+            }
+        }
+    }
+
     enum class BufferType
     {
         Index,

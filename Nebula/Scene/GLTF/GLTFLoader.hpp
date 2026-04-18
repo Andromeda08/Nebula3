@@ -10,6 +10,9 @@
 
 #include "Core/Types.hpp"
 #include "Core/Util.hpp"
+#include "Math/vec.hpp"
+#include "Scene/SceneGeometry.hpp"
+#include "Scene/DataV2/MaterialPool.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
 class LightSystem;
@@ -37,6 +40,7 @@ struct GLTFLoaderLoadParams
     TextureManager* pTextureManager;
     SceneGeometry*  pSceneGeometry;
     LightSystem*    pLightSystem;
+    MaterialPool*   pMaterialPool;
     SceneV2*        pScene;
 };
 
@@ -48,12 +52,10 @@ class GLTFLoader
 
     struct MeshGeometryInfo
     {
-        SPtr<Geometry>  geometry;
-        glm::vec4       baseColor;
-        int32_t         textureIndex;
-        int32_t         textureUV;
-        int32_t         normalMapIndex;
-        int32_t         normalUV;
+        SPtr<Geometry>   geometry;
+        GeometryIndex    geometryIndex;
+        Handle           hMaterial;
+        nbl::BoundingBox aabb;
     };
 
     struct TextureInfo
@@ -99,6 +101,7 @@ private:
     TextureManager* mTextureManager;
     SceneGeometry*  mSceneGeometry;
     LightSystem*    mLightSystem;
+    MaterialPool*   mMaterialPool;
     SceneV2*        mScene;
 
     // Deduced texture format based on Material usages

@@ -123,6 +123,13 @@ namespace RHI
             shaderInfos[shaderInfo.shaderStage] = shaderInfo;
             return *this;
         }
+
+        GraphicsPipelineCreateInfo& addShader(const ShaderStage stage, const std::filesystem::path& path)
+        {
+            const auto s = toVulkanStage(stage);
+            shaderInfos[s] = { path, s, "main" };
+            return *this;
+        }
     end_PipelineCreateInfoStruct;
 
     class GraphicsPipeline final : public Pipeline

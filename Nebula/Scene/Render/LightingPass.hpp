@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RenderPass.hpp"
+#include "Scene/TLASManager.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 struct Lighting_Input
@@ -10,6 +11,8 @@ struct Lighting_Input
     SPtr<RHI::Image>        albedo;
     SPtr<RHI::Descriptor>   sceneDescriptor;
     SPtr<RHI::Image>        ssao;
+    SPtr<RHI::Image>        lightingParams;
+    TLASManager*            tlasManager;
     SPtr<RHI::Image>        cubeMap;
     SPtr<RHI::Buffer>       skyData;
 };
@@ -37,12 +40,9 @@ public:
 
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
-    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
 
-    void setShadowMode(const int32_t mode) noexcept
-    {
-        mPushConstants.shadowMode = mode;
-    }
+    void setShadowMode(int32_t mode) noexcept;
 
 private:
     void createResources() noexcept;

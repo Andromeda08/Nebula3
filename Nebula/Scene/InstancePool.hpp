@@ -8,14 +8,11 @@
 struct GPUInstanceData
 {
     glm::mat4 model;
-    glm::vec4 solidColor;
-    int32_t   textureIndex;
-    int32_t   geometryIndex;
-    uint64_t  blasAddress = 0;
-    int32_t   normalIndex = -1;
-    int32_t   _p0 = 0;
-    int32_t   _p1 = 0;
-    int32_t   _p2 = 0;
+    glm::vec4 min;
+    glm::vec4 max;
+    uint64_t  blasAddress   = 0;
+    int32_t   materialIndex = -1;
+    int32_t   geometryIndex = -1;
 };
 
 using InstanceIndex = uint32_t;

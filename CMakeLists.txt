@@ -12,12 +12,15 @@ nrt_build()
 add_subdirectory(External/fastgltf  EXCLUDE_FROM_ALL)
 add_subdirectory(External/glm       EXCLUDE_FROM_ALL)
 add_subdirectory(External/json      EXCLUDE_FROM_ALL)
-add_subdirectory(External/ktx       EXCLUDE_FROM_ALL)
 add_subdirectory(External/vma       EXCLUDE_FROM_ALL)
+add_subdirectory(External/fmt       EXCLUDE_FROM_ALL)
 add_subdirectory(External/gemmi     EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL       EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL_ttf   EXCLUDE_FROM_ALL)
 add_subdirectory(External/spdlog    EXCLUDE_FROM_ALL)
+add_subdirectory(External/meshopt   EXCLUDE_FROM_ALL)
+
+add_compile_options(/arch:AVX2)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -30,6 +33,63 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
+set(Nebula_RenderGraph_Sources
+    Nebula/RenderGraph/RenderGraph.hpp
+    Nebula/RenderGraph/RGConfiguration.hpp
+    Nebula/RenderGraph/RenderGraphTraits.hpp
+    Nebula/RenderGraph/RenderGraph.cpp
+    Nebula/RenderGraph/Node.hpp
+    Nebula/RenderGraph/Node.cpp
+    Nebula/RenderGraph/DependencyInfo.hpp
+    Nebula/RenderGraph/RenderGraphContext.hpp
+    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.hpp
+    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.cpp
+    Nebula/RenderGraph/RenderGraphContext.cpp
+    Nebula/RenderGraph/RGConfiguration.cpp
+    Nebula/RenderGraph/Compiler/RenderGraphCompiler.hpp
+    Nebula/RenderGraph/Compiler/GraphAlgorithm.hpp
+    Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
+    Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
+    Nebula/RenderGraph/RenderPath/Resource.hpp
+    Nebula/RenderGraph/Compiler/RenderGraphCompiler.cpp
+    Nebula/RenderGraph/Compiler/GraphAlgorithm.cpp
+    Nebula/RenderGraph/RenderPath/RenderPath.hpp
+    Nebula/RenderGraph/RenderPath/RenderPath.cpp
+    Nebula/RenderGraph/RenderPath/Resource.cpp
+    Nebula/RenderGraph/RenderPath/PassFactory.hpp
+    Nebula/RenderGraph/RenderPath/PassFactory.cpp
+    Nebula/RenderGraph/DependencyInfo.cpp
+    Nebula/RenderGraph/Builder/RenderGraphBuilder.hpp
+    Nebula/RenderGraph/Builder/RenderGraphBuilder.cpp
+    Nebula/RenderGraph/Compiler/Export.hpp
+    Nebula/RenderGraph/Compiler/Export.cpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture2DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/Texture3DResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.hpp
+    Nebula/RenderGraph/RenderPath/Resources/SceneResource.hpp
+    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
+)
+
+set(Nebula_Molecule_Sources
+    Nebula/Scene/Molecule/CIFData.hpp
+    Nebula/Scene/Molecule/CIFData.cpp
+    Nebula/Scene/Molecule/CIFParser.cpp
+    Nebula/Scene/Molecule/CIFParser.hpp
+    Nebula/Scene/Molecule/CIFGeometry.hpp
+    Nebula/RenderPass/Molecule/SDFComputePass.cpp
+    Nebula/RenderPass/Molecule/StructurePass.hpp
+    Nebula/RenderPass/Molecule/StructurePass.cpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.hpp
+    Nebula/RenderPass/Molecule/SDFRaymarchPass.cpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.hpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.cpp
+    Nebula/Scene/Molecule/RenderingOptions.hpp
+    Nebula/RenderPass/Molecule/SDFComputePass.hpp
+    Nebula/Scene/Molecule/CIFGeometry.cpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.hpp
+    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.cpp
+)
+
 add_executable(Nebula3
     ${IMGUI_FILES} ${IMNODES_FILES}
     External/mikktspace/mikktspace.c
@@ -37,7 +97,6 @@ add_executable(Nebula3
 
     Nebula/Impl/pch.hpp
     Nebula/Core/Configuration.hpp
-    Nebula/VulkanRHI/RHIConfiguration.hpp
     Nebula/Core/AppSpecification.hpp
     Nebula/Core/Types.hpp
     Nebula/Core/App.hpp
@@ -103,43 +162,13 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.cpp
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp
-    Nebula/RenderPass/HelloTrianglePass.hpp
-    Nebula/RenderGraph/RenderGraph.hpp
-    Nebula/RenderGraph/RGConfiguration.hpp
-    Nebula/RenderGraph/RenderGraphTraits.hpp
-    Nebula/RenderGraph/RenderGraph.cpp
-    Nebula/RenderGraph/Node.hpp
-    Nebula/RenderGraph/Node.cpp
-    Nebula/RenderGraph/DependencyInfo.hpp
-    Nebula/RenderGraph/RenderGraphContext.hpp
-    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.hpp
-    Nebula/RenderGraph/Editor/RenderGraphEditorComponent.cpp
-    Nebula/RenderGraph/RenderGraphContext.cpp
-    Nebula/RenderGraph/RGConfiguration.cpp
     Nebula/RenderPass/Special/ScenePass.hpp
     Nebula/RenderPass/Pass.hpp
-    Nebula/RenderGraph/Compiler/RenderGraphCompiler.hpp
-    Nebula/RenderGraph/Compiler/GraphAlgorithm.hpp
-    Nebula/RenderGraph/Compiler/ResourceOptimizer.hpp
-    Nebula/RenderGraph/Compiler/ResourceOptimizer.cpp
-    Nebula/RenderGraph/RenderPath/Resource.hpp
     Nebula/RenderPass/Special/LightingPass.hpp
     Nebula/RenderPass/Special/AmbientOcclusionPass.hpp
     Nebula/RenderPass/Special/AntiAliasingPass.hpp
     Nebula/RenderPass/Special/PresentPass.hpp
-    Nebula/RenderGraph/Compiler/RenderGraphCompiler.cpp
-    Nebula/RenderGraph/Compiler/GraphAlgorithm.cpp
-    Nebula/RenderGraph/RenderPath/RenderPath.hpp
-    Nebula/RenderGraph/RenderPath/RenderPath.cpp
-    Nebula/RenderGraph/RenderPath/Resource.cpp
-    Nebula/RenderGraph/RenderPath/PassFactory.hpp
-    Nebula/RenderGraph/RenderPath/PassFactory.cpp
-    Nebula/RenderGraph/DependencyInfo.cpp
     Nebula/VulkanRHI/Allocation.hpp
-    Nebula/RenderGraph/Builder/RenderGraphBuilder.hpp
-    Nebula/RenderGraph/Builder/RenderGraphBuilder.cpp
-    Nebula/RenderGraph/Compiler/Export.hpp
-    Nebula/RenderGraph/Compiler/Export.cpp
     Nebula/RenderPass/Special/Combine.hpp
     Nebula/RenderPass/RenderPass.hpp
     Nebula/Scene/Types/Vertex.hpp
@@ -147,7 +176,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
     Nebula/Scene/Scene.hpp
     Nebula/Scene/Types/Light.hpp
-    Nebula/Scene/SceneConfiguration.hpp
     Nebula/Scene/Scene.cpp
     Nebula/Scene/Components/SceneInfoComponent.hpp
     Nebula/Scene/Components/SceneInfoComponent.cpp
@@ -155,19 +183,12 @@ add_executable(Nebula3
     Nebula/Scene/Geometry/Geometry.cpp
     Nebula/Scene/Types/CameraData.hpp
     Nebula/Scene/Camera/ICamera.hpp
-    Nebula/Scene/Molecule/CIFData.hpp
-    Nebula/Scene/Molecule/CIFData.cpp
-    Nebula/Scene/Molecule/CIFParser.cpp
-    Nebula/Scene/Molecule/CIFParser.hpp
-    Nebula/Scene/Molecule/CIFGeometry.hpp
     Nebula/Scene/Object.hpp
     Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
     Nebula/VulkanRHI/Detail/BufferTraits.hpp
-    Nebula/RenderPass/Molecule/SDFComputePass.hpp
-    Nebula/Scene/Molecule/CIFGeometry.cpp
     Nebula/VulkanRHI/Detail/Resource.hpp
     Nebula/VulkanRHI/Detail/Resource.cpp
     Nebula/VulkanRHI/Allocation.cpp
@@ -175,30 +196,14 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
     Nebula/Scene/TextureManager.hpp
     Nebula/Scene/TextureManager.cpp
-    Nebula/RenderPass/Molecule/SDFComputePass.cpp
-    Nebula/RenderPass/Molecule/StructurePass.hpp
-    Nebula/RenderPass/Molecule/StructurePass.cpp
-    Nebula/RenderPass/Molecule/SDFRaymarchPass.hpp
-    Nebula/RenderPass/Molecule/SDFRaymarchPass.cpp
-    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.hpp
-    Nebula/Scene/Scenes/MoleculeScene/MoleculeSceneParamsComponent.cpp
-    Nebula/Scene/Molecule/RenderingOptions.hpp
     Nebula/VulkanRHI/Texture.hpp
     Nebula/VulkanRHI/Texture.cpp
-    Nebula/RenderGraph/RenderPath/Resources/Texture2DResource.hpp
-    Nebula/RenderGraph/RenderPath/Resources/Texture3DResource.hpp
-    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.hpp
-    Nebula/RenderGraph/RenderPath/Resources/SceneResource.hpp
-    Nebula/RenderGraph/RenderPath/Resources/ResourceRegistry.cpp
-    Nebula/Core/AppSpecification.cpp
     Nebula/Core/Platform.hpp
     Nebula/RenderPass/Special/GBufferPass.hpp
     Nebula/Window/SDLWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp
     Nebula/Window/SDLWindow.cpp
     Nebula/Scene/Camera/FlyingCamera.cpp
-    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.hpp
-    Nebula/Scene/Scenes/MoleculeScene/MoleculeScene.cpp
     Nebula/Core/Ranges.hpp
     Nebula/Math/HeightMap.hpp
     Nebula/Core/Random.hpp
@@ -246,7 +251,6 @@ add_executable(Nebula3
     Nebula/Scene/SceneV2.cpp
     Nebula/Window/SplashWindow.hpp
     Nebula/Window/SplashWindow.cpp
-    # Nebula/Scene/Render/FFX_Denoiser.hpp
     Nebula/Scene/Render/ProceduralSky.hpp
     Nebula/Scene/Render/ProceduralSky.cpp
     Nebula/VulkanRHI/Detail/Extensions.hpp
@@ -257,6 +261,48 @@ add_executable(Nebula3
     Nebula/Scene/Render/TonemapPass.cpp
     Nebula/Scene/GLTF/GLTFLoader.hpp
     Nebula/Scene/GLTF/GLTFLoader.cpp
+    Nebula/Input/DualSense.hpp
+    Nebula/Input/Gamepad.hpp
+    Nebula/Scene/Render/FullRT.hpp
+    Nebula/Scene/Render/FullRT.cpp
+    Nebula/Input/Gamepad.cpp
+    Nebula/Math/BoundingBox.hpp
+    Nebula/Math/vec.hpp
+    Nebula/Scene/Render/AABBOverlayPass.cpp
+    Nebula/Scene/Render/AABBOverlayPass.hpp
+    Nebula/Cleanup/Scene.hpp
+    Nebula/Cleanup/Geometry/GeometrySystem.hpp
+    Nebula/Cleanup/VertexTypes.hpp
+    Nebula/Cleanup/VertexTypes.cpp
+    Nebula/Cleanup/Math/BoundingBox.hpp
+    Nebula/Cleanup/Math/BoundingBox.cpp
+    Nebula/Cleanup/Geometry/Geometry.hpp
+    Nebula/Cleanup/Geometry/Meshlet.hpp
+    Nebula/Cleanup/Geometry/Geometry.cpp
+    Nebula/Cleanup/SceneManager.hpp
+    Nebula/Cleanup/IO/SceneLoader.hpp
+    Nebula/Cleanup/SceneManager.cpp
+    Nebula/Cleanup/IO/SceneLoader.cpp
+    Nebula/Cleanup/Geometry/TangentGeneration.hpp
+    Nebula/Cleanup/Geometry/TangentGeneration.cpp
+    Nebula/Cleanup/Timer.hpp
+    Nebula/Cleanup/Timer.cpp
+    Nebula/Cleanup/Math/Transform.hpp
+    Nebula/Cleanup/Math/Transform.cpp
+    Nebula/Cleanup/Object.hpp
+    Nebula/Cleanup/Material/Material.hpp
+    Nebula/Cleanup/Material/MaterialSystem.hpp
+    Nebula/Cleanup/Instance/InstancePool.hpp
+    Nebula/Cleanup/Geometry/GeometrySystem.cpp
+    Nebula/Cleanup/Geometry/GeometrySystemDebugRenderPass.hpp
+    Nebula/Scene/Renderer/Pass.hpp
+    Nebula/Scene/Renderer/GBufferPass.hpp
+    Nebula/Scene/Renderer/GBufferPass.cpp
+    Nebula/Scene/Renderer/SceneRenderer.hpp
+    Nebula/Scene/Render/BloomPass.hpp
+    Nebula/Scene/Render/BloomPass.cpp
+    Nebula/Scene/DataV2/SlotPool.hpp
+    Nebula/Scene/DataV2/MaterialPool.hpp
 )
 
 target_include_directories(Nebula3 PUBLIC
@@ -268,7 +314,7 @@ target_include_directories(Nebula3 PUBLIC
     External/imgui/misc/cpp
     External/imnodes
     External/json/include
-    External/ktx/lib/include
+    External/meshopt/src
     External/mikktspace
     External/stb
     External/vma/include
@@ -283,13 +329,13 @@ target_link_libraries(Nebula3 PUBLIC
     ${NLOHMANN_JSON_TARGET_NAME}
     ${Vulkan_LIBRARIES}
     glm::glm
-    gemmi::gemmi_cpp
+    # gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
     SDL3::SDL3
     SDL3_ttf::SDL3_ttf
     spdlog::spdlog
-    ktx
     fastgltf::fastgltf
+    meshoptimizer
 )
 
 target_compile_definitions(Nebula3 PUBLIC

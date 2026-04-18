@@ -23,7 +23,7 @@ TLASManager::TLASManager(const TLASManagerCreateInfo& createInfo)
     });
 
     auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-        .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv").string())
         .addDescriptorSetLayout(mUpdateDescriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(TLASUpdatePushConstants) })
         .setDebugName("TLAS_Instance_Update");
@@ -187,12 +187,12 @@ void TLASManager::execute_TLASUpdateInstances(const RHI::CommandList* pCommandLi
 
     const TLASUpdatePushConstants pc = { .size = mInstancePool->getSize() };
 
-    mUpdatePipeline->bind(pCommandList->getHandle());
-    mUpdatePipeline->bindDescriptorSet(pCommandList->getHandle(), mUpdateDescriptor->getSet(0));
-    mUpdatePipeline->pushConstants(pCommandList->getHandle(), &pc);
+    mUpdatePipeline->bind(pCommandList);
+    mUpdatePipeline->bindDescriptorSet(pCommandList, mUpdateDescriptor->getSet(0));
+    mUpdatePipeline->pushConstants(pCommandList, &pc);
 
     const auto x = (pc.size + 63) / 64;
-    mUpdatePipeline->dispatch(pCommandList->getHandle(), x, 1, 1);
+    mUpdatePipeline->dispatch(pCommandList, x, 1, 1);
 
     pCommandList->endLabel();
 }
@@ -238,7 +238,14 @@ void TLASManager::execute_TLASBuild(const RHI::CommandList* pCommandList) const 
             .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR)
             .setBuffer(mBackingBuffer->getHandle())
             .setSize(VK_WHOLE_SIZE);
-        const std::array barriers = { b1, b2 };
+        const auto b3 = vk::BufferMemoryBarrier2()
+            .setBuffer(mInstanceBuffer->getHandle())
+            .setSize(VK_WHOLE_SIZE)
+            .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
+            .setDstAccessMask(vk::AccessFlagBits2::eAccelerationStructureReadKHR | vk::AccessFlagBits2::eShaderRead)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR | vk::PipelineStageFlagBits2::eAccelerationStructureCopyKHR);
+        const std::array barriers = { b1, b2, b3 };
         const auto dependencyInfo = vk::DependencyInfo()
             .setBufferMemoryBarriers(barriers);
         pCommandList->getHandle().pipelineBarrier2(dependencyInfo);

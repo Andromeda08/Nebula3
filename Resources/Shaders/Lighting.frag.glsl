@@ -1,20 +1,25 @@
 #version 460
 
+#define nbl_RT
+
+#ifdef nbl_RT
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_ray_query : enable
+#endif
 
 #define MAX_LIGHTS 256
 
 struct GPULightData
 {
-    vec4  position;
-    vec4  color;
+    vec3  vector;
+    int   lightType;
+    vec3  color;
     float intensity;
+    float radius;
     int   enabled;
     int   castsShadow;
     int   _p0;
 };
-
 // Input Attributes
 // ========================================
 layout (location = 0) in vec2 inUV;
@@ -31,6 +36,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
     mat4  viewInverse;
     mat4  projInverse;
     vec4  eye;
+    vec4  frustumPlanes[6];
     float nearPlane;
     float farPlane;
 } camera;
@@ -39,7 +45,9 @@ layout (set = 0, binding = 1) readonly buffer LightUniform {
     GPULightData data[MAX_LIGHTS];
 } lights;
 
+#ifdef nbl_RT
 layout (set = 0, binding = 2) uniform accelerationStructureEXT topLevelAS;
+#endif
 
 layout (set = 1, binding = 0) uniform sampler2D   uPositionDepth;
 layout (set = 1, binding = 1) uniform sampler2D   uNormal;
@@ -76,6 +84,8 @@ vec2 randomDisk(int i, int numSamples)
     return vec2(r * cos(theta), r * sin(theta));
 }
 
+#ifdef nbl_RT
+
 // Return shadowFactor or 1.0f
 float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
 {
@@ -97,14 +107,14 @@ float castSoftShadow(vec3 origin, GPULightData light, float r)
     float shadow = 0.0;
     const int samples = 16;
 
-    vec3 lightDir = light.position.xyz - origin;
+    vec3 lightDir = light.vector.xyz - origin;
     vec3 b1, b2;
     branchlessONB(lightDir, b1, b2);
 
     for (int i = 0; i < samples; i++)
     {
         vec2 rnd = randomDisk(i, samples);
-        vec3 jitteredLightPos = light.position.xyz + r * (rnd.x * b1 + rnd.y * b2);
+        vec3 jitteredLightPos = light.vector.xyz + r * (rnd.x * b1 + rnd.y * b2);
 
         vec3  dir  = jitteredLightPos - origin.xyz;
         vec3  L    = normalize(dir);
@@ -115,6 +125,8 @@ float castSoftShadow(vec3 origin, GPULightData light, float r)
 
     return shadow / float(samples);
 }
+
+#endif
 
 void main()
 {
@@ -158,7 +170,9 @@ void main()
 
     if (shadowMode != 0 && sunNdotL > 0.0)
     {
+        #ifdef nbl_RT
         sunContrib *= castShadow(wPos, sunDirection, 0.01, 1000.0);
+        #endif
     }
 
     finalColor += sunContrib;
@@ -172,7 +186,7 @@ void main()
 
         GPULightData light = lights.data[i];
 
-        vec3  lightDir = light.position.xyz - wPos;
+        vec3  lightDir = light.vector.xyz - wPos;
         float dist     = length(lightDir);
         vec3  L        = normalize(lightDir);
 
@@ -186,6 +200,7 @@ void main()
             continue;
         }
 
+        #ifdef nbl_RT
         if (shadowMode != 0 && light.castsShadow == 1)
         {
             vec3 origin = wPos;
@@ -202,6 +217,7 @@ void main()
                 color *= castSoftShadow(origin, light, 1.0);
             }
         }
+        #endif
 
         finalColor += color.rgb;
     }

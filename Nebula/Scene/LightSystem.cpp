@@ -5,16 +5,6 @@
 #include "Core/Ranges.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
-struct GPULightData
-{
-    glm::vec4   position;
-    glm::vec4   color;
-    float       intensity;
-    int32_t     enabled;
-    int32_t     castsShadow;
-    int32_t     _p0;
-};
-
 LightSystem::LightSystem(const SPtr<RHI::VulkanRHI>& rhi, const std::vector<Light>& initialLights)
 : mRHI(rhi)
 {
@@ -68,7 +58,7 @@ void LightSystem::removeLight(const uint64_t idx) noexcept
     exitOnAssert(idx < mLights.size(), "Out of bounds index");
 
     mValidity[idx] = false;
-    mLights[idx].enabled = false;
+    mLights[idx].isEnabled = false;
 }
 
 void LightSystem::upload() noexcept
@@ -97,13 +87,7 @@ void LightSystem::upload() noexcept
             .setSize(elementSize);
 
         regions.push_back(region);
-        data.push_back({
-            .position = glm::vec4(mLights[lightIndex].position, 1.0f),
-            .color = glm::vec4(mLights[lightIndex].color, 1.0f),
-            .intensity = mLights[lightIndex].intensity,
-            .enabled = mLights[lightIndex].enabled ? 1 : 0,
-            .castsShadow = mLights[lightIndex].castsShadow ? 1 : 0,
-        });
+        data.push_back(mLights[lightIndex].toGpuData());
     }
 
     // Set staging data then copy to LightsBuffer

@@ -10,6 +10,20 @@ namespace RHI
     class Buffer;
     class Image;
 
+    struct BufferRegion
+    {
+        uint64_t srcOffset;
+        uint64_t dstOffset;
+        uint64_t size;
+    };
+
+    struct BufferCopyInfo
+    {
+        Buffer*                     src     = nullptr;
+        Buffer*                     dst     = nullptr;
+        std::vector<BufferRegion>   regions = {};
+    };
+
     struct BufferImageCopyInfo
     {
         Buffer*  pSrcBuffer;
@@ -41,7 +55,11 @@ namespace RHI
         void beginLabel(const std::string& name) const;
         void endLabel() const;
 
+        void setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const;
+
         void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;
+
+        void copyBuffer(const BufferCopyInfo& bufferCopyInfo) const;
 
         [[nodiscard]] vk::CommandBuffer getHandle() const noexcept { return mCommandBuffer; }
 

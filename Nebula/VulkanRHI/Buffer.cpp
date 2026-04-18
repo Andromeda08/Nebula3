@@ -48,10 +48,10 @@ namespace RHI
         return &mDescriptorBufferInfo.value();
     }
 
-    void Buffer::map(void* ptr) const
+    void* Buffer::map() const
     {
         nbl_ASSERT_MAPPABLE_MEMORY();
-        mAllocation->mapMemory(ptr);
+        return mAllocation->getAllocationInfo().pMappedData;
     }
 
     void Buffer::unmap() const
@@ -72,5 +72,18 @@ namespace RHI
         nbl_ASSERT_MAPPABLE_MEMORY();
         const auto result = vmaCopyAllocationToMemory(mDevice->getAllocator(), mAllocation->getAllocation(), offset, pData, size);
         nbl_ASSERT(result == VK_SUCCESS, "Failed to copy from memory to allocation!");
+    }
+
+    vk::BufferMemoryBarrier2 Buffer::getBarrier(const BufferUsage srcUsage, const BufferUsage dstUsage) const
+    {
+        const auto [ srcAccess, srcStage ] = getBarrierFlagsForBufferUsage(srcUsage);
+        const auto [ dstAccess, dstStage ] = getBarrierFlagsForBufferUsage(dstUsage);
+        return vk::BufferMemoryBarrier2()
+            .setBuffer(mBuffer)
+            .setSize(VK_WHOLE_SIZE)
+            .setSrcAccessMask(srcAccess)
+            .setDstAccessMask(dstAccess)
+            .setSrcStageMask(srcStage)
+            .setDstStageMask(dstStage);
     }
 }

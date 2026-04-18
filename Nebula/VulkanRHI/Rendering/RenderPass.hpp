@@ -10,6 +10,7 @@
 #include "Core/Macro.hpp"
 #include "VulkanRHI/Image.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
+#include "VulkanRHI/Commands/CommandList.hpp"
 
 namespace RHI
 {
@@ -34,6 +35,8 @@ namespace RHI
         nbl_CTOR(RenderPass);
 
         void execute(const vk::CommandBuffer& commandList, const std::function<void(const vk::CommandBuffer&)>& lambda) const;
+
+        void execute(const CommandList* commandList, const std::function<void(const CommandList*)>& lambda) const;
 
         void setColorAttachment(uint32_t index, const Attachment& attachment);
 

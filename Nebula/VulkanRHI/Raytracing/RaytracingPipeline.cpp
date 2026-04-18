@@ -70,7 +70,10 @@ namespace RHI
             .setLayout(mPipelineLayout);
 
         const vk::Result result = mDevice->getHandle().createRayTracingPipelinesKHR(nullptr, nullptr, 1, &raytracingPipelineCreateInfo, nullptr, &mPipeline);
-        assert(result == vk::Result::eSuccess);
+        if (result != vk::Result::eSuccess)
+        {
+            exitWithError("Failed to create RT pipeline: {}", vk::to_string(result));
+        }
 
         mDevice->nameObject<vk::Pipeline>({
             .debugName = createInfo.debugName,

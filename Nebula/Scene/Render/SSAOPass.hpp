@@ -34,7 +34,7 @@ public:
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
     // Get the current SSAO result image (depending on mRunBlurPass)
-    [[nodiscard]] const SPtr<RHI::Image>& getResult() const noexcept;
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
 
     // Get the result Image of the SSAO RenderPass
     [[nodiscard]] const SPtr<RHI::Image>& getSSAOResult() const noexcept;

@@ -7,7 +7,7 @@ VoxelScene::VoxelScene(const SceneCreateInfo& createInfo)
 {
     mCube = addGeometry<Cube>(Cube::Params{});
 
-    const auto vertexSize = mCube->vertexCount() * sizeof(Vertex);
+    const auto vertexSize = mCube->getVertexCount() * sizeof(Vertex);
     mVertexBuffer = mRHI->createBuffer({
         .size  = vertexSize,
         .type  = RHI::BufferType::Vertex,
@@ -15,7 +15,7 @@ VoxelScene::VoxelScene(const SceneCreateInfo& createInfo)
     });
     mRHI->immediate_uploadToBuffer(mVertexBuffer.get(), mCube->getVertices().data(), vertexSize);
 
-    const auto indexSize = mCube->indexCount() * sizeof(uint32_t);
+    const auto indexSize = mCube->getIndexCount() * sizeof(uint32_t);
     mIndexBuffer = mRHI->createBuffer({
         .size  = indexSize,
         .type  = RHI::BufferType::Index,

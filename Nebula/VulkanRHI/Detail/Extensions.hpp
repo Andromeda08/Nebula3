@@ -133,6 +133,7 @@ namespace RHI
         vk::PhysicalDeviceVulkan13Properties,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceVulkan13Features()
+                .setShaderDemoteToHelperInvocation(true)
                 .setMaintenance4(true)
                 .setDynamicRendering(true)
                 .setSynchronization2(true)
@@ -224,18 +225,6 @@ namespace RHI
         }
     );
 
-    // VK_EXT_descriptor_heap
-    def_VulkanExtProps(
-        DescriptorHeapEXT,
-        vk::EXTDescriptorHeapExtensionName,
-        vk::PhysicalDeviceDescriptorHeapFeaturesEXT,
-        vk::PhysicalDeviceDescriptorHeapPropertiesEXT,
-        [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceDescriptorHeapFeaturesEXT()
-                .setDescriptorHeap(true);
-        }
-    );
-
     // VK_NV_ray_tracing_linear_swept_spheres
     def_VulkanExt(
         RayTracingLinearSweptSpheresNV,
@@ -271,7 +260,7 @@ namespace RHI
         }
     );
 
-    // VK_NV_ray_tracing_linear_swept_spheres
+    // VK_KHR_ray_tracing_position_fetch
     def_VulkanExt(
         RayTracingPositionFetch,
         vk::KHRRayTracingPositionFetchExtensionName,
@@ -279,6 +268,17 @@ namespace RHI
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceRayTracingPositionFetchFeaturesKHR()
                 .setRayTracingPositionFetch(true);
+        }
+    );
+
+    // VK_NV_ray_tracing_validation
+    def_VulkanExt(
+        RayTracingValidation,
+        vk::NVRayTracingValidationExtensionName,
+        vk::PhysicalDeviceRayTracingValidationFeaturesNV,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceRayTracingValidationFeaturesNV()
+                .setRayTracingValidation(true);
         }
     );
     #pragma endregion

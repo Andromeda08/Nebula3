@@ -20,14 +20,34 @@ ConfigurationData& Configuration::getConfig()
     return sInstance->mData;
 }
 
-std::string Configuration::getShaderFilePath(const std::string& shaderFile) noexcept
+std::filesystem::path Configuration::getSceneFilePath(const std::string& sceneFile) noexcept
 {
-    return std::format("{}/{}", sInstance->mData.app.shadersDir, shaderFile);
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.scenesDirName, sceneFile);
 }
 
-std::string Configuration::getTextureFilePath(const std::string& textureFile) noexcept
+std::filesystem::path Configuration::getFontFilePath(const std::string& fontFile) noexcept
 {
-    return std::format("{}/{}", sInstance->mData.scenes.texturesDir, textureFile);
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.fontsDirName, fontFile);
+}
+
+std::filesystem::path Configuration::getShaderFilePath(const std::string& shaderFile) noexcept
+{
+    const auto& config = getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.shadersBinDirName, shaderFile);
+}
+
+std::filesystem::path Configuration::getShaderSourceFilePath(const std::string& shaderFile) noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.shadersDirName, shaderFile);
+}
+
+std::filesystem::path Configuration::getTextureFilePath(const std::string& textureFile) noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.texturesDirName, textureFile);
 }
 
 Configuration::Configuration()

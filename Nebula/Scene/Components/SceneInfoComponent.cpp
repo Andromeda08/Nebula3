@@ -16,7 +16,6 @@ void SceneInfoComponent::draw()
     ImGui::Begin("Scene Info");
     ImGui::Text("Name: %s", mScene->mName.c_str());
 
-    // ============================
     // Lights
     // ============================
     auto* lights = mScene->mLightSystem.get();
@@ -25,11 +24,12 @@ void SceneInfoComponent::draw()
     if (ImGui::SmallButton("Add"))
     {
         mLightIndex = lights->addLight({
-            .position    = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
+            .vector      = glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f)),
             .color       = Random::getVector<glm::vec3>(),
             .intensity   = 1500.0f,
-            .enabled     = true,
+            .isEnabled   = true,
             .castsShadow = true,
+            .radius      = 10.0f,
             .type        = LightType::Point,
             .name        = "Light",
         });
@@ -69,10 +69,10 @@ void SceneInfoComponent::draw()
         ImGui::InputText("Name", &light.name);
 
         bool changed = false;
-        changed |= ImGui::InputFloat3(posLabel.data(), glm::value_ptr(light.position));
+        changed |= ImGui::DragFloat3(posLabel.data(), glm::value_ptr(light.vector), 0.1f, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
         changed |= ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
-        changed |= ImGui::InputFloat("Intensity", &light.intensity);
-        changed |= ImGui::Checkbox("Enabled", &light.enabled);
+        changed |= ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, std::numeric_limits<float>::max());
+        changed |= ImGui::Checkbox("Enabled", &light.isEnabled);
         changed |= ImGui::Checkbox("Shadows", &light.castsShadow);
 
         if (changed)
@@ -81,8 +81,9 @@ void SceneInfoComponent::draw()
         }
     }
 
-    ImGui::Separator();
-    ImGui::Text("Set Shadow Mode");
+    // Shadows
+    // ============================
+    ImGui::SeparatorText("Shadows");
     if (ImGui::SmallButton("Disable"))
     {
         mScene->mLightingPass->setShadowMode(0);
@@ -92,5 +93,17 @@ void SceneInfoComponent::draw()
     {
         mScene->mLightingPass->setShadowMode(1);
     }
+
+    // Culling
+    // ============================
+    ImGui::SeparatorText("Culling");
+    ImGui::Checkbox("Enable Culling", &mScene->mEnableCulling);
+    ImGui::Checkbox("Visualize AABBs", &mScene->mVisualizeAABBs);
+
+    ImGui::SeparatorText("Culling Stats");
+    ImGui::Text("Object Count: %d", mScene->mLastCull.totalObjectCount);
+    ImGui::Text("Culled Count: %d (%.3f)", mScene->mLastCull.culledCount, mScene->mLastCull.percent);
+    ImGui::Text("Time: %.3fms", mScene->mLastCull.cullTimeMs);
+
     ImGui::End();
 }

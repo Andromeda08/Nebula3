@@ -9,6 +9,27 @@
 
 namespace RHI
 {
+    enum class ShaderStage
+    {
+        Vertex,
+        Fragment,
+        Mesh,
+        Task,
+    };
+
+    constexpr vk::ShaderStageFlagBits toVulkanStage(const ShaderStage& stage)
+    {
+        using enum ShaderStage;
+        switch (stage)
+        {
+            case Vertex:    return vk::ShaderStageFlagBits::eVertex;
+            case Fragment:  return vk::ShaderStageFlagBits::eFragment;
+            case Mesh:      return vk::ShaderStageFlagBits::eMeshEXT;
+            case Task:      return vk::ShaderStageFlagBits::eTaskEXT;
+        }
+        std::unreachable();
+    }
+
     enum class PipelineType
     {
         Graphics,
@@ -32,6 +53,11 @@ namespace RHI
             std::string                             debugName               = "Unknown Pipeline";   \
             vk::RenderPass                          renderPass              = nullptr;              \
             SPtr<Device>                            device                  = nullptr;              \
+            template <class T> \
+            T##PipelineCreateInfo& setPushConstantRange(const vk::ShaderStageFlags stages) {        \
+                pushConstantRange = { stages, 0, sizeof(T) };                                       \
+                return* this;                                                                       \
+            }                                                                                       \
             T##PipelineCreateInfo& setPushConstantRange(const vk::PushConstantRange& value) {       \
                 pushConstantRange = value;                                                          \
                 return* this;                                                                       \

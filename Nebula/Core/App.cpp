@@ -1,17 +1,18 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "../Cleanup/Math/Transform.hpp"
 #include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
-#include "RenderPass/HelloTrianglePass.hpp"
 #include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
-#include "Scene/Scenes/MoleculeScene/MoleculeScene.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "Window/SplashWindow.hpp"
 
 App* gApplication = nullptr;
+
+nbl::Transform gTestTransform = {};
 
 App::App()
 {
@@ -21,6 +22,9 @@ App::App()
         .size  = config.app.windowSize,
         .title = config.app.windowTitle,
     });
+
+    mGamepadManager = makeUnique<GamepadManager>();
+
     SplashWindow::get().setMessage("Initializing VulkanRHI...");
     mVulkanRHI = RHI::VulkanRHI::create({
         .pWindow = mWindow,
@@ -28,22 +32,29 @@ App::App()
 
     SplashWindow::get().setMessage("Initializing UserInterface...");
     mUserInterface = UserInterface::create({
-        .fontFile = "Resources/Fonts/GeistMono-Regular.ttf",
+        .fontFile = "GeistMono-Regular.ttf",
         .window   = mWindow,
         .rhi      = mVulkanRHI,
     });
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
-    // mRenderGraphContext = rg::RenderGraphContext::create({
-    //     .rhi = mVulkanRHI,
-    // });
-    // mUserInterface->addComponent<rg::RenderGraphEditorComponent>(mRenderGraphContext);
-
-    // MoleculeScene::registerUIComponent(dynamic_cast<MoleculeScene*>(mScene.get()), mUserInterface.get());
-
-    SplashWindow::get().setMessage(std::format("Loading Scene (zorah_main_public.gltf)..."));
     mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
     mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+
+    // Version 2
+    // mUserInterface->addComponent<nbl::TransformEditorComponent>(&gTestTransform);
+
+    // const auto geometrySystemConfig = nbl::GeometrySystemConfig {
+    //     .generateMeshlets = true,
+    //     .createBLAS       = mVulkanRHI->getRaytracingSupport(),
+    // };
+    // mGeometrySystem = makeUnique<nbl::GeometrySystem>(geometrySystemConfig, mVulkanRHI);
+    //
+    // mSceneManager = makeUnique<nbl::SceneManager>(mGeometrySystem.get());
+    //
+    // mSceneManager->loadScene(Configuration::getSceneFilePath("bistro.glb"));
+    //
+    // mGeometrySystemDebugRenderPass = makeUnique<nbl::GeometrySystemDebugRenderPass>(mVulkanRHI, mSceneManager->getActiveScene(), mGeometrySystem.get(), mScene->getSceneDescriptor().get());
 
     mWindow->reveal();
 }
@@ -67,8 +78,6 @@ void App::run_renderPathLoop()
         commandList = graphicsCommandPool->allocate();
     }
 
-    const auto helloTrianglePass = std::make_unique<HelloTrianglePass>(mVulkanRHI);
-
     // Main Loop
     while (mRunning)
     {
@@ -82,6 +91,9 @@ void App::run_renderPathLoop()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            // Look for Gamepad connection events
+            mGamepadManager->onGamepadEvent(event);
+
             // Let ImGui process events
             mUserInterface->processEvents(event);
             // If ImGui didn't want to consume any input continue with Scene handlers.
@@ -100,7 +112,13 @@ void App::run_renderPathLoop()
                     }
                     break;
                 }
-                default: {}
+                case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
+                    spdlog::info("Pressed: {} ", event.gbutton.button);
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
         }
 
@@ -124,10 +142,12 @@ void App::run_renderPathLoop()
 
         mScene->onRender(commandList, frameData);
 
+        // mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+
         // =====================================
         // User Interface
         // =====================================
-        commandList->getHandle().beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT().setPLabelName("ImGui"));
+        commandList->beginLabel("ImGui");
 
         /* Acquired Swapchain Image | ColorAttachment */ {
             const auto barrier = RHI::Barrier()
@@ -141,7 +161,7 @@ void App::run_renderPathLoop()
             barrier.insert(commandList);
         }
 
-        commandList->getHandle().endDebugUtilsLabelEXT();
+        commandList->endLabel();
 
         commandList->end();
         mVulkanRHI->endFrame_submitAndPresent({

@@ -27,6 +27,11 @@ public:
         return mTLAS;
     }
 
+    [[nodiscard]] const SPtr<RHI::Buffer>& getBackingBuffer() const noexcept
+    {
+        return mBackingBuffer;
+    }
+
 private:
     void createInitialEmptyTLAS() noexcept;
 

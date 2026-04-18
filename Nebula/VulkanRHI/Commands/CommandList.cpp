@@ -8,7 +8,7 @@ namespace RHI
     CommandList::CommandList(const CommandListCreateInfo& createInfo)
     : mCommandBuffer(createInfo.commandBuffer)
     , mSingleTime(createInfo.singleTimeSubmit)
-    , mDebug(Configuration::getConfig().rhi.debugFeatures)
+    , mDebug(Configuration::getConfig().enableDebugFeatures)
     {
     }
 
@@ -69,6 +69,12 @@ namespace RHI
         mCommandBuffer.endDebugUtilsLabelEXT();
     }
 
+    void CommandList::setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const
+    {
+        mCommandBuffer.setScissor(0, scissor);
+        mCommandBuffer.setViewport(0, viewport);
+    }
+
     void CommandList::copyBufferToImage(const BufferImageCopyInfo& copyInfo) const
     {
         const auto imageProperties = copyInfo.pDstImage->getProperties();
@@ -86,5 +92,39 @@ namespace RHI
             .setRegions(copyRegion);
 
         mCommandBuffer.copyBufferToImage2(copyBufferToImageInfo);
+    }
+
+    void CommandList::copyBuffer(const BufferCopyInfo& bufferCopyInfo) const
+    {
+        if (!bufferCopyInfo.src)
+        {
+            spdlog::error("copyBuffer src is null");
+            return;
+        }
+        if (!bufferCopyInfo.dst)
+        {
+            spdlog::error("copyBuffer dst is null");
+            return;
+        }
+
+        std::vector<vk::BufferCopy2> regions;
+        if (bufferCopyInfo.regions.empty())
+        {
+            regions.push_back({ 0, 0, bufferCopyInfo.src->getSize() });
+        }
+        else
+        {
+            for (const auto& region : bufferCopyInfo.regions)
+            {
+                regions.push_back({ region.srcOffset, region.dstOffset, region.size });
+            }
+        }
+
+        const auto copyInfo = vk::CopyBufferInfo2()
+            .setSrcBuffer(bufferCopyInfo.src->getHandle())
+            .setDstBuffer(bufferCopyInfo.dst->getHandle())
+            .setRegions(regions);
+
+        mCommandBuffer.copyBuffer2(copyInfo);
     }
 }

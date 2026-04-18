@@ -39,9 +39,9 @@ public:
     }
 
 private:
-    float       mDisplayScaling  = 1.0f;
-    Size2D      mWindowSize      = {};
-    Size2D      mFramebufferSize = {};
-    SDL_Window* mWindow          = nullptr;
-    std::string mTitle           = "Nebula3 Window";
+    float           mDisplayScaling  = 1.0f;
+    Size2D          mWindowSize      = {};
+    Size2D          mFramebufferSize = {};
+    SDL_Window*     mWindow          = nullptr;
+    std::string     mTitle           = "Nebula3 Window";
 };

@@ -59,8 +59,7 @@ namespace RHI
 
         auto get_handle = [&](uint32_t i) { return handles.data() + i * shaderGroupHandleSize; };
 
-        void* mappedMemory = nullptr;
-        mBuffer->map(mappedMemory);
+        void* mappedMemory = mBuffer->map();
         
         uint8_t* pSBT = reinterpret_cast<uint8_t*>(mappedMemory);
         uint8_t* pData = nullptr;
@@ -90,8 +89,6 @@ namespace RHI
             std::memcpy(pData, get_handle(handleIdx++), shaderGroupHandleSize);
             pData += mCallableRegion.stride;
         }
-
-        mBuffer->unmap();
     }
 
     void ShaderBindingTable::getRaytracingProperties(vk::PhysicalDeviceRayTracingPipelinePropertiesKHR* pProps) const

@@ -38,7 +38,7 @@ void main()
 {
     vec3 color = texture(uColor, inUV).rgb;
 
-    vec3 mapped = tonemap_ue3(color);
+    vec3 mapped = tonemap_uncharted2(color);
 
     outColor = vec4(mapped.rgb, 1.0);
 }

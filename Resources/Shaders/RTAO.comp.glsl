@@ -20,11 +20,12 @@ layout (set = 1, binding = 0) uniform CameraUniform {
     mat4  viewInverse;
     mat4  projInverse;
     vec4  eye;
+    vec4  frustumPlanes[6];
     float nearPlane;
     float farPlane;
 } camera;
 
-layout(set = 1, binding = 2) uniform accelerationStructureEXT topLevelAS;
+layout(set = 1, binding = 3) uniform accelerationStructureEXT topLevelAS;
 
 layout(push_constant) uniform AoControl {
     float aoRadius;

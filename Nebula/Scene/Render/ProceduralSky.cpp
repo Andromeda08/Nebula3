@@ -28,22 +28,10 @@ void ProceduralSkyPass::execute(const RHI::CommandList* pCommandList, const RHI:
     // }
 
     pCommandList->beginLabel("ProceduralSky_Pass");
-    {
-        const auto barrier = vk::BufferMemoryBarrier2()
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eFragmentShader)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eComputeShader)
-            .setSrcAccessMask(vk::AccessFlagBits2::eShaderRead)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderWrite)
-            .setBuffer(mSkyData->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setBufferMemoryBarriers(barrier);
-        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
-    }
-
 
     RHI::Barrier()
         .addBarrier(mCubeMap->getBarrier(RHI::ImageUsage::General))
+        .addBarrier(mSkyData->getBarrier(RHI::BufferUsage::Fragment, RHI::BufferUsage::Compute))
         .insert(pCommandList);
 
     mPipeline->bind(pCommandList);
@@ -110,7 +98,7 @@ void ProceduralSkyPass::createPipeline() noexcept
     auto pipelineCreateInfo = RHI::ComputePipelineCreateInfo()
         .addDescriptorSetLayout(mDescriptor->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(SkyParams) })
-        .setComputeShader(Configuration::getShaderFilePath("RayleighMieSky.comp.spv"))
+        .setComputeShader(Configuration::getShaderFilePath("RayleighMieSky.comp.spv").string())
         .setDebugName("ProceduralSky_Pipeline");
     mPipeline = mRHI->createComputePipeline(pipelineCreateInfo);
 }

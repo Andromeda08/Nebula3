@@ -18,36 +18,32 @@ UPtr<LightingPass> LightingPass::create(const Lighting_Params& params) noexcept
 void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
 {
     pCommandList->beginLabel("Lighting_Pass");
-    RHI::Barrier()
+
+    auto barriers = RHI::Barrier()
         .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
         .addBarrier(mInput.position->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.normal->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.albedo->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.ssao->getBarrier(RHI::ImageUsage::ShaderReadOnly))
+        .addBarrier(mInput.lightingParams->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.cubeMap->getBarrier(RHI::ImageUsage::ShaderReadOnly))
-        .insert(pCommandList);
+        .addBarrier(mInput.skyData->getBarrier(RHI::BufferUsage::Compute, RHI::BufferUsage::Fragment));
 
+    if (mRHI->getRaytracingSupport())
     {
-        const auto barrier = vk::BufferMemoryBarrier2()
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eComputeShader)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eFragmentShader)
-            .setSrcAccessMask(vk::AccessFlagBits2::eShaderWrite)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderRead)
-            .setBuffer(mInput.skyData->getHandle())
-            .setSize(VK_WHOLE_SIZE);
-        const auto dependencyInfo = vk::DependencyInfo()
-            .setBufferMemoryBarriers(barrier);
-        pCommandList->getHandle().pipelineBarrier2(dependencyInfo);
+        barriers.addBarrier(mInput.tlasManager->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
     }
 
-    mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
-        mPipeline->bind(commandBuffer);
-        mPipeline->pushConstants(commandBuffer, &mPushConstants);
-        mPipeline->bindDescriptorSets(commandBuffer, {
+    barriers.insert(pCommandList);
+
+    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
+        mPipeline->bind(cmd);
+        mPipeline->pushConstants(cmd, &mPushConstants);
+        mPipeline->bindDescriptorSets(cmd, {
             mInput.sceneDescriptor->getSet(frameData.currentFrame),
             mDescriptor->getSet(0),
         });
-        commandBuffer.draw(3, 1, 0, 0);
+        cmd->getHandle().draw(3, 1, 0, 0);
     });
     pCommandList->endLabel();
 }
@@ -55,6 +51,11 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
 SPtr<RHI::Image> LightingPass::getResult() const noexcept
 {
     return mOutput;
+}
+
+void LightingPass::setShadowMode(const int32_t mode) noexcept
+{
+    mPushConstants.shadowMode = mode;
 }
 
 void LightingPass::createResources() noexcept
@@ -75,7 +76,8 @@ void LightingPass::createResources() noexcept
            { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
            { 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
            { 4, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-           { 5, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },
+           { 5, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+           { 6, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },
        },
        .setCount = 1,
        .debugName = "Lighting_Descriptor",
@@ -86,8 +88,9 @@ void LightingPass::createResources() noexcept
         .writeCombinedImageSampler(1, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.normal)
         .writeCombinedImageSampler(2, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.albedo)
         .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.ssao)
-        .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.cubeMap)
-        .writeStorageBuffer(5, mInput.skyData);
+        .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.lightingParams)
+        .writeCombinedImageSampler(5, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.cubeMap)
+        .writeStorageBuffer(6, mInput.skyData);
     mDescriptor->write(0, descriptorWrite);
 }
 
@@ -116,8 +119,8 @@ void LightingPass::createPipeline() noexcept
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
             .setCullMode(vk::CullModeFlagBits::eNone)
             .addDefaultAttachmentStates(1))
-        .addShader({ "Resources/Shaders/bin/FSQuad.vert.spv", vk::ShaderStageFlagBits::eVertex })
-        .addShader({ "Resources/Shaders/bin/Lighting.frag.spv", vk::ShaderStageFlagBits::eFragment })
+        .addShader({ Configuration::getShaderFilePath("FSQuad.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
+        .addShader({ Configuration::getShaderFilePath("PBRLighting.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mOutput->getProperties().format)
         .setDebugName("Lighting_Pipeline");
 

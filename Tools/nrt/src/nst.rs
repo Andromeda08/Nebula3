@@ -6,11 +6,10 @@ use crate::util;
 pub struct NSTParams {
     src:     std::path::PathBuf,
     bin_dir: std::path::PathBuf,
-    debug:   bool,
 }
 
 fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
-    let debug = args.contains(&String::from("-d"));
+    // let debug = args.contains(&String::from("-d"));
     let cwd = match env::current_dir() {
         Ok(p) => p,
         Err(e) => {
@@ -46,7 +45,6 @@ fn parse_arguments(args: &Vec<String>) -> Result<NSTParams, String> {
     Ok(NSTParams {
         src: std::path::PathBuf::new().join(cwd.clone()).join(src),
         bin_dir: std::path::PathBuf::new().join(cwd.clone()).join(bin?),
-        debug,
     })
 }
 
@@ -76,9 +74,7 @@ fn compile_shaders(params: &NSTParams, shaders: &Vec<std::path::PathBuf>) -> i32
         cmd.arg("-o").arg(format!("{0}/{1}.spv", params.bin_dir.to_str().unwrap(), shader.file_stem().unwrap().to_str().unwrap()));
         cmd.arg("-V").arg(shader.to_str().unwrap());
         cmd.arg("--target-env").arg("vulkan1.4");
-        if params.debug {
-            cmd.arg("-g");
-        }
+        cmd.arg("-g");
 
         match cmd.output() {
             Ok(o) => {

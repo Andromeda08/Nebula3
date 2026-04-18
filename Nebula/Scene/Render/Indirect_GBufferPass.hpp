@@ -27,11 +27,17 @@ public:
 
     void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept override;
 
+    [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
+
     [[nodiscard]] const SPtr<RHI::Image>& getPosition() const noexcept;
 
     [[nodiscard]] const SPtr<RHI::Image>& getNormal() const noexcept;
 
     [[nodiscard]] const SPtr<RHI::Image>& getAlbedo() const noexcept;
+
+    [[nodiscard]] const SPtr<RHI::Image>& getEmissive() const noexcept { return mEmissiveBuffer; }
+
+    [[nodiscard]] const SPtr<RHI::Image>& getLightingParams() const noexcept { return mLightingParamsBuffer; }
 
     [[nodiscard]] const SPtr<RHI::Image>& getDepth() const noexcept;
 
@@ -44,6 +50,9 @@ private:
     SPtr<RHI::Image>        mPositionDepthBuffer;
     SPtr<RHI::Image>        mNormalBuffer;
     SPtr<RHI::Image>        mAlbedoBuffer;
+    SPtr<RHI::Image>        mEmissiveBuffer;
+    SPtr<RHI::Image>        mLightingParamsBuffer;
+    SPtr<RHI::Image>        mMotionVectors;
     SPtr<RHI::Image>        mDepthBuffer;
 
     SPtr<RHI::Pipeline>     mPipeline;

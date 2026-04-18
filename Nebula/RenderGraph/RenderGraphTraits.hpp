@@ -2,7 +2,6 @@
 
 #include <set>
 #include <nlohmann/json.hpp>
-#include "VulkanRHI/RHIConfiguration.hpp"
 
 namespace rg
 {
@@ -19,7 +18,6 @@ namespace rg
         X(Unknown) \
         X(Scene) \
         X(Present) \
-        X(HelloTrianglePresent) \
         X(GBufferPass) \
         X(LightingPass) \
         X(AmbientOcclusionPass) \
@@ -75,7 +73,6 @@ namespace rg
             // [RHI Feature Level : Basic]
             case Scene:
             case Present:
-            case HelloTrianglePresent:
             case GBufferPass:
             case LightingPass:
             case AntiAliasingPass:
@@ -93,8 +90,7 @@ namespace rg
 
     constexpr bool isSinkNode(const NodeType nodeType) noexcept
     {
-        return nodeType == NodeType::Present
-            || nodeType == NodeType::HelloTrianglePresent;
+        return nodeType == NodeType::Present;
     }
 
     #undef NODE_TYPES

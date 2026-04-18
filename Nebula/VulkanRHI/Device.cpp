@@ -1,5 +1,6 @@
 #include "Device.hpp"
 
+#include <vulkan/vk_enum_string_helper.h>
 #include "Texture.hpp"
 #include "Core/Ranges.hpp"
 
@@ -22,7 +23,7 @@ namespace RHI
             .addExtension(vk::KHRSwapchainExtensionName, FeatureOption::Required)
             .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Required)
             // General Extensions
-            .addExtension<DeviceFaultEXT>(FeatureOption::Required)
+            .addExtension<DeviceFaultEXT>(FeatureOption::Optional)
             // Ray tracing
             .addExtension<AccelerationStructureKHR>(FeatureOption::Optional)
             .addExtension<RayQuery>(FeatureOption::Optional)
@@ -31,13 +32,13 @@ namespace RHI
             .addExtension<RayTracingLinearSweptSpheresNV>(FeatureOption::Optional)
             .addExtension<RayTracingInvocationReorderEXT>(FeatureOption::Optional)
             .addExtension<RayTracingPositionFetch>(FeatureOption::Optional)
+            .addExtension<RayTracingValidation>(FeatureOption::Optional)
+            // NVIDIA
+            .addExtension(vk::NVXImageViewHandleExtensionName, FeatureOption::Optional)
             // Mesh shader
-            .addExtension<MeshShaderEXT>(FeatureOption::Optional)
-            // Beta
-            .addExtension<DescriptorHeapEXT>(FeatureOption::Optional);
+            .addExtension<MeshShaderEXT>(FeatureOption::Optional);
 
-        const auto& config = Configuration::getConfig();
-        mDebugFeatures  = config.rhi.debugFeatures;
+        mDebugFeatures  = Configuration::getConfig().enableDebugFeatures;
 
         selectPhysicalDeviceV2();
 
@@ -70,7 +71,11 @@ namespace RHI
         const VkBufferCreateInfo bufferCreateInfo = allocInfo.bufferInfo;
         const auto result = vmaCreateBuffer(mAllocator, &bufferCreateInfo, &createInfo, pHandle,
             &alloc->mAllocation, &alloc->mAllocationInfo);
-        nbl_ASSERT(result == VK_SUCCESS, "Failed to create Buffer and allocate memory!");
+
+        if (result != VK_SUCCESS)
+        {
+            exitWithError("Failed to create Buffer and allocate memory: {}", string_VkResult(result));
+        }
 
         mAllocations.push_back(alloc);
         return alloc;

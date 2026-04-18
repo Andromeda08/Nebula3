@@ -63,6 +63,11 @@ namespace RHI
             return mFeatureLevel >= FeatureLevel::Complete;
         }
 
+        [[nodiscard]] bool getMeshShaderSupport() const noexcept
+        {
+            return mFeatureLevel >= FeatureLevel::Complete;
+        }
+
         [[nodiscard]] bool getNVRTXSupport() const noexcept
         {
             return mFeatureLevel >= FeatureLevel::Nvidia;

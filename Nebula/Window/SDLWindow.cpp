@@ -4,10 +4,11 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Core/Util.hpp"
+#include "Input/DualSense.hpp"
 
 SDLWindow::SDLWindow(const WindowCreateInfo& createInfo)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD))
     {
         exitWithError("Failed to initialize windowing system.");
     }
@@ -30,7 +31,6 @@ SDLWindow::SDLWindow(const WindowCreateInfo& createInfo)
 
     SDL_GetWindowSizeInPixels(mWindow, &w, &h);
     mFramebufferSize = { static_cast<uint32_t>(w), static_cast<uint32_t>(h) };
-
 }
 
 SDLWindow::~SDLWindow()

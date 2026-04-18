@@ -23,7 +23,6 @@ namespace rg
         {
             case Scene:                 return ScenePass::getNodeInfo();
             case Present:               return PresentPass::getNodeInfo();
-            case HelloTrianglePresent:  return HelloTrianglePass::getNodeInfo();
             case GBufferPass:           return GBufferPass::getNodeInfo();
             case LightingPass:          return LightingPass::getNodeInfo();
             case AmbientOcclusionPass:  return AmbientOcclusionPass::getNodeInfo();
@@ -57,7 +56,7 @@ namespace rg
         {
             mHasSourceNode = true;
         }
-        if (createInfo.nodeType == NodeType::Present || createInfo.nodeType == NodeType::HelloTrianglePresent)
+        if (createInfo.nodeType == NodeType::Present)
         {
             mHasSinkNode = true;
         }
