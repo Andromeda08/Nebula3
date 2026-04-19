@@ -73,6 +73,24 @@ namespace nbl
             return result;
         }
 
+        bool isVisible(const std::array<glm::vec4, 6>& planes) const noexcept
+        {
+            for (const auto& plane : planes)
+            {
+                // p-vertex: the corner of the AABB furthest along the plane normal
+                const glm::vec3 p = {
+                    plane.x >= 0.0f ? mMax.x : mMin.x,
+                    plane.y >= 0.0f ? mMax.y : mMin.y,
+                    plane.z >= 0.0f ? mMax.z : mMin.z,
+                };
+
+                // If the furthest-positive corner is behind the plane, the whole box is outside
+                if (glm::dot(glm::vec3(plane), p) + plane.w < 0.0f)
+                    return false;
+            }
+            return true;
+        }
+
     private:
         glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::infinity());
         glm::vec3 mMax = glm::vec3(-std::numeric_limits<float>::infinity());

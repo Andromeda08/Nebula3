@@ -73,7 +73,7 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
 
         const auto region = vk::BufferCopy2()
             .setSrcOffset((staged.size() - 1) * sizeof(InstanceData))
-            .setDstOffset(i * sizeof(InstanceData))
+            .setDstOffset(idx * sizeof(InstanceData))
             .setSize(sizeof(InstanceData));
         regions.push_back(region);
 

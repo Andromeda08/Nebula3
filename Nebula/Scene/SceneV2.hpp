@@ -124,24 +124,23 @@ public:
         const GeometryIndex     geometryIndex,
         const Transform&        transform,
         const Handle            hMaterial,
-        const nbl::BoundingBox& geometryBoundingBox,
         const std::string&      name
     ) noexcept
     {
         auto obj = makeUnique<T>();
         obj->name          = name;
 
+        // Set object transform and compute initial transformed AABB
+        obj->transform     = transform;
+        obj->boundingBox   = mGeometry->getGeometry(geometryIndex)->getBoundingBox().getTransformed(obj->transform.getModel());
+
+        // Ray Tracing
+        obj->blasAddress   = mRHI->getRaytracingSupport() ? mGeometry->getBlasAddress(geometryIndex) : 0,
+
         // Set handles and indices
         obj->geometryIndex = geometryIndex;
         obj->hMaterial     = hMaterial;
         obj->instanceIndex = mInstancePool->acquire(obj->getInstanceData(mMaterialPool.get()));
-
-        // Set object transform and compute initial transformed AABB
-        obj->transform     = transform;
-        obj->boundingBox   = geometryBoundingBox.getTransformed(obj->transform.getModel());
-
-        // Ray Tracing
-        obj->blasAddress   = mRHI->getRaytracingSupport() ? mGeometry->getBlasAddress(geometryIndex) : 0,
 
         mObjects.push_back(std::move(obj));
 

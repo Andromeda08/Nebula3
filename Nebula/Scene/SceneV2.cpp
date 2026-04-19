@@ -3,6 +3,7 @@
 #include <glm/gtc/noise.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "GLTF/GLTFLoader.hpp"
 #include "Window/SplashWindow.hpp"
@@ -34,6 +35,24 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
     {
         const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
         mCamera = makeUnique<FlyingCamera>(glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+
+        const auto cubeIdx   = mGeometry->addGeometry<Cube>(Cube::Params {});
+        mGeometry->commit();
+
+        for (int32_t i = 0; i < 1024; i++)
+        {
+            auto hMat = mMaterialPool->acquire({
+                .solidColor = Random::getColor(),
+            });
+
+            const auto base = Random::get(1.0f, 3.5f);
+            auto transform = Transform()
+                .setTranslate(glm::vec3(Random::get(-128, 128), Random::get(0.0f, 35.0f), Random::get(-128, 128)))
+                .setScale(glm::vec3(base));
+            (i % 2 == 0)
+                ? addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube#{}", i))
+                : addObject<ExampleObject>(cubeIdx, transform, hMat, fmt::format("Cube#{}", i));
+        }
 
         GLTFLoader::loadParts({
             .pTextureManager = mTextureManager.get(),
@@ -166,7 +185,12 @@ void SceneV2::onUpdate(const float dt, const RHI::FrameData& frameData, const RH
         if (obj->transform.isDirty() || isFirstUpdate)
         {
             auto data = obj->getInstanceData(mMaterialPool.get());
+
             data.blasAddress = mGeometry->getBlasAddress(data.geometryIndex);
+            obj->boundingBox = mGeometry->getGeometry(data.geometryIndex)->getBoundingBox().getTransformed(data.model);
+            data.min = glm::vec4(obj->boundingBox.getMin(), 1.0f);
+            data.max = glm::vec4(obj->boundingBox.getMax(), 1.0f);
+
             mInstancePool->update(obj->instanceIndex, data);
         }
     }
@@ -269,19 +293,25 @@ void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI:
     // Frustum Cull
     #pragma region
     const auto cameraData = mCamera->getCameraData();
-    const auto vp         = cameraData.proj * cameraData.view;
-    const auto vpt        = glm::transpose(vp);
+    const auto vp = cameraData.proj * cameraData.view;
 
-    const std::array<glm::vec4, 6> frustumPlanes = {
-        // left, right, bottom, top
-        (vpt[3] + vpt[0]),
-        (vpt[3] - vpt[0]),
-        (vpt[3] + vpt[1]),
-        (vpt[3] - vpt[1]),
-        // near, far
-        (vpt[3] + vpt[2]),
-        (vpt[3] - vpt[2]),
+    const glm::vec4 row0(vp[0][0], vp[1][0], vp[2][0], vp[3][0]);
+    const glm::vec4 row1(vp[0][1], vp[1][1], vp[2][1], vp[3][1]);
+    const glm::vec4 row2(vp[0][2], vp[1][2], vp[2][2], vp[3][2]);
+    const glm::vec4 row3(vp[0][3], vp[1][3], vp[2][3], vp[3][3]);
+
+    std::array<glm::vec4, 6> frustumPlanes = {
+        row3 + row0,  // left
+        row3 - row0,  // right
+        row3 + row1,  // bottom
+        row3 - row1,  // top
+        row2,         // near
+        row3 - row2,  // far
     };
+
+    for (auto& p : frustumPlanes) {
+        p /= glm::length(glm::vec3(p));
+    }
     #pragma endregion
 
     uint32_t totalInstanceCount        = 0;
@@ -306,7 +336,7 @@ void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI:
             if (mEnableCulling)
             {
                 const auto& instanceData = mInstancePool->getData().at(instanceIndex);
-                shouldKeep = BoundingBox::isVisible(instanceData.min, instanceData.max, frustumPlanes);
+                shouldKeep = nbl::BoundingBox(instanceData.min, instanceData.max).isVisible(frustumPlanes);
             }
             if (shouldKeep)
             {
@@ -328,7 +358,7 @@ void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI:
     }
 
     mLastCull  = CullStats::make(totalInstanceCount, totalVisibleInstanceCount, cullTime.getDeltaTime());
-    mDrawCount = mGeometry->getGeometryCount();
+    mDrawCount = mDrawCount = static_cast<uint32_t>(draws.size());;
 
     const auto drawSize = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
     mDrawCmdBuffer[frameData.currentFrame] = mRHI->createBuffer({

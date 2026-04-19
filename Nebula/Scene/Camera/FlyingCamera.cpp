@@ -112,8 +112,8 @@ void FlyingCamera::onUpdate() noexcept
     if (glm::abs(mInputState.rightX) > mDeadzone || glm::abs(mInputState.rightY) > mDeadzone)
     {
         SDL_MouseMotionEvent fakeMotion {};
-        fakeMotion.xrel = mInputState.rightX * mSize.x * 0.0025f;
-        fakeMotion.yrel = mInputState.rightY * mSize.y * 0.0025f;
+        fakeMotion.xrel = mInputState.rightX * mSize.x * 0.05f;
+        fakeMotion.yrel = mInputState.rightY * mSize.y * 0.05f;
         handleMouseEvent(fakeMotion);
     }
 }

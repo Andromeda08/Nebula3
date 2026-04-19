@@ -146,6 +146,11 @@ public:
         };
     }
 
+    [[nodiscard]] Geometry* getGeometry(const GeometryIndex index) const noexcept
+    {
+        return mGeometries[index].get();
+    }
+
     [[nodiscard]] uint64_t getBlasAddress(const GeometryIndex index) const noexcept
     {
         return mBottomLevel[index]->getAddress();

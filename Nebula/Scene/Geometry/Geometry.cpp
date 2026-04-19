@@ -74,6 +74,8 @@ Cube::Cube(const Params& params)
     mIndexCount  = static_cast<uint32_t>(sCubeIndices.size());
 
     mName = sName;
+
+    computeBoundingBox();
 }
 
 std::vector<Vertex> Cube::generateVertices(const float scale)
@@ -96,6 +98,8 @@ Sphere::Sphere(const Params& params)
     mIndexCount  = static_cast<uint32_t>(mIndices.size());
 
     mName = sName;
+
+    computeBoundingBox();
 }
 
 std::vector<Vertex> Sphere::generateVertices(const int32_t stackCount, const int32_t sectorCount, const float radius)

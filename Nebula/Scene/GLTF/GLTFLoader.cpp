@@ -629,7 +629,7 @@ void GLTFLoader::processNode(fastgltf::Asset& asset, const size_t nodeIndex, glm
                     ? fmt::format("gltf_node_{}", nodeIndex)
                     : std::string(node.name);
                 auto transform = Transform().setModel(model);
-                mScene->addObject<Object>(prim.geometryIndex, transform, prim.hMaterial, prim.aabb, generatedName);
+                mScene->addObject<Object>(prim.geometryIndex, transform, prim.hMaterial, generatedName);
             }
         }
     }
