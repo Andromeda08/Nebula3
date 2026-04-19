@@ -12,6 +12,10 @@ struct GPUInstanceData
     uint64_t  blasAddress;
     int       materialIndex;
     int       geometryIndex;
+    int       objectID;
+    int       _pad0;
+    int       _pad1;
+    int       _pad2;
 };
 
 struct AccelerationStructureInstanceKHR

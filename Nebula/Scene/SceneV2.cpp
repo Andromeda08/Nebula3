@@ -169,6 +169,48 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
         });
     }
     #pragma endregion
+
+    initializeObjectSelectionFeature();
+}
+
+void SceneV2::onEvent(const SDL_Event& event) noexcept
+{
+    if (mCamera)
+    {
+        mCamera->onEvent(event);
+    }
+
+    if (mObjSelectPipeline != nullptr && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    {
+        if (const auto& mouseEvent = event.button; mouseEvent.button == SDL_BUTTON_RIGHT)
+        {
+            mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
+                const auto [w, h] = mRHI->getSwapchain()->getProperties().extent;
+                glm::vec2 mousePos;
+                SDL_GetMouseState(&mousePos.x, &mousePos.y);
+
+                const auto pushConstants = ObjSelectPushConstant {
+                    .instanceAddress = mInstancePool->getBuffer()->getAddress(),
+                    .selectAddress   = mObjSelectBuffer->getAddress(),
+                    .mousePos        = std::move(mousePos),
+                    .screenSize      = glm::vec2(w, h),
+                };
+
+                mObjSelectPipeline->bind(pCommandList);
+                mObjSelectPipeline->bindDescriptorSet(pCommandList, mSceneDescriptor->getSet(0));
+                mObjSelectPipeline->pushConstants(pCommandList, &pushConstants);
+                mObjSelectPipeline->dispatch(pCommandList, 1);
+
+                RHI::Barrier()
+                    .addBarrier(mObjSelectBuffer->getBarrier(RHI::BufferUsage::Compute_Write, RHI::BufferUsage::Host_Read))
+                    .insert(pCommandList);
+            });
+
+            const auto* pSelectedObj = static_cast<int32_t*>(mObjSelectBuffer->map());
+            mSelectedObject = pSelectedObj ? *pSelectedObj : -1;
+            spdlog::info("Selected object: {}", mSelectedObject);
+        }
+    }
 }
 
 void SceneV2::onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
@@ -194,7 +236,7 @@ void SceneV2::onUpdate(const float dt, const RHI::FrameData& frameData, const RH
             mInstancePool->update(obj->instanceIndex, data);
         }
     }
-    mInstancePool->flush(pCommandList);
+    mInstancePool->flush(pCommandList, frameData.currentFrame);
 
     // Update Top-Level AS
     if (mRHI->getRaytracingSupport())
@@ -280,6 +322,28 @@ void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData
     commandList->getHandle().blitImage2(blit);
 
     commandList->endLabel();
+}
+
+void SceneV2::initializeObjectSelectionFeature()
+{
+    if (!mRHI->getRaytracingSupport())
+    {
+        spdlog::warn("Object selection feature is not available.");
+        return;
+    }
+
+    mObjSelectBuffer = mRHI->createBuffer({
+        .size  = sizeof(int32_t),
+        .type  = RHI::BufferType::Readback,
+        .label = "ObjSelectBuffer",
+    });
+
+    auto pipelineInfo = RHI::ComputePipelineCreateInfo()
+        .addDescriptorSetLayout(mSceneDescriptor->getLayout())
+        .setComputeShader(Configuration::getShaderFilePath("RQSelect.comp.spv"))
+        .setDebugName("ObjSelectPipeline")
+        .setPushConstantRange<ObjSelectPushConstant>(vk::ShaderStageFlagBits::eCompute);
+    mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
 }
 
 void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept

@@ -18,11 +18,12 @@ A cross-platform rendering engine built with Vulkan.
   - Geometry
     - Single Vertex and Index buffer
     - Bottom-Level AS management with a single backing buffer
-  - Instanced rendering
+  - Per-geometry batched instanced rendering
   - Textures
   - Materials
   - Top-Level AS Management
     - Compute-based data updates using the existing instance data
+    - Used for shadows, ambient occlusion and object selection
 - Rendering techniques
   - Deferred shading
   - Screen-space and raytraced ambient occlusion
@@ -30,6 +31,8 @@ A cross-platform rendering engine built with Vulkan.
   - Raytraced shadows
   - Anti-aliasing (FXAA)
   - Rayleigh-Mie Procedural Sky
+    - Directional Light
+  - Multiple lights, Runtime editing via UI
   - Frustum Culling
     - Debug Shader for AABB visualization
   - [WIP] Dual Kawase blur bloom for emissive materials.

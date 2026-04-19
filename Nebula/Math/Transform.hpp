@@ -106,6 +106,11 @@ struct Transform
         return _dirty;
     }
 
+    void markAsDirty() noexcept
+    {
+        _dirty = true;
+    }
+
 private:
     glm::mat4 computeModel() const
     {

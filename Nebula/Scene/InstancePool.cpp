@@ -11,11 +11,14 @@ InstancePool::InstancePool(const SPtr<RHI::VulkanRHI>& rhi, const uint32_t initi
         .type  = RHI::BufferType::Vertex,
         .label = "InstanceBuffer"
     });
-    mStagingBuffer = mRHI->createBuffer({
-        .size  = mCapacity * sizeof(InstanceData),
-        .type  = RHI::BufferType::Staging,
-        .label = "InstanceStagingBuffer"
-    });
+    for (uint32_t i = 0; i < mStagingBuffer.size(); i++)
+    {
+        mStagingBuffer[i] = mRHI->createBuffer({
+            .size  = mCapacity * sizeof(InstanceData),
+            .type  = RHI::BufferType::Staging,
+            .label = fmt::format("InstanceStagingBuffer_{}", i),
+        });
+    }
 }
 
 InstanceIndex InstancePool::acquire(const InstanceData& data) noexcept
@@ -56,7 +59,7 @@ void InstancePool::update(const InstanceIndex idx, const InstanceData& data) noe
     mUpdateQueue.push_back(idx);
 }
 
-void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
+void InstancePool::flush(const RHI::CommandList* pCommandList, const uint32_t frameIndex) noexcept
 {
     pCommandList->beginLabel("InstancePool_flush");
     std::vector<vk::BufferCopy2> regions;
@@ -82,13 +85,15 @@ void InstancePool::flush(const RHI::CommandList* pCommandList) noexcept
 
     if (regions.empty())
     {
+        pCommandList->endLabel();
+        mUpdateQueue.clear();
         return;
     }
 
-    mStagingBuffer->setData(staged.data(), staged.size() * sizeof(InstanceData), 0);
+    mStagingBuffer[frameIndex]->setData(staged.data(), staged.size() * sizeof(InstanceData), 0);
 
     const auto copyInfo = vk::CopyBufferInfo2()
-        .setSrcBuffer(mStagingBuffer->getHandle())
+        .setSrcBuffer(mStagingBuffer[frameIndex]->getHandle())
         .setDstBuffer(mInstanceBuffer->getHandle())
         .setRegions(regions);
 
@@ -129,11 +134,14 @@ void InstancePool::resizeBuffer() noexcept
 
     mInstanceBuffer = std::move(newInstanceBuffer);
 
-    mStagingBuffer = mRHI->createBuffer({
-        .size  = mCapacity * sizeof(InstanceData),
-        .type  = RHI::BufferType::Staging,
-        .label = "InstanceStagingBuffer"
-    });
+    for (uint32_t i = 0; i < mStagingBuffer.size(); i++)
+    {
+        mStagingBuffer[i] = mRHI->createBuffer({
+            .size  = mCapacity * sizeof(InstanceData),
+            .type  = RHI::BufferType::Staging,
+            .label = fmt::format("InstanceStagingBuffer_{}", i),
+        });
+    }
 
     spdlog::warn("InstancePool resized: {} -> {}", oldCapacity, mCapacity);
 }

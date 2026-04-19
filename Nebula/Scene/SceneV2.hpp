@@ -77,6 +77,7 @@ struct Object
             .blasAddress    = blasAddress,
             .materialIndex  = hMaterial.isNull() ? -1 : static_cast<int32_t>(pMaterialPool->getGpuIndex(hMaterial)),
             .geometryIndex  = geometryIndex,
+            .objectID       = id,
         };
     }
 };
@@ -96,6 +97,13 @@ private:
 
 class SceneV2
 {
+    struct ObjSelectPushConstant
+    {
+        uint64_t  instanceAddress;
+        uint64_t  selectAddress;
+        glm::vec2 mousePos;
+        glm::vec2 screenSize;
+    };
 public:
     explicit SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI);
 
@@ -104,13 +112,7 @@ public:
         mLightSystem->upload();
     }
 
-    void onEvent(const SDL_Event& event) const noexcept
-    {
-        if (mCamera)
-        {
-            mCamera->onEvent(event);
-        }
-    }
+    void onEvent(const SDL_Event& event) noexcept;
 
     void onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept;
 
@@ -128,6 +130,7 @@ public:
     ) noexcept
     {
         auto obj = makeUnique<T>();
+        obj->id            = mObjects.size();
         obj->name          = name;
 
         // Set object transform and compute initial transformed AABB
@@ -153,6 +156,8 @@ public:
     }
 
 private:
+    void initializeObjectSelectionFeature();
+
     void buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept;
 
     friend class Indirect_GBufferPass;
@@ -185,6 +190,11 @@ private:
 
     std::vector<UPtr<Object>>           mObjects;
     bool                                mObjectCountChanged = false;
+
+    // Object Selection
+    int32_t                             mSelectedObject = -1;
+    SPtr<RHI::Buffer>                   mObjSelectBuffer;
+    SPtr<RHI::ComputePipeline>          mObjSelectPipeline;
 
     PerFrameArray<SPtr<RHI::Buffer>>    mDrawStaging;
     PerFrameArray<SPtr<RHI::Buffer>>    mDrawCmdBuffer;

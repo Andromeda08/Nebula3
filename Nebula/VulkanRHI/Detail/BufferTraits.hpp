@@ -21,6 +21,8 @@ namespace RHI
         Vertex,
         Index,
         StorageRead,
+        Host_Read,
+        Host_Write,
         All,
     };
 
@@ -80,6 +82,12 @@ namespace RHI
             case StorageRead: {
                 return { A::eShaderStorageRead, S::eAllGraphics };
             }
+            case Host_Read: {
+                return { A::eHostRead, S::eHost };
+            }
+            case Host_Write: {
+                return { A::eHostWrite, S::eHost };
+            }
             case All: {
                 return { A::eShaderWrite | A::eShaderRead | A::eTransferRead | A::eTransferWrite, S::eAllCommands };
             }
@@ -99,6 +107,7 @@ namespace RHI
         AccelerationStructure,
         ShaderBindingTable,
         Staging,
+        Readback,
     };
 
     /**
@@ -156,6 +165,10 @@ namespace RHI
             case BufferType::Staging: {
                 break;
             }
+            case BufferType::Readback: {
+                result |= eStorageBuffer;
+                break;
+            }
         }
 
         return result;
@@ -172,6 +185,9 @@ namespace RHI
                 return VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
                        | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT
                        | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            case BufferType::Readback:
+                return VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+                     | VMA_ALLOCATION_CREATE_MAPPED_BIT;
             default:
                 return 0;
         }
@@ -181,7 +197,8 @@ namespace RHI
     {
         return bufferType == BufferType::ShaderBindingTable
             || bufferType == BufferType::Staging
-            || bufferType == BufferType::Uniform;
+            || bufferType == BufferType::Uniform
+            || bufferType == BufferType::Readback;
     }
 
     struct BufferProperties

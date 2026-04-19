@@ -81,6 +81,30 @@ void SceneInfoComponent::draw()
         }
     }
 
+    // Object Selection
+    // ============================
+    ImGui::SeparatorText("Selected Object");
+    if (mScene->mSelectedObject == -1)
+    {
+        ImGui::Text("none");
+    }
+    else
+    {
+        auto* pSelectedObject = mScene->mObjects[mScene->mSelectedObject].get();
+        ImGui::Text("%s", pSelectedObject->name.c_str());
+        if (ImGui::CollapsingHeader("Transform"))
+        {
+            bool dirty = false;
+            dirty |= ImGui::DragFloat3("Position", glm::value_ptr(pSelectedObject->transform._translate), 1.0f, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+            dirty |= ImGui::DragFloat3("Scale", glm::value_ptr(pSelectedObject->transform._scale), 0.1f, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+            dirty |= ImGui::DragFloat3("Rotation", glm::value_ptr(pSelectedObject->transform._euler), 0.5f, -360.0f, 360.0f, "%.3f", ImGuiSliderFlags_WrapAround);
+            if (dirty)
+            {
+                pSelectedObject->transform.markAsDirty();
+            }
+        }
+    }
+
     // Shadows
     // ============================
     ImGui::SeparatorText("Shadows");

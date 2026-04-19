@@ -15,20 +15,15 @@ struct CameraData
 struct GPUInstanceData
 {
     mat4      model;
-    vec4      solidColor;
-    vec4      min;
-    vec4      max;
+    vec4      boundsMin;
+    vec4      boundsMax;
     uint64_t  blasAddress;
-    int       textureIndex;
+    int       materialIndex;
     int       geometryIndex;
-    int       normalIndex;
-    int       isEmissive;
-    int       metallicRoughnessIndex;
-    float     metallicFactor;
-    float     roughnessFactor;
-    int       _p0;
-    int       _p1;
-    int       _p2;
+    int       objectID;
+    int       _pad0;
+    int       _pad1;
+    int       _pad2;
 };
 
 // Texture Cosntants

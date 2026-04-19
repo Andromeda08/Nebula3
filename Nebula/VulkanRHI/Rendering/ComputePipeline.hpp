@@ -20,7 +20,7 @@ namespace RHI
             return *this;
         }
 
-        ComputePipelineCreateInfo& setComputeShader(const std::string& shaderPath)
+        ComputePipelineCreateInfo& setComputeShader(const std::filesystem::path& shaderPath)
         {
             computeShader = {
                 .filePath    = shaderPath,
