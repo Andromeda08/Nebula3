@@ -65,6 +65,28 @@ float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
 }
 #endif
 
+vec3 computeSkyIrradiance(vec3 N)
+{
+    vec3 skyUp      = textureLod(uSkyCubeMap, vec3(0, 1, 0), 6.0).rgb;
+    vec3 skyHorizon = textureLod(uSkyCubeMap, vec3(0, 0, 1), 6.0).rgb;
+    vec3 ground     = vec3(0.1, 0.09, 0.08);
+
+    float upness = N.y;
+    vec3 hemisphere;
+    if (upness > 0.0) {
+        hemisphere = mix(skyHorizon, skyUp, upness);
+    } else {
+        hemisphere = mix(skyHorizon, ground, -upness);
+    }
+
+    return hemisphere;
+}
+
+vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
 void main()
 {
     vec3 viewPosition = texture(uViewPositionDepth, inUV).xyz;
@@ -80,7 +102,9 @@ void main()
 
         float sunAngle = acos(clamp(dot(rayDir, sunDirection), -1.0, 1.0));
         if (sunAngle < 0.0047)
-        sky += sunTransmittance.rgb * sunIntensity;
+        {
+            sky += sunTransmittance.rgb * sunIntensity;
+        }
 
         outColor = vec4(sky, 1.0);
         return;
@@ -110,25 +134,35 @@ void main()
 
     // Ambient (Todo: IBL)
     vec3 F0       = mix(vec3(0.04), albedo, metallic);
-    vec3 ambient  = 0.15 * mix(albedo, F0, metallic);
-    finalColor   += ambient;
+    vec3 ambient  = 0.05 * mix(albedo, F0, metallic);
+    float ambientOcclusionFactor = texture(uAmbientOcclusion, inUV).r;
+    finalColor += ambient * ambientOcclusionFactor;
+
+    // vec3 irradiance = computeSkyIrradiance(N);
+    // vec3 R = reflect(-V, N);
+    // float maxMip = 7.0;
+    // vec3 prefiltered = textureLod(uSkyCubeMap, R, roughness * maxMip).rgb;
+    // vec3 F = F_SchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    // vec3 kD = (1.0 - F) * (1.0 - metallic);
+    // vec3 ambient = (kD * irradiance * albedo + F * prefiltered) * ambientOcclusionFactor;
+    // finalColor += ambient;
 
     // Sun (Directional Light)
-    {
-        vec3 L           = sunDirection;
-        vec3 sunRadiance = sunTransmittance.rgb * sunIntensity;
-        vec3 sunContrib  = evaluateBRDF(N, V, L, albedo, metallic, roughness) * sunRadiance;
-
-        #ifdef nbl_RAY_TRACING
-        float NdotL = max(0.0, dot(N, L));
-        if (shadowMode != 0 && NdotL > 0.0)
-        {
-            sunContrib *= castShadow(worldPosition, L, 0.01, 1000.0);
-        }
-        #endif
-
-        finalColor += sunContrib;
-    }
+    // {
+    //     vec3 L           = sunDirection;
+    //     vec3 sunRadiance = sunTransmittance.rgb * sunIntensity;
+    //     vec3 sunContrib  = evaluateBRDF(N, V, L, albedo, metallic, roughness) * sunRadiance;
+//
+    //     #ifdef nbl_RAY_TRACING
+    //     float NdotL = max(0.0, dot(N, L));
+    //     if (shadowMode != 0 && NdotL > 0.0)
+    //     {
+    //         sunContrib *= castShadow(worldPosition, L, 0.01, 1000.0);
+    //     }
+    //     #endif
+//
+    //     finalColor += sunContrib;
+    // }
 
     // Point Lights
     for (int i = 0; i < MAX_LIGHTS; i++)
@@ -139,25 +173,39 @@ void main()
         }
 
         GPULightData light    = lights[i];
-        vec3         lightDir = light.vector.xyz - worldPosition;
-        float        dist     = length(lightDir);
-        vec3         L        = normalize(lightDir);
-        float        NdotL    = max(0.0, dot(N, L));
 
-        float attenuation = light.intensity / max(15.0, dist * dist);
-        vec3  radiance    = light.color.rgb * attenuation;
-        vec3  contrib     = evaluateBRDF(N, V, L, albedo, metallic, roughness) * radiance;
+        vec3  L;
+        vec3  radiance;
+        float tMax;
+        if (light.lightType == POINT_LIGHT)
+        {
+            vec3  lightDir = light.vector.xyz - worldPosition;
+            float dist     = length(lightDir);
+            L = normalize(lightDir);
+
+            float attenuation = light.intensity / max(15.0, dist * dist);
+            radiance = light.color.rgb * attenuation;
+            tMax = dist;
+        }
+        if (light.lightType == DIRECTIONAL_LIGHT)
+        {
+            L = normalize(light.vector.xyz);
+            radiance = light.color.rgb * light.intensity;
+            tMax = 1024.0;
+        }
+
+        float NdotL   = max(0.0, dot(N, L));
+        vec3  contrib = evaluateBRDF(N, V, L, albedo, metallic, roughness) * radiance;
 
         #ifdef nbl_RAY_TRACING
         if (shadowMode != 0 && light.castsShadow == 1)
         {
-            contrib *= castShadow(worldPosition, L, 0.01, dist);
+            contrib *= castShadow(worldPosition, L, 0.01, tMax);
         }
         #endif
 
         finalColor += contrib;
     }
 
-    float ambientOcclusionFactor = texture(uAmbientOcclusion, inUV).r;
-    outColor = vec4(finalColor * ambientOcclusionFactor, 1.0);
+    outColor = vec4(finalColor, 1.0);
 }

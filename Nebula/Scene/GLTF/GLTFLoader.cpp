@@ -137,7 +137,7 @@ void GLTFLoader::load()
 
     // Load Data
     constexpr auto options = fastgltf::Options::LoadExternalBuffers | fastgltf::Options::GenerateMeshIndices;
-    auto assetResult = parser.loadGltf(gltfDataBuffer.get(), std::filesystem::path("."), options);
+    auto assetResult = parser.loadGltf(gltfDataBuffer.get(), mFileName.parent_path(), options);
     if (assetResult.error() != fastgltf::Error::None)
     {
         exitWithError("Failed to parse GLTF ({}): {}",
@@ -350,6 +350,9 @@ void GLTFLoader::s2_parallel_loadTextures(fastgltf::Asset& asset) noexcept
             spdlog::warn("Failed to load texture: {}", textureInfo.name);
         }
     }
+
+    std::vector<int32_t> slots = textureInfos | std::views::transform(&TextureInfo::index) | std::ranges::to<std::vector>();
+    mTextureManager->generateMipmaps(slots, vk::Filter::eNearest);
 
     mStats.textureLoadSeconds = textureLoadTime.getDeltaTime();
     spdlog::debug("Loaded {} textures, decode time: {}s", textureInfos.size(), mStats.textureLoadSeconds);

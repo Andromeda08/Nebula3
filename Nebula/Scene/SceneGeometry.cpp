@@ -314,6 +314,7 @@ void SceneGeometry::uploadQueuedGeometries()
     for (auto i = 0; i < mUploadQueue.size(); ++i)
     {
         mUploadQueue[i].blasAddress = mRaytracing ? mBottomLevel[mCommittedCount + i]->getAddress() : 0;
+        mGeometries[mUploadQueue[i].index]->setBlasAddress(mRaytracing ? mBottomLevel[mCommittedCount + i]->getAddress() : 0);
     }
 
     // Add new committed GeometryInfo structs to meta

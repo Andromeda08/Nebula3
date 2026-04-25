@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "Cleanup/Math/BoundingBox.hpp"
+#include "Math/BoundingBox.hpp"
 #include "Scene/Types/Vertex.hpp"
 
 struct GeometryCreateInfo
@@ -48,6 +48,16 @@ public:
         return mName;
     }
 
+    [[nodiscard]] uint64_t getBlasAddress() const noexcept
+    {
+        return mBlasAddress;
+    }
+
+    void setBlasAddress(const uint64_t a)
+    {
+        mBlasAddress = a;
+    }
+
 protected:
     Geometry() = default;
 
@@ -58,6 +68,7 @@ protected:
     std::vector<uint32_t>   mIndices     = {};
     uint32_t                mIndexCount  = 0;
     nbl::BoundingBox        mBoundingBox = {};
+    uint64_t                mBlasAddress = 0;
     std::string             mName        = "Unknown Geometry";
 };
 

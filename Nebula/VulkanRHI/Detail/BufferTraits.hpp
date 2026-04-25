@@ -13,6 +13,7 @@ namespace RHI
         Fragment,
         Fragment_ReadWrite,
         AS_BuildUpdate,
+        AS_BuildInput,
         AS_Traverse,
         SBT_Read,
         TransferSrc,
@@ -58,8 +59,11 @@ namespace RHI
             case AS_BuildUpdate: {
                 return { A::eAccelerationStructureWriteKHR, S::eAccelerationStructureBuildKHR | S::eAccelerationStructureCopyKHR };
             }
+            case AS_BuildInput: {
+                return { A::eShaderRead, S::eAccelerationStructureBuildKHR };
+            }
             case AS_Traverse: {
-                return { A::eAccelerationStructureReadKHR, S::eAllGraphics };
+                return { A::eAccelerationStructureReadKHR, S::eAllGraphics | S::eComputeShader | S::eRayTracingShaderKHR | S::eAccelerationStructureBuildKHR };
             }
             case SBT_Read: {
                 return { A::eShaderBindingTableReadKHR, S::eAllGraphics };

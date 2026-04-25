@@ -12,6 +12,11 @@ layout (location = 0) out vec4 outColor;
 // ========================================
 layout (set = 0, binding = 0) uniform sampler2D uColor;
 
+layout (push_constant) uniform PushConstant
+{
+    float exposure;
+};
+
 vec3 tonemap_ue3(vec3 x)
 {
     // Unreal 3, Documentation: "Color Grading"
@@ -23,7 +28,6 @@ vec3 tonemap_ue3(vec3 x)
 // Hable 2010, "Filmic Tonemapping Operators"
 vec3 tonemap_uncharted2(vec3 x)
 {
-    x *= 16.0;
     const float A = 0.15;
     const float B = 0.50;
     const float C = 0.10;
@@ -38,7 +42,8 @@ void main()
 {
     vec3 color = texture(uColor, inUV).rgb;
 
-    vec3 mapped = tonemap_uncharted2(color);
+    vec3 mapped = tonemap_uncharted2(color * exposure);
+    vec3 whiteScale = 1.0 / tonemap_uncharted2(vec3(11.2));
 
-    outColor = vec4(mapped.rgb, 1.0);
+    outColor = vec4(mapped * whiteScale, 1.0);
 }

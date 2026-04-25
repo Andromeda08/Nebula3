@@ -37,6 +37,13 @@ concept IsConvertibleToGpu = requires(const CpuType& cpuType)
     { cpuType.toGPU() } -> std::same_as<GpuType>;
 };
 
+template <class CpuType>
+struct CpuView
+{
+    Handle   handle;
+    CpuType* data;
+};
+
 /**
  * Fixed-size slot pool with generational handles.
  * @tparam CpuType CPU-side representation that's convertible to the GPU-side type
@@ -67,11 +74,15 @@ public:
             .label = fmt::format("Pool_{}_StorageBuffer", name),
         });
 
-        mStagingBuffer = mRHI->createBuffer({
-            .size  = mCapacity * sizeof(GpuType),
-            .type  = RHI::BufferType::Staging,
-            .label = fmt::format("Pool_{}_StagingBuffer", name)
-        });
+        mLastUsedStagingBuffer = mStagingBuffer.size() - 1;
+        for (auto i = 0; i < mStagingBuffer.size(); i++)
+        {
+            mStagingBuffer[i] = mRHI->createBuffer({
+                .size  = mCapacity * sizeof(GpuType),
+                .type  = RHI::BufferType::Staging,
+                .label = fmt::format("Pool_{}_StagingBuffer_{}", name, i),
+            });
+        }
     }
 
     [[nodiscard]] Handle acquire(const CpuType& data)
@@ -182,6 +193,9 @@ public:
 
         pCommandList->beginLabel(fmt::format("Pool_{}_Flush", mName));
 
+        const auto stagingIndex = (mLastUsedStagingBuffer + 1) % mStagingBuffer.size();
+        mLastUsedStagingBuffer = stagingIndex;
+
         // Deduplicate
         std::ranges::sort(mDirtyDense);
         mDirtyDense.erase(std::ranges::unique(mDirtyDense).begin(), std::end(mDirtyDense));
@@ -199,7 +213,7 @@ public:
         }
 
         // Staging & Copies
-        auto* staging = static_cast<GpuType*>(mStagingBuffer->map());
+        auto* staging = static_cast<GpuType*>(mStagingBuffer[stagingIndex]->map());
 
         std::vector<vk::BufferCopy2> regions;
         regions.reserve(mDirtyDense.size());
@@ -239,7 +253,7 @@ public:
             .insert(pCommandList);
 
         pCommandList->getHandle().copyBuffer2(vk::CopyBufferInfo2()
-            .setSrcBuffer(mStagingBuffer->getHandle())
+            .setSrcBuffer(mStagingBuffer[stagingIndex]->getHandle())
             .setDstBuffer(mBuffer->getHandle())
             .setRegions(regions));
 
@@ -268,6 +282,49 @@ public:
         return mBuffer;
     }
 
+    [[nodiscard]] uint32_t getSize() const noexcept
+    {
+        return mDenseToSlot.size();
+    }
+
+    [[nodiscard]] uint32_t getCapacity() const noexcept
+    {
+        return mCapacity;
+    }
+
+    [[nodiscard]] CpuType* getByDense(const uint32_t denseIndex) noexcept
+    {
+        return &mCpuData[mDenseToSlot[denseIndex]];
+    }
+
+    [[nodiscard]] Handle getHandleFromDense(const uint32_t dense) const
+    {
+        if (dense >= mDenseToSlot.size())
+        {
+            return {};
+        }
+
+        const uint32_t slot = mDenseToSlot[dense];
+        return { slot, mGenerations[slot] };
+    }
+
+    template <typename F>
+    requires std::invocable<F&, CpuView<CpuType>>
+    void forEachView(F&& fn)
+    {
+        for (uint32_t i = 0; i < mDenseToSlot.size(); i++)
+        {
+            uint32_t slot = mDenseToSlot[i];
+
+            CpuView<CpuType> view {
+                .handle = Handle {slot, mGenerations[slot] },
+                .data   = &mCpuData[slot],
+            };
+
+            fn(view);
+        }
+    }
+
 private:
     /**
      * Sparse layout on the CPU, free slots are holes that are reused later.
@@ -283,9 +340,11 @@ private:
     /**
      * GPU-side
      */
-    SPtr<RHI::VulkanRHI>    mRHI;
-    SPtr<RHI::Buffer>       mBuffer;
-    SPtr<RHI::Buffer>       mStagingBuffer;
+    SPtr<RHI::VulkanRHI>             mRHI;
+    SPtr<RHI::Buffer>                mBuffer;
+
+    uint32_t                         mLastUsedStagingBuffer = 0;
+    PerFrameArray<SPtr<RHI::Buffer>> mStagingBuffer;
 
     const std::string       mName;
     const uint32_t          mCapacity = 0;

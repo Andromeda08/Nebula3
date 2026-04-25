@@ -6,7 +6,6 @@
 #include "Macro.hpp"
 #include "Core/AppSpecification.hpp"
 #include "Core/Types.hpp"
-#include "RenderGraph/RGConfiguration.hpp"
 
 constexpr auto gConfigurationPath = "nbl.json";
 

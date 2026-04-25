@@ -61,6 +61,16 @@ public:
         return mDescriptor;
     }
 
+    void generateMipmaps(const std::vector<int32_t>& slots, const vk::Filter filter = vk::Filter::eLinear) const
+    {
+        mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
+            for (const auto& slot : slots)
+            {
+                mTextures[slot]->generateMipmaps(commandList, filter);
+            }
+        });
+    }
+
 private:
     // Blocking texture load.
     void loadImmediately(const TextureLoadInfo& textureLoadInfo) noexcept;

@@ -12,7 +12,7 @@
 #include "Core/Util.hpp"
 #include "Math/vec.hpp"
 #include "Scene/SceneGeometry.hpp"
-#include "Scene/DataV2/MaterialPool.hpp"
+#include "../../Level/Material/MaterialPool.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
 class LightSystem;

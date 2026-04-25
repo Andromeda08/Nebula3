@@ -10,8 +10,8 @@ struct GPUInstanceData
     vec4      boundsMin;
     vec4      boundsMax;
     uint64_t  blasAddress;
-    int       materialIndex;
     int       geometryIndex;
+    int       materialIndex;
     int       objectID;
     int       _pad0;
     int       _pad1;

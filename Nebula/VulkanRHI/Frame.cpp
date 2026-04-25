@@ -6,6 +6,7 @@ namespace RHI
 {
     FrameSync::FrameSync(const SPtr<Device>& pDevice)
     : currentFrame(0)
+    , lifetimeFrameCounter(0)
     , mDevice(pDevice)
     {
         constexpr auto semaphoreCreateInfo = vk::SemaphoreCreateInfo();
@@ -35,5 +36,6 @@ namespace RHI
     void FrameSync::advanceCurrentFrame() noexcept
     {
         currentFrame = (currentFrame + 1) % gFramesInFlight;
+        lifetimeFrameCounter += 1;
     }
 }

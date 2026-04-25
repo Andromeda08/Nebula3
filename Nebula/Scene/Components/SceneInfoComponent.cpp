@@ -70,6 +70,23 @@ void SceneInfoComponent::draw()
 
         bool changed = false;
         changed |= ImGui::DragFloat3(posLabel.data(), glm::value_ptr(light.vector), 0.1f, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+
+        const auto lightTypes = getLightTypes();
+
+        std::vector<const char*> lightTypeCStrs;
+        lightTypeCStrs.reserve(lightTypes.size());
+        for (const auto& name : lightTypes)
+        {
+            lightTypeCStrs.push_back(name.c_str());
+        }
+
+        auto currentType = std::to_underlying(light.type);
+        if (ImGui::Combo("Light Type", &currentType, lightTypeCStrs.data(), static_cast<int32_t>(lightTypeCStrs.size())))
+        {
+            light.type = static_cast<LightType>(currentType);
+            changed |= true;
+        }
+
         changed |= ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
         changed |= ImGui::DragFloat("Intensity", &light.intensity, 0.1f, 0.0f, std::numeric_limits<float>::max());
         changed |= ImGui::Checkbox("Enabled", &light.isEnabled);
@@ -117,6 +134,11 @@ void SceneInfoComponent::draw()
     {
         mScene->mLightingPass->setShadowMode(1);
     }
+
+    // Tonemapping
+    // ============================
+    ImGui::SeparatorText("Tonemapping");
+    ImGui::DragFloat("Exposure", &mScene->mTonemapPass->mPushConstant.exposure, 0.1f, 0.0f, 16.0f);
 
     // Culling
     // ============================

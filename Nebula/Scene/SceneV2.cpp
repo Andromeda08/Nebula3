@@ -8,13 +8,13 @@
 #include "GLTF/GLTFLoader.hpp"
 #include "Window/SplashWindow.hpp"
 
-SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
+SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManager, UserInterface* pUI)
 : mRHI(rhi)
 , mUserInterface(pUI)
+, mTextureManager(pTextureManager)
 {
     mGeometry = makeUnique<SceneGeometry>(mRHI);
     mInstancePool = makeUnique<InstancePool>(mRHI, 65536);
-    mTextureManager = TextureManager::create({ mRHI });
     mLightSystem = makeUnique<LightSystem>(mRHI);
     mMaterialPool = makeUnique<MaterialPool>(mRHI, "Material", 4096);
 
@@ -55,7 +55,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI)
         }
 
         GLTFLoader::loadParts({
-            .pTextureManager = mTextureManager.get(),
+            .pTextureManager = mTextureManager,
             .pSceneGeometry  = mGeometry.get(),
             .pLightSystem    = mLightSystem.get(),
             .pMaterialPool   = mMaterialPool.get(),
@@ -364,7 +364,7 @@ void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI:
     const glm::vec4 row2(vp[0][2], vp[1][2], vp[2][2], vp[3][2]);
     const glm::vec4 row3(vp[0][3], vp[1][3], vp[2][3], vp[3][3]);
 
-    std::array<glm::vec4, 6> frustumPlanes = {
+    std::array frustumPlanes = {
         row3 + row0,  // left
         row3 - row0,  // right
         row3 + row1,  // bottom
@@ -373,7 +373,8 @@ void SceneV2::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI:
         row3 - row2,  // far
     };
 
-    for (auto& p : frustumPlanes) {
+    for (auto& p : frustumPlanes)
+    {
         p /= glm::length(glm::vec3(p));
     }
     #pragma endregion

@@ -17,6 +17,10 @@ struct Tonemap_Params
 
 class TonemapPass : public RenderPass
 {
+    struct PushConstant
+    {
+        float exposure = 1.0;
+    };
 public:
     explicit TonemapPass(const Tonemap_Params& params);
 
@@ -29,9 +33,12 @@ public:
     [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept override;
 
 private:
+    friend class SceneInfoComponent;
+
     void createResources() noexcept;
     void createPipeline()  noexcept;
 
+    PushConstant            mPushConstant;
     Tonemap_Input           mInput;
     SPtr<RHI::Image>        mOutput;
     SPtr<RHI::Descriptor>   mDescriptor;

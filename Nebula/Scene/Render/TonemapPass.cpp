@@ -28,6 +28,7 @@ void TonemapPass::execute(const RHI::CommandList* pCommandList, const RHI::Frame
     // RenderPass
     mRenderPass->execute(pCommandList->getHandle(), [&](const vk::CommandBuffer& commandBuffer) -> void {
         mPipeline->bind(commandBuffer);
+        mPipeline->pushConstants(commandBuffer, &mPushConstant);
         mPipeline->bindDescriptorSet(commandBuffer, mDescriptor->getSet());
         commandBuffer.draw(3, 1, 0, 0);
     });
@@ -83,6 +84,7 @@ void TonemapPass::createPipeline() noexcept
     });
 
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
+        .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eFragment)
         .addDescriptorSetLayout(mDescriptor->getLayout())
         .setStateInfo(RHI::GraphicsPipelineStateInfo()
             .setCullMode(vk::CullModeFlagBits::eNone)

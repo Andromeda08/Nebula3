@@ -39,6 +39,8 @@ void ProceduralSkyPass::execute(const RHI::CommandList* pCommandList, const RHI:
     mPipeline->pushConstants(pCommandList, &mParams);
     mPipeline->dispatch(pCommandList, 128 / 8, 128 / 4, 6);
 
+    mCubeMap->generateMipmaps(pCommandList, vk::Filter::eLinear);
+
     pCommandList->endLabel();
 
     mParamsChanged = false;
@@ -107,7 +109,7 @@ void ProceduralSkyPassComponent::draw()
 {
     ImGui::Begin("Sky Options");
     bool changed = ImGui::SliderFloat("Time of Day", &mTimeOfDay, 0.0f, 24.0f);
-    changed |= ImGui::SliderFloat("Intensity", &mIntensity, 0.0f, 20.0f);
+    changed |= ImGui::SliderFloat("Intensity", &mIntensity, 0.0f, 120.0f);
 
     if (changed)
     {

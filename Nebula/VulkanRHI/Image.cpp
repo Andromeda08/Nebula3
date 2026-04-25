@@ -1,5 +1,7 @@
 #include "Image.hpp"
 
+#include "Commands/CommandList.hpp"
+
 namespace RHI
 {
     namespace detail
@@ -156,6 +158,99 @@ namespace RHI
     const vk::ImageView& Image::getMipView(size_t i) const noexcept
     {
         return mMipViews[i];
+    }
+
+    void Image::generateMipmaps(const CommandList* commandList, const vk::Filter filter)
+    {
+        const auto commandBuffer = commandList->getHandle();
+        const auto layerCount    = mProperties.layerCount;
+
+        /* Transition base mip level to TransferSrc */
+        {
+            const auto barrier_Undef_TDst = vk::ImageMemoryBarrier2()
+                .setImage(mImage)
+                .setSubresourceRange({ mProperties.aspectFlags, 0, 1, 0, layerCount })
+                .setOldLayout(mState.layout)
+                .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setSrcAccessMask(mState.accessMask)
+                .setDstAccessMask(vk::AccessFlagBits2::eTransferRead)
+                .setSrcStageMask(mState.stageMask)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
+            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier_Undef_TDst);
+            commandBuffer.pipelineBarrier2(dependencyInfo);
+        }
+
+        // Blit mip levels i-1 to i
+        const auto w = static_cast<int32_t>(mProperties.extent.width);
+        const auto h = static_cast<int32_t>(mProperties.extent.height);
+        for (uint32_t i = 1; i < mProperties.levelCount; i++)
+        {
+            // current mip level to transfer dst
+            const auto barrier_Undef_TDst = vk::ImageMemoryBarrier2()
+                .setImage(mImage)
+                .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, layerCount })
+                .setOldLayout(vk::ImageLayout::eUndefined)
+                .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setSrcAccessMask(vk::AccessFlagBits2::eNone)
+                .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eNone)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
+            const auto dependencyInfo_Pre = vk::DependencyInfo().setImageMemoryBarriers(barrier_Undef_TDst);
+
+            // Blit
+            const auto imageBlit = vk::ImageBlit2()
+                .setSrcSubresource({ mProperties.aspectFlags, static_cast<uint32_t>(i - 1), 0, layerCount})
+                .setSrcOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { w >> (i - 1), h >> (i - 1), 1 },
+                })
+                .setDstSubresource({ mProperties.aspectFlags, static_cast<uint32_t>(i), 0, layerCount})
+                .setDstOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { w >> i, h >> i,  1 },
+                });
+
+            const auto blitImageInfo = vk::BlitImageInfo2()
+                .setSrcImage(mImage)
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(mImage)
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(filter)
+                .setRegions(imageBlit);
+
+            // current mip level to transfer src
+            const auto barrier_TDst_TSrc = vk::ImageMemoryBarrier2()
+                .setImage(mImage)
+                .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, layerCount })
+                .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
+                .setDstAccessMask(vk::AccessFlagBits2::eTransferRead)
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eBlit)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
+            const auto dependencyInfo_Post = vk::DependencyInfo().setImageMemoryBarriers(barrier_TDst_TSrc);
+
+            commandBuffer.pipelineBarrier2(dependencyInfo_Pre);
+            commandBuffer.blitImage2(blitImageInfo);
+            commandBuffer.pipelineBarrier2(dependencyInfo_Post);
+        }
+
+        // Transition all mip levels to General layout
+        const auto barrier_TSrc_General = vk::ImageMemoryBarrier2()
+            .setImage(mImage)
+            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, layerCount })
+            .setOldLayout(vk::ImageLayout::eTransferSrcOptimal)
+            .setNewLayout(vk::ImageLayout::eGeneral)
+            .setSrcAccessMask(vk::AccessFlagBits2::eTransferRead)
+            .setDstAccessMask(vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite)
+            .setSrcStageMask(vk::PipelineStageFlagBits2::eBlit)
+            .setDstStageMask(vk::PipelineStageFlagBits2::eAllGraphics);
+        const auto dependencyInfo_End = vk::DependencyInfo().setImageMemoryBarriers(barrier_TSrc_General);
+        commandBuffer.pipelineBarrier2(dependencyInfo_End);
+
+        mState.accessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
+        mState.stageMask  = vk::PipelineStageFlagBits2::eAllGraphics;
+        mState.layout     = vk::ImageLayout::eGeneral;
     }
 
     void Image::useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo)

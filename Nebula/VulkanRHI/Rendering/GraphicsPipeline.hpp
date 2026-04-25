@@ -79,6 +79,12 @@ namespace RHI
             return *this;
         }
 
+        GraphicsPipelineStateInfo& setTopology(const vk::PrimitiveTopology topology)
+        {
+            inputAssemblyState.setTopology(topology);
+            return *this;
+        }
+
         GraphicsPipelineStateInfo& setWireframeMode(const bool value = true)
         {
             rasterizationState.setPolygonMode(value ? vk::PolygonMode::eFill : vk::PolygonMode::eLine);
@@ -108,6 +114,14 @@ namespace RHI
         }
     };
 
+    template <class F>
+    [[nodiscard]] inline GraphicsPipelineStateInfo makeGraphicsStateInfo(F&& fn)
+    {
+        GraphicsPipelineStateInfo stateInfo = {};
+        stateInfo.configure(fn);
+        return stateInfo;
+    }
+
     begin_PipelineCreateInfoStruct(Graphics)
         std::map<vk::ShaderStageFlagBits, ShaderInfo> shaderInfos;
         GraphicsPipelineStateInfo                     stateInfo = {};
@@ -130,6 +144,7 @@ namespace RHI
             shaderInfos[s] = { path, s, "main" };
             return *this;
         }
+
     end_PipelineCreateInfoStruct;
 
     class GraphicsPipeline final : public Pipeline

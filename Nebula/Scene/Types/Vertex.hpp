@@ -11,7 +11,7 @@ struct Vertex
     glm::vec2 uv1       = glm::vec2(0.0f, 0.0f);
     glm::vec4 tangent   = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
-    [[nodiscard]] static RHI::VertexAttributes getAttributes(const uint32_t firstLoc = 0, const uint32_t binding = 0) noexcept
+    [[nodiscard]] static std::vector<vk::VertexInputAttributeDescription> getAttributes(const uint32_t firstLoc = 0, const uint32_t binding = 0) noexcept
     {
         return {
             { firstLoc + 0, binding, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position) },
@@ -22,7 +22,7 @@ struct Vertex
         };
     }
 
-    [[nodiscard]] static RHI::VertexBinding getBinding(const uint32_t binding) noexcept
+    [[nodiscard]] static vk::VertexInputBindingDescription getBinding(const uint32_t binding) noexcept
     {
         return { binding, sizeof(Vertex), vk::VertexInputRate::eVertex };
     }

@@ -36,6 +36,8 @@ namespace RHI
         FrameData beginFrame() const;
         void      endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const;
 
+        bool      isFrameComplete(uint64_t frame) const;
+
         CommandQueue* getGraphicsQueue() const { return mGraphicsQueue.get(); }
         Swapchain*    getSwapchain() const { return mSwapchain.get(); }
 

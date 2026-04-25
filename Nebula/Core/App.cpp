@@ -1,8 +1,6 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
-#include "../Cleanup/Math/Transform.hpp"
-#include "RenderGraph/Editor/RenderGraphEditorComponent.hpp"
 #include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
@@ -11,8 +9,6 @@
 #include "Window/SplashWindow.hpp"
 
 App* gApplication = nullptr;
-
-nbl::Transform gTestTransform = {};
 
 App::App()
 {
@@ -30,6 +26,10 @@ App::App()
         .pWindow = mWindow,
     });
 
+    mTextureManager = TextureManager::create({
+        .rhi = mVulkanRHI,
+    });
+
     SplashWindow::get().setMessage("Initializing UserInterface...");
     mUserInterface = UserInterface::create({
         .fontFile = "GeistMono-Regular.ttf",
@@ -38,23 +38,16 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
-    mScene = makeUnique<SceneV2>(mVulkanRHI, mUserInterface.get());
-    mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
+    // mScene = makeUnique<SceneV2>(mVulkanRHI, mTextureManager.get(), mUserInterface.get());
+    // mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
 
-    // Version 2
-    // mUserInterface->addComponent<nbl::TransformEditorComponent>(&gTestTransform);
+    mLevel = makeUnique<nbl::Level>(mVulkanRHI, mUserInterface.get(), mTextureManager.get());
+    mLevelRenderer = makeUnique<nbl::LevelRenderer>(mVulkanRHI, mTextureManager.get(), mLevel.get());
 
-    // const auto geometrySystemConfig = nbl::GeometrySystemConfig {
-    //     .generateMeshlets = true,
-    //     .createBLAS       = mVulkanRHI->getRaytracingSupport(),
-    // };
-    // mGeometrySystem = makeUnique<nbl::GeometrySystem>(geometrySystemConfig, mVulkanRHI);
-    //
-    // mSceneManager = makeUnique<nbl::SceneManager>(mGeometrySystem.get());
-    //
-    // mSceneManager->loadScene(Configuration::getSceneFilePath("bistro.glb"));
-    //
-    // mGeometrySystemDebugRenderPass = makeUnique<nbl::GeometrySystemDebugRenderPass>(mVulkanRHI, mSceneManager->getActiveScene(), mGeometrySystem.get(), mScene->getSceneDescriptor().get());
+    {
+        const auto [w, h] = mWindow->getFramebufferSize();
+        mTitleScreen = makeUnique<TitleScreen>(glm::vec2(w, h), mVulkanRHI, mTextureManager.get());
+    }
 
     mWindow->reveal();
 }
@@ -85,7 +78,7 @@ void App::run_renderPathLoop()
         mCPUFramerate = dt;
         // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
 
-        mScene->preFrame();
+        if (mScene) mScene->preFrame();
 
         // Input
         SDL_Event event;
@@ -99,7 +92,8 @@ void App::run_renderPathLoop()
             // If ImGui didn't want to consume any input continue with Scene handlers.
             if (!mUserInterface->wantCaptureInput())
             {
-                mScene->onEvent(event);
+                if (mScene) mScene->onEvent(event);
+                if (mLevel) mLevel->onEvent(event);
             }
 
             switch (event.type)
@@ -128,8 +122,11 @@ void App::run_renderPathLoop()
 
         commandList->begin();
 
+        mTextureManager->update(commandList);
+
         // Updates
-        mScene->onUpdate(dt, frameData, commandList);
+        if (mScene) mScene->onUpdate(dt, frameData, commandList);
+        if (mLevel) mLevel->onUpdate(dt, frameData, commandList);
 
         // pRenderPath->update(dt, frameData);
         mUserInterface->update();
@@ -140,7 +137,11 @@ void App::run_renderPathLoop()
         // pRenderPath->initialize(commandList);   // Runs once
         // pRenderPath->execute(commandList, frameData);
 
-        mScene->onRender(commandList, frameData);
+
+        if (mScene) mScene->onRender(commandList, frameData);
+
+        mLevelRenderer->render(frameData, commandList);
+        mTitleScreen->render(commandList, frameData);
 
         // mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
 

@@ -39,7 +39,9 @@ struct GPUInstanceData
 // Light Types and Constants
 // ============================================
 // Maximum number of lights contained in the descriptor array.
-#define MAX_LIGHTS 256
+#define MAX_LIGHTS          256
+#define POINT_LIGHT         0
+#define DIRECTIONAL_LIGHT   1
 
 struct GPULightData
 {

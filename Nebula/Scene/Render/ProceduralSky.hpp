@@ -72,7 +72,7 @@ public:
 
 private:
     float              mTimeOfDay = 16.0f;
-    float              mIntensity = 10.0f;
+    float              mIntensity = 80.0f;
     ProceduralSkyPass* mSkyPass;
 };
 

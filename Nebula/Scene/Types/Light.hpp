@@ -24,7 +24,7 @@ enum class LightType : int32_t
     Directional = 1,
 };
 
-[[nodiscard]] constexpr std::string_view toString(const LightType e) noexcept
+[[nodiscard]] constexpr std::string toString(const LightType e) noexcept
 {
     using enum LightType;
     switch (e)
@@ -33,6 +33,11 @@ enum class LightType : int32_t
         case Directional: return "Directional";
         default:          return "Unknown";
     }
+}
+
+inline std::vector<std::string> getLightTypes()
+{
+    return { toString(LightType::Point), toString(LightType::Directional) };
 }
 
 struct Light

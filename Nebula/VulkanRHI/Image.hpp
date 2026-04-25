@@ -10,6 +10,7 @@
 
 namespace RHI
 {
+    class CommandList;
     // =====================================
     // Image Class
     // =====================================
@@ -63,6 +64,8 @@ namespace RHI
 
             return barrier;
         }
+
+        void generateMipmaps(const CommandList* commandList, vk::Filter filter = vk::Filter::eNearest);
 
         void updateState(const ImageState& imageState)
         {

@@ -88,6 +88,7 @@ namespace RHI
             .imageReadySemaphore        = mFrameSync->imageReady[currentFrame],
             .renderingFinishedSemaphore = mFrameSync->renderingFinished[currentFrame],
             .currentFrame               = currentFrame,
+            .lifetimeFrameCounter       = mFrameSync->lifetimeFrameCounter,
             .acquiredIndex              = acquiredIndex,
         };
     }
@@ -133,6 +134,25 @@ namespace RHI
         exitOnAssert(result == vk::Result::eSuccess, "Failed to present image.");
 
         mFrameSync->advanceCurrentFrame();
+    }
+
+    bool VulkanRHI::isFrameComplete(const uint64_t frame) const
+    {
+        const vk::Fence fence = mFrameSync->frameInFlight[frame % gFramesInFlight];
+        const vk::Result result = mDevice->getHandle().getFenceStatus(fence);
+
+        if (result == vk::Result::eSuccess)
+        {
+            return true;
+        }
+
+        if (result == vk::Result::eNotReady)
+        {
+            return false;
+        }
+
+        exitOnAssert(false, "vk::Device::getFenceStatus failed: {}", vk::to_string(result));
+        return false;
     }
 
     SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const

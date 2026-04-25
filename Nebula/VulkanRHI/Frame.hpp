@@ -14,6 +14,7 @@ namespace RHI
         vk::Semaphore   imageReadySemaphore;
         vk::Semaphore   renderingFinishedSemaphore;
         const uint64_t  currentFrame;
+        const uint64_t  lifetimeFrameCounter;
         const uint32_t  acquiredIndex;
     };
 
@@ -33,6 +34,7 @@ namespace RHI
         PerFrameArray<vk::Semaphore>  renderingFinished;
 
         uint64_t                      currentFrame;
+        uint64_t                      lifetimeFrameCounter;
 
         explicit FrameSync(const SPtr<Device>& pDevice);
 

@@ -28,3 +28,10 @@
     T& operator=(const T&) = delete;    \
     T(const T&&) = delete;              \
     T& operator=(const T&&) = delete;
+
+#define nbl_DisableCopy(T) nbl_DISABLE_COPY(T)
+
+#define nbl_CreateWithStruct(ClassType, ParamsType)             \
+    static UPtr<ClassType> create(const ParamsType& params) {   \
+        return std::make_unique<ClassType>(params);             \
+    }

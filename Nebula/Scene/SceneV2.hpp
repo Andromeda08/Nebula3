@@ -14,7 +14,7 @@
 #include "Core/Random.hpp"
 #include "Core/Ranges.hpp"
 #include "Core/Types.hpp"
-#include "DataV2/MaterialPool.hpp"
+#include "../Level/Material/MaterialPool.hpp"
 #include "Geometry/Geometry.hpp"
 #include "Math/BoundingBox.hpp"
 #include "Math/DeltaTime.hpp"
@@ -105,7 +105,7 @@ class SceneV2
         glm::vec2 screenSize;
     };
 public:
-    explicit SceneV2(const SPtr<RHI::VulkanRHI>& rhi, UserInterface* pUI);
+    explicit SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManager, UserInterface* pUI);
 
     void preFrame() noexcept
     {
@@ -163,6 +163,7 @@ private:
     friend class Indirect_GBufferPass;
     friend class nbl::GBufferPass;
     friend class SceneInfoComponent;
+    friend class BoundingBoxDebugPass;
 
     SPtr<RHI::VulkanRHI>                mRHI;
     UserInterface*                      mUserInterface;
@@ -177,7 +178,7 @@ private:
 
     UPtr<TLASManager>                   mTLASManager;
 
-    UPtr<TextureManager>                mTextureManager;
+    TextureManager*                     mTextureManager;
 
     UPtr<LightSystem>                   mLightSystem;
 

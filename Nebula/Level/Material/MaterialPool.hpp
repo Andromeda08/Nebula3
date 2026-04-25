@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "SlotPool.hpp"
+#include "../SlotPool.hpp"
 
 using TextureHandle = int32_t;
 
@@ -50,3 +50,20 @@ struct MaterialData
 };
 
 using MaterialPool = Pool<MaterialData, GPUMaterialData>;
+
+namespace nbl
+{
+    class MaterialSystem : public Pool<MaterialData, GPUMaterialData>
+    {
+    public:
+        explicit MaterialSystem(const SPtr<RHI::VulkanRHI>& rhi, const uint32_t capacity = 4096)
+        : Pool(rhi, "MaterialSystem", capacity)
+        {
+        }
+
+        void onUpdate(const RHI::CommandList* commandList)
+        {
+            flush(commandList);
+        }
+    };
+}

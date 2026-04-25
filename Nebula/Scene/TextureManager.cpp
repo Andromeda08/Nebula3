@@ -57,7 +57,7 @@ uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::
             .setWidth(static_cast<uint32_t>(width))
             .setHeight(static_cast<uint32_t>(height)),
         .format = vk::Format::eR8G8B8A8Srgb,
-        .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+        .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
         .createSampler = true,
         .aliased = false,
         .debugName = std::format("{}[slot={}]", textureFile, loadSlot),
@@ -71,7 +71,7 @@ uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::
 
     loadImmediately(loadInfo);
 
-    return true;
+    return loadSlot;
 }
 
 uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const stbi_uc* pixels,
@@ -90,9 +90,10 @@ uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const s
             .setWidth(static_cast<uint32_t>(width))
             .setHeight(static_cast<uint32_t>(height)),
         .format = format,
-        .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+        .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
         .createSampler = true,
         .aliased = false,
+        .mipmapping = true,
         .debugName = std::format("{}[slot={}]", label, loadSlot),
         .samplerInfo = samplerInfo,
     });
@@ -132,6 +133,8 @@ void TextureManager::loadImmediately(const TextureLoadInfo& textureLoadInfo) noe
             .dstUsage = RHI::ImageUsage::ShaderReadOnly,
             .image = textureImage,
         }).insert(commandList);
+
+        textureImage->generateMipmaps(commandList, vk::Filter::eLinear);
 
         updateMetaTexture(commandList);
     });

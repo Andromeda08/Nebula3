@@ -9,7 +9,7 @@ struct GPUVoxelInstanceData
     glm::mat4x4 model;
     glm::vec4   color;
 
-    [[nodiscard]] static RHI::VertexAttributes getAttributes(const uint32_t firstLoc = 0, const uint32_t binding = 0) noexcept
+    [[nodiscard]] static std::vector<vk::VertexInputAttributeDescription> getAttributes(const uint32_t firstLoc = 0, const uint32_t binding = 0) noexcept
     {
         return {
             { firstLoc + 0, binding, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4) * 0 },
@@ -20,7 +20,7 @@ struct GPUVoxelInstanceData
         };
     }
 
-    [[nodiscard]] static RHI::VertexBinding getBinding(const uint32_t binding) noexcept
+    [[nodiscard]] static vk::VertexInputBindingDescription getBinding(const uint32_t binding) noexcept
     {
         return { binding, sizeof(GPUVoxelInstanceData), vk::VertexInputRate::eInstance };
     }
