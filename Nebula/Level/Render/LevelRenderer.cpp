@@ -1,6 +1,5 @@
 #include "LevelRenderer.hpp"
 
-#include "LightingPass.hpp"
 #include "Templates.hpp"
 #include "Level/Level.hpp"
 #include "VulkanRHI/Barrier.hpp"
