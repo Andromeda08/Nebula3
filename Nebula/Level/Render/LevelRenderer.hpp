@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TonemapPass.hpp"
+#include "Level/Render/AntiAliasingPass.hpp"
 #include "Level/Render/BoundingBoxDebugPass.hpp"
 #include "Level/Render/GBufferPass.hpp"
 #include "Level/Render/LightingPass.hpp"
@@ -29,6 +29,7 @@ namespace nbl
         SPtr<GBufferPass>           mGBufferPass;
         UPtr<LightingPass>          mLightingPass;
         UPtr<TonemapPass>           mTonemapPass;
+        UPtr<AntiAliasingPass>      mAntiAliasingPass;
         UPtr<BoundingBoxDebugPass>  mBoundingBoxDebugPass;
     };
 }

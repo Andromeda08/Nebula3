@@ -11,7 +11,7 @@
 // #define nbl_AMBIENT_OCCLUSION
 // ============================================
 
-#define nbl_TEMP_SKY_COLOR vec3(0.05, 0.1, 0.025)
+#define nbl_TEMP_SKY_COLOR vec3(0.01)
 #define nbl_ROUGHNESS_MIN 0.089
 
 #ifdef nbl_RT

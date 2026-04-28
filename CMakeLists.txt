@@ -78,6 +78,8 @@ set(V2_FILES
     Nebula/Level/Render/LightingPass.cpp
     Nebula/Level/Render/TonemapPass.hpp
     Nebula/Level/Render/TonemapPass.cpp
+    Nebula/Level/Render/AntiAliasingPass.cpp
+    Nebula/Level/Render/AntiAliasingPass.hpp
 )
 
 add_executable(Nebula3

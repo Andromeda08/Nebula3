@@ -29,6 +29,11 @@ namespace nbl
             .rhi   = mRHI,
         });
 
+        // mAntiAliasingPass = AntiAliasingPass::create({
+        //     .input = mTonemapPass->getResult(),
+        //     .rhi   = mRHI,
+        // });
+
         mBoundingBoxDebugPass = BoundingBoxDebugPass::create({
             .pLevel             = mLevel,
             .renderTarget       = mTonemapPass->getResult(),
@@ -42,6 +47,7 @@ namespace nbl
         mGBufferPass->execute(commandList, frameData);
         mLightingPass->execute(commandList, frameData);
         mTonemapPass->execute(commandList, frameData);
+        // mAntiAliasingPass->execute(commandList, frameData);
         mBoundingBoxDebugPass->execute(commandList, frameData);
 
         blitToSwapchain(mTonemapPass->getResult().get(), commandList, frameData);
