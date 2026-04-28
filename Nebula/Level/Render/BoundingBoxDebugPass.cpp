@@ -39,10 +39,10 @@ namespace nbl
             mPipeline->bind(cmd);
 
             auto pushConstant = PushConstants {
-                .boxColor = mBoxColor,
-                .cameraUniformAddress = mInput.pLevel->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
-                .instanceDataAddress = mInput.pLevel->mInstanceSystem->getBuffer()->getAddress(),
-                .instanceIndex = 0 /* !! Set before draw calls !! */,
+                .boxColor       = mBoxColor,
+                .instanceBuffer = mInput.pLevel->mInstanceSystem->getBuffer()->getAddress(),
+                .cameraBuffer   = mInput.pLevel->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+                .instanceIndex  = 0 /* !! Set before draw calls !! */,
             };
 
             // Render for selected object
@@ -79,8 +79,8 @@ namespace nbl
 
         mRenderPass = mRHI->createRenderPass({
             .renderArea       = mScissor,
-            .colorAttachments = { makeAttachment(mInput.renderTarget.get(), vk::AttachmentLoadOp::eLoad) },
-            .depthAttachment  = makeAttachment(mInput.gBufferDepthBuffer.get(), vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone),
+            .colorAttachments = { makeAttachment(mInput.renderTarget, vk::AttachmentLoadOp::eLoad) },
+            .depthAttachment  = makeAttachment(mInput.gBufferDepthBuffer, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone),
             .label            = "BoundingBoxDebug_RenderPass",
         });
 
@@ -120,6 +120,11 @@ namespace nbl
 
     void BoundingBoxDebugPassUI::draw()
     {
+        if (!mPass)
+        {
+            return;
+        }
+
         ImGui::Begin("AABB Debug");
 
         ImGui::Checkbox("Render AABBs", &mPass->mVisualizeAABBs);

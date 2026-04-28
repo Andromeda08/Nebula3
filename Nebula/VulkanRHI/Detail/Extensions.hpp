@@ -117,6 +117,7 @@ namespace RHI
         vk::PhysicalDeviceVulkan12Properties,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceVulkan12Features()
+                .setShaderSampledImageArrayNonUniformIndexing(true)
                 .setBufferDeviceAddress(true)
                 .setDescriptorIndexing(true)
                 .setScalarBlockLayout(true)

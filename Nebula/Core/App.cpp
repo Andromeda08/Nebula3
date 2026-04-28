@@ -57,6 +57,11 @@ UPtr<App> App::create() noexcept
     return std::make_unique<App>();
 }
 
+App::~App()
+{
+    mVulkanRHI->getDevice()->waitIdle();
+}
+
 void App::run_renderPathLoop()
 {
     // Initialize variables, start main loop

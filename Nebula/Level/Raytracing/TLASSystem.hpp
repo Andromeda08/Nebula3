@@ -9,6 +9,8 @@ namespace nbl
     {
         struct TLASUpdatePushConstants
         {
+            uint64_t tlasInstances;
+            uint64_t instances;
             uint32_t size;
         };
     public:

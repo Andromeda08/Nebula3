@@ -17,8 +17,8 @@ namespace nbl
     {
         struct PushConstant
         {
-            uint64_t  cameraAddress;
             uint64_t  instanceAddress;
+            uint64_t  cameraAddress;
             uint64_t  selectAddress;
             glm::vec2 mousePos;
             glm::vec2 screenSize;
@@ -44,7 +44,7 @@ namespace nbl
 
             auto pipelineInfo = RHI::ComputePipelineCreateInfo()
                 .addDescriptorSetLayout(mTlasSystem->getDescriptor()->getLayout())
-                .setComputeShader(Configuration::getShaderFilePath("RQSelectV2.comp.spv"))
+                .setComputeShader(Configuration::getShaderFilePath("RQSelect.comp.spv"))
                 .setDebugName("ObjSelectPipeline")
                 .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eCompute);
             mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
@@ -67,8 +67,8 @@ namespace nbl
                         SDL_GetMouseState(&mousePos.x, &mousePos.y);
 
                         const auto pushConstants = PushConstant {
-                            .cameraAddress   = mCameraSystem->getBuffer(0)->getAddress(),
                             .instanceAddress = mInstanceSystem->getBuffer()->getAddress(),
+                            .cameraAddress   = mCameraSystem->getBuffer(0)->getAddress(),
                             .selectAddress   = mObjSelectBuffer->getAddress(),
                             .mousePos        = std::move(mousePos),
                             .screenSize      = glm::vec2(w, h),

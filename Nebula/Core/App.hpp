@@ -23,6 +23,8 @@ public:
 
     void run_renderPathLoop();
 
+    ~App();
+
 private:
     bool                         mRunning = false;
     float                        mCPUFramerate = 0.0f;

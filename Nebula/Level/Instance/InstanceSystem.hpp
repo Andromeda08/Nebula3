@@ -9,20 +9,20 @@ namespace nbl
     struct GPUInstanceData
     {
         glm::mat4   model;
+        glm::mat4   modelInverse;
+        glm::mat4   modelPrevious;
         glm::vec4   aabbMin;
         glm::vec4   aabbMax;
         uint64_t    blas;
         int32_t     geometryIndex;
         int32_t     materialIndex;
         int32_t     objectId;
-        int32_t     _pad0 = 0;
-        int32_t     _pad1 = 0;
-        int32_t     _pad2 = 0;
     };
 
     struct InstanceData
     {
         glm::mat4   model;
+        glm::mat4   previousModel;
 
         /**
          * Expects the already transformed BoundingBox.
@@ -40,6 +40,8 @@ namespace nbl
         {
             return {
                 .model          = model,
+                .modelInverse   = glm::inverse(model),
+                .modelPrevious  = previousModel,
                 .aabbMin        = glm::vec4(boundingBox.getMin(), 1.0f),
                 .aabbMax        = glm::vec4(boundingBox.getMax(), 1.0f),
                 .blas           = blas,

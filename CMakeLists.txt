@@ -72,6 +72,12 @@ set(V2_FILES
     Nebula/Level/Render/Templates.hpp
     Nebula/Level/Render/BoundingBoxDebugPass.cpp
     Nebula/Level/Render/LevelRenderer.cpp
+    Nebula/Level/Render/GBufferPass.hpp
+    Nebula/Level/Render/GBufferPass.cpp
+    Nebula/Level/Render/LightingPass.hpp
+    Nebula/Level/Render/LightingPass.cpp
+    Nebula/Level/Render/TonemapPass.hpp
+    Nebula/Level/Render/TonemapPass.cpp
 )
 
 add_executable(Nebula3
@@ -245,10 +251,6 @@ add_executable(Nebula3
     Nebula/Math/BoundingBox.cpp
     Nebula/Scene/Render/AABBOverlayPass.cpp
     Nebula/Scene/Render/AABBOverlayPass.hpp
-    Nebula/Scene/Renderer/Pass.hpp
-    Nebula/Scene/Renderer/GBufferPass.hpp
-    Nebula/Scene/Renderer/GBufferPass.cpp
-    Nebula/Scene/Renderer/SceneRenderer.hpp
     Nebula/Scene/Render/BloomPass.hpp
     Nebula/Scene/Render/BloomPass.cpp
     Nebula/Level/SlotPool.hpp

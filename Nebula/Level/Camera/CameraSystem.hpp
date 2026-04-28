@@ -20,7 +20,7 @@ namespace nbl
 
         void onEvent(const SDL_Event& event) const noexcept;
 
-        void onUpdate(const RHI::FrameData& frameData) const noexcept;
+        void onUpdate(const RHI::FrameData& frameData) noexcept;
 
         template <class T, class... Args>
         requires std::derived_from<T, Camera>
@@ -34,7 +34,7 @@ namespace nbl
             return static_cast<T*>(mCameras.back().get());
         }
 
-        void setActiveCamera(const int32_t index);
+        void setActiveCamera(int32_t index);
 
         [[nodiscard]] Camera* getActiveCamera() const;
 
@@ -44,12 +44,18 @@ namespace nbl
 
         [[nodiscard]] const SPtr<RHI::Buffer>& getBuffer(uint32_t frameIndex) const noexcept;
 
+        [[nodiscard]] const SPtr<RHI::Buffer>& getPreviousBuffer(uint32_t frameIndex) const noexcept;
+
     private:
         std::vector<UPtr<Camera>>           mCameras;
         int32_t                             mActiveCamera = -1;
 
         SPtr<RHI::VulkanRHI>                mRHI;
         PerFrameArray<SPtr<RHI::Buffer>>    mUniformBuffers;
+
+        // Previous frame data, always 1 frame behind at the same index.
+        GPUCameraData                       mPreviousData;
+        PerFrameArray<SPtr<RHI::Buffer>>    mPreviousUniformBuffers;
     };
 
     class CameraSystemUI : public IComponent

@@ -26,7 +26,7 @@ namespace nbl
 
         auto pipelineInfo = RHI::ComputePipelineCreateInfo()
             .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv").string())
-            .addDescriptorSetLayout(mUpdateDescriptor->getLayout())
+            // .addDescriptorSetLayout(mUpdateDescriptor->getLayout())
             .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(TLASUpdatePushConstants) })
             .setDebugName("TLAS_Instance_Update");
         mUpdatePipeline = mRHI->createComputePipeline(pipelineInfo);
@@ -230,10 +230,14 @@ namespace nbl
     {
         pCommandList->beginLabel("TLAS_Update_Instances");
     
-        const TLASUpdatePushConstants pc = { .size = mInstanceSystem->getSize() };
+        const TLASUpdatePushConstants pc = {
+            .tlasInstances = mInstanceBuffer->getAddress(),
+            .instances = mInstanceSystem->getBuffer()->getAddress(),
+            .size = mInstanceSystem->getSize()
+        };
     
         mUpdatePipeline->bind(pCommandList);
-        mUpdatePipeline->bindDescriptorSet(pCommandList, mUpdateDescriptor->getSet(0));
+        // mUpdatePipeline->bindDescriptorSet(pCommandList, mUpdateDescriptor->getSet(0));
         mUpdatePipeline->pushConstants(pCommandList, &pc);
     
         const auto x = (pc.size + 63) / 64;

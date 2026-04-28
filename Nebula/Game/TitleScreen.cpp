@@ -83,7 +83,7 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
     });
 
     mText.push_back({
-        .text     = "/ System and UI Preview /",
+        .text     = "/ GI and Systems Preview /",
         .position = glm::vec2(mScreen.padding.x, mScreen.size.y - mScreen.padding.y - 16.0f),
         .color    = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
         .pFont    = mFont16.get(),
@@ -200,12 +200,12 @@ void TitleScreen::render(const RHI::CommandList* pCommandList, const RHI::FrameD
         constexpr vk::DeviceSize offset = 0;
         cmd->getHandle().bindVertexBuffers(0, 1, &mVertices->getHandle(), &offset);
         cmd->getHandle().bindIndexBuffer(mIndices->getHandle(), 0, vk::IndexType::eUint32);
-        for (auto i = 0; i < mQuads.size(); i++)
-        {
-            pushConstant.color = mQuads[i].backgroundColor;
-            mPipeline->pushConstants(cmd, &pushConstant);
-            pCommandList->getHandle().drawIndexed(6, 1, i * 6, 0, 0);
-        }
+        // for (auto i = 0; i < mQuads.size(); i++)
+        // {
+        //     pushConstant.color = mQuads[i].backgroundColor;
+        //     mPipeline->pushConstants(cmd, &pushConstant);
+        //     pCommandList->getHandle().drawIndexed(6, 1, i * 6, 0, 0);
+        // }
 
         pushConstant.isText       = 1;
         for (auto i = 0; i < mText.size(); i++)

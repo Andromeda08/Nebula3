@@ -1,0 +1,8 @@
+#ifndef nbl_CONSTANTS_INC_GLSL
+#define nbl_CONSTANTS_INC_GLSL
+
+const float PI     = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+const float INV_PI = 0.31830988618;
+
+#endif

@@ -35,3 +35,8 @@
     static UPtr<ClassType> create(const ParamsType& params) {   \
         return std::make_unique<ClassType>(params);             \
     }
+
+#define nbl_CreateWithStructShared(ClassType, ParamsType)             \
+    static SPtr<ClassType> create(const ParamsType& params) {   \
+        return makeShared<ClassType>(params);                   \
+    }

@@ -15,7 +15,6 @@ struct GPUMaterialData
     float     roughnessFactor;
     int32_t   isEmissive;
     uint32_t  rtHitGroup;
-    int32_t   _pad0;
 };
 
 struct MaterialData

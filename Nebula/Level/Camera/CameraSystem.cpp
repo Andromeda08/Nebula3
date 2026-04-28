@@ -20,6 +20,12 @@ namespace nbl
                 .type  = RHI::BufferType::Uniform,
                 .label = fmt::format("CameraSystem_UniformBuffer_{}", i),
             });
+
+            mPreviousUniformBuffers[i] = mRHI->createBuffer({
+               .size  = sizeof(GPUCameraData),
+               .type  = RHI::BufferType::Uniform,
+               .label = fmt::format("CameraSystem_History_UniformBuffer_{}", i),
+           });
         }
     }
 
@@ -31,15 +37,24 @@ namespace nbl
         }
     }
 
-    void CameraSystem::onUpdate(const RHI::FrameData& frameData) const noexcept
+    void CameraSystem::onUpdate(const RHI::FrameData& frameData) noexcept
     {
+        static bool isFirstFrame = true;
+
         if (auto* camera = getActiveCamera())
         {
             camera->onUpdate();
 
             const auto gpuCameraData = camera->getGpuCameraData();
+            const auto& previousData = isFirstFrame ? gpuCameraData : mPreviousData;
+
+            mPreviousUniformBuffers[frameData.currentFrame]->setData(&previousData, sizeof(GPUCameraData), 0);
             mUniformBuffers[frameData.currentFrame]->setData(&gpuCameraData, sizeof(GPUCameraData), 0);
+
+            mPreviousData = gpuCameraData;
         }
+
+        isFirstFrame = false;
     }
 
     void CameraSystem::setActiveCamera(const int32_t index)
@@ -73,6 +88,11 @@ namespace nbl
     const SPtr<RHI::Buffer>& CameraSystem::getBuffer(const uint32_t frameIndex) const noexcept
     {
         return mUniformBuffers[frameIndex];
+    }
+
+    const SPtr<RHI::Buffer>& CameraSystem::getPreviousBuffer(const uint32_t frameIndex) const noexcept
+    {
+        return mPreviousUniformBuffers[frameIndex];
     }
 
     CameraSystemUI::CameraSystemUI(CameraSystem* pCameraSystem)

@@ -24,6 +24,7 @@ namespace nbl
         uint64_t    blasAddress     = {};
 
         bool        isInstanceDirty = true;
+        bool        isFirstUpdate   = true;
         Handle      hInstance       = {};
     };
 }

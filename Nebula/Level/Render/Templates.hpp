@@ -9,6 +9,41 @@
 namespace nbl
 {
     /**
+     * Create a render target with Transfer, Sampled, Storage and Color/Depth usage deduced from format.
+     * @param pRHI
+     * @param name Debug label
+     * @param format Default: RGBA16 float
+     * @param extent If no extent is specified, the current swapchain size is used for creation.
+     * @param samplerInfo
+     * @return Image
+     */
+    [[nodiscard]] inline SPtr<RHI::Image> makeRenderTarget(
+        const RHI::VulkanRHI*                       pRHI,
+        const std::string&                          name,
+        const vk::Format                            format = vk::Format::eR16G16B16A16Sfloat,
+        const std::optional<vk::Extent2D>&          extent = std::nullopt,
+        const std::optional<vk::SamplerCreateInfo>& samplerInfo = std::nullopt
+        )
+    {
+        const auto isDepth = vk::hasDepthComponent(format);
+
+        using enum vk::ImageUsageFlagBits;
+        const vk::ImageUsageFlags usageFlags = (isDepth ? eDepthStencilAttachment : eColorAttachment)
+            | eTransferSrc | eTransferDst | eSampled | eStorage;
+
+        const auto _extent = extent.value_or(pRHI->getSwapchain()->getProperties().extent);
+
+        return pRHI->createImage({
+            .extent        = _extent,
+            .format        = format,
+            .usageFlags    = usageFlags,
+            .createSampler = true,
+            .debugName     = name,
+            .samplerInfo   = samplerInfo,
+        });
+    }
+
+    /**
      * Create a rendering attachment, automatically resolving color/depth usage.
      * @param pImage Image to use as attachment
      * @param loadOp Default: Clear
@@ -17,7 +52,7 @@ namespace nbl
      * @return RHI Attachment description
      */
     [[nodiscard]] inline RHI::Attachment makeAttachment(
-        const RHI::Image*                    pImage,
+        const SPtr<RHI::Image>&              pImage,
         const vk::AttachmentLoadOp           loadOp     = vk::AttachmentLoadOp::eClear,
         const vk::AttachmentStoreOp          storeOp    = vk::AttachmentStoreOp::eStore,
         const std::optional<vk::ClearValue>& clearValue = std::nullopt)

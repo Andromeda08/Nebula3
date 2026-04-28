@@ -23,8 +23,8 @@ struct ConfigurationData
     std::string         baseDirPath         = "../Resources";
     std::string         scenesDirName       = "Scenes";
     std::string         fontsDirName        = "Fonts";
-    std::string         shadersDirName      = "Shaders";
-    std::string         shadersBinDirName   = "Shaders/bin";
+    std::string         shadersDirName      = "Gen2_Shaders";
+    std::string         shadersBinDirName   = "Gen2_Shaders/bin";
     std::string         texturesDirName     = "Textures";
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, app);

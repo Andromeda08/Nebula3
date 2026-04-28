@@ -79,6 +79,8 @@ namespace nbl
         void buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData);
 
         friend class LevelRenderer;
+        friend class GBufferPass;
+        friend class LightingPass;
         friend class BoundingBoxDebugPass;
 
         SPtr<RHI::VulkanRHI>                mRHI;

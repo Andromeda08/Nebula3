@@ -44,7 +44,6 @@ namespace nbl
         int32_t     isEnabled;
         int32_t     castsShadows;
         float       radius;
-        int32_t     _pad0;
     };
 
     /**
@@ -81,7 +80,6 @@ namespace nbl
                 .isEnabled      = isEnabled    ? 1 : 0,
                 .castsShadows   = castsShadows ? 1 : 0,
                 .radius         = radius,
-                ._pad0          = 0,
             };
         }
     };

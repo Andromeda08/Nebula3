@@ -16,6 +16,7 @@ namespace RHI
                 .levelCount  = (createInfo.mipmapping) ? getMipLevels(createInfo.extent) : 1,
                 .layerCount  = createInfo.cubeMap ? 6u : 1u,
                 .sampleCount = createInfo.samples,
+                .usageFlags  = createInfo.usageFlags,
             };
         }
     }

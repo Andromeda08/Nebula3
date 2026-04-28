@@ -59,8 +59,8 @@ namespace nbl
             for (auto i = 0; i < textures.size(); i++)
             {
                 catMaterials[i] = mMaterialSystem->acquire({
-                    .solidColor = Random::getColor(),
-                    .hTexture   = static_cast<int32_t>(textures[i]),
+                    .solidColor  = Random::getColor(),
+                    .hTexture    = static_cast<int32_t>(textures[i]),
                 });
             }
 
@@ -77,9 +77,35 @@ namespace nbl
                 else
                 {
                     const auto hMat = mMaterialSystem->acquire({
-                        .solidColor = Random::getColor(),
+                        .solidColor  = Random::getColor(),
+                        .pIsEmissive = true,
                     });
                     addObject<Object>(sphereIdx, transform, hMat, fmt::format("Sphere-Obj#{}", i));
+                }
+            }
+
+            /* Ground */ {
+                const auto hMat = mMaterialSystem->acquire({
+                    .solidColor = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                });
+                auto transform = Transform()
+                    .setTranslate(glm::vec3(0.0f, -20.0f, 0.0f))
+                    .setScale(glm::vec3(256.0f, 0.001f, 256.0f));
+                addObject<Object>(cubeIdx, transform, hMat, "Plane");
+            }
+
+            /* Random Pillars */ {
+                for (int32_t i = 0; i < 64; i++)
+                {
+                    const auto hMat = mMaterialSystem->acquire({
+                        .solidColor = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                    });
+                    const auto b = Random::get(2.5f, 7.5f);
+                    auto transform = Transform()
+                        .setTranslate(glm::vec3(Random::get(-120.0f, 120.0f), -5.0f, Random::get(-120.0f, 120.0f)))
+                        .setRotation(glm::vec3(Random::get(-45.0f, 45.0f), Random::get(0.0f, 360.0f), Random::get(-45.0f, 45.0f)))
+                        .setScale(glm::vec3(b, 50.0f, b));
+                    addObject<Object>(cubeIdx, transform, hMat, fmt::format("Pillar-#{}", i));
                 }
             }
         }
@@ -117,8 +143,11 @@ namespace nbl
                     const auto materialIndex = obj->hMaterial.isNull() ? -1 : static_cast<int32_t>(mMaterialSystem->getGpuIndex(obj->hMaterial));
                     const auto bbox = mGeometrySystem->getGeometry(obj->geometryIndex)->getBoundingBox().getTransformed(model);
 
+                    const auto previousModel = obj->isFirstUpdate ? model : data.model;
+
                     data = {
                         .model          = model,
+                        .previousModel  = previousModel,
                         .boundingBox    = bbox,
                         .blas           = mBlasSystem ? mBlasSystem->getGeometryBlasAddress(obj->geometryIndex) : 0,
                         .geometryIndex  = obj->geometryIndex,
@@ -127,6 +156,7 @@ namespace nbl
                     };
                 });
 
+                obj->isFirstUpdate   = false;
                 obj->isInstanceDirty = false;
             }
         }

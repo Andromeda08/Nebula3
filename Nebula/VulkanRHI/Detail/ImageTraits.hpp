@@ -215,6 +215,7 @@ namespace RHI
         uint32_t                levelCount  = 1;
         uint32_t                layerCount  = 1;
         vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
+        vk::ImageUsageFlags     usageFlags = {};
 
         [[nodiscard]] vk::Extent3D getExtent3D() const
         {
