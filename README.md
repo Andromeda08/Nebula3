@@ -4,6 +4,13 @@ A cross-platform rendering engine built with Vulkan.
 <p align="center">
   <img src="./Resources/bistro_test.png" width="75%" />
 </p>
+<p align="center">Bistro Scene with RT Shadows</p>
+
+<p align="center">
+  <img src="./Resources/gi.png" width="75%" />
+</p>
+<p align="center">Single-bounce diffuse GI with Ray Queries</p>
+
 
 
 ### Features
@@ -23,12 +30,13 @@ A cross-platform rendering engine built with Vulkan.
   - Materials
   - Top-Level AS Management
     - Compute-based data updates using the existing instance data
-    - Used for shadows, ambient occlusion and object selection
+    - Used for GI, shadows, ambient occlusion and object selection
 - Rendering techniques
   - Deferred shading
   - Screen-space and raytraced ambient occlusion
   - PBR Lighting
   - Raytraced shadows
+  - Single-bounce GI : Indirect Diffuse Lighting
   - Anti-aliasing (FXAA)
   - Rayleigh-Mie Procedural Sky
     - Directional Light
