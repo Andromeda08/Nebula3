@@ -21,7 +21,7 @@ public:
     App();
     static UPtr<App> create() noexcept;
 
-    void run_renderPathLoop();
+    void run();
 
     ~App();
 

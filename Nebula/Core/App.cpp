@@ -62,9 +62,8 @@ App::~App()
     mVulkanRHI->getDevice()->waitIdle();
 }
 
-void App::run_renderPathLoop()
+void App::run()
 {
-    // Initialize variables, start main loop
     mRunning = true;
     mDeltaTime.initialize();
 
@@ -81,9 +80,6 @@ void App::run_renderPathLoop()
     {
         const float dt = mDeltaTime.getDeltaTime();
         mCPUFramerate = dt;
-        // auto* pRenderPath = mRenderGraphContext->getCurrentRenderPath();
-
-        if (mScene) mScene->preFrame();
 
         // Input
         SDL_Event event;
@@ -95,10 +91,12 @@ void App::run_renderPathLoop()
             // Let ImGui process events
             mUserInterface->processEvents(event);
             // If ImGui didn't want to consume any input continue with Scene handlers.
-            if (!mUserInterface->wantCaptureInput())
+            if (!UserInterface::wantCaptureInput())
             {
-                if (mScene) mScene->onEvent(event);
-                if (mLevel) mLevel->onEvent(event);
+                if (mLevel)
+                {
+                    mLevel->onEvent(event);
+                }
             }
 
             switch (event.type)
@@ -111,8 +109,8 @@ void App::run_renderPathLoop()
                     }
                     break;
                 }
-                case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
-                    spdlog::info("Pressed: {} ", event.gbutton.button);
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+                    mRunning = false;
                     break;
                 }
                 default: {
@@ -127,28 +125,29 @@ void App::run_renderPathLoop()
 
         commandList->begin();
 
-        mTextureManager->update(commandList);
-
+        // =====================================
         // Updates
-        if (mScene) mScene->onUpdate(dt, frameData, commandList);
-        if (mLevel) mLevel->onUpdate(dt, frameData, commandList);
+        // =====================================
+        commandList->beginLabel("Updates");
 
-        // pRenderPath->update(dt, frameData);
+        mTextureManager->update(commandList);
+        if (mLevel)
+        {
+            mLevel->onUpdate(dt, frameData, commandList);
+        }
         mUserInterface->update();
 
-        // =====================================
-        // RenderPath
-        // =====================================
-        // pRenderPath->initialize(commandList);   // Runs once
-        // pRenderPath->execute(commandList, frameData);
+        commandList->endLabel();
 
-
-        if (mScene) mScene->onRender(commandList, frameData);
+        // =====================================
+        // Rendering
+        // =====================================
+        commandList->beginLabel("Rendering");
 
         mLevelRenderer->render(frameData, commandList);
         mTitleScreen->render(commandList, frameData);
 
-        // mGeometrySystemDebugRenderPass->execute(commandList, mScene->getSceneDescriptor()->getSet(frameData.currentFrame));
+        commandList->endLabel();
 
         // =====================================
         // User Interface
@@ -174,10 +173,5 @@ void App::run_renderPathLoop()
             .frameData    = frameData,
             .pCommandList = commandList,
         });
-
-        // if (mRenderGraphContext->hasQueuedRenderPathChange())
-        // {
-        //     mRenderGraphContext->changeToQueuedRenderPath();
-        // }
     }
 }
