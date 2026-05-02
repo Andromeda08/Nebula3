@@ -62,12 +62,16 @@ namespace nbl
 
         [[nodiscard]] Object* getSelectedObject() const noexcept
         {
-            const auto idx = *mSelectObjectFeature->getSelectedObjectIdx();
-            if (idx == -1)
+            if (mSelectObjectFeature)
             {
-                return nullptr;
+                const auto idx = *mSelectObjectFeature->getSelectedObjectIdx();
+                if (idx == -1)
+                {
+                    return nullptr;
+                }
+                return mObjects[idx].get();
             }
-            return mObjects[idx].get();
+            return nullptr;
         }
 
         [[nodiscard]] const SPtr<RHI::Buffer>& getInstanceIndirectionBuffer(const uint32_t frameIndex)

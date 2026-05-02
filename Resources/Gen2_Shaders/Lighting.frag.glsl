@@ -7,7 +7,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 // ============================================
-#define nbl_RT
+// #define nbl_RT
 // #define nbl_AMBIENT_OCCLUSION
 // ============================================
 
@@ -148,6 +148,8 @@ MaterialSample sampleMaterial(GPUMaterialData material, mat3 TBN, vec2 uv)
     return s;
 }
 
+#ifdef nbl_RT
+
 struct HitSurface
 {
     vec3  position;
@@ -211,6 +213,8 @@ HitSurface reconstructHitSurface(rayQueryEXT rq)
     return hit;
 }
 
+#endif
+
 void computeDefaultBasis(const vec3 normal, out vec3 x, out vec3 y)
 {
     // ZAP's default coordinate system for compatibility
@@ -220,6 +224,8 @@ void computeDefaultBasis(const vec3 normal, out vec3 x, out vec3 y)
 
     x = cross(y, z);
 }
+
+#ifdef nbl_RT
 
 float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
 {
@@ -233,6 +239,8 @@ float castShadow(vec3 origin, vec3 direction, float tMin, float tMax)
     }
     return 1.0;
 }
+
+#endif
 
 vec3 computeAmbient(vec3 albedo, float metallic)
 {
@@ -300,6 +308,7 @@ vec3 computeDirectLighting(vec3 position, vec3 N, vec3 V, vec3 albedo, float met
     return result;
 }
 
+#ifdef nbl_RT
 vec3 computeIndirectLighting(vec3 position, vec3 N, vec3 albedo, uint seed)
 {
     const int SAMPLES = sampleCount;
@@ -344,6 +353,7 @@ vec3 computeIndirectLighting(vec3 position, vec3 N, vec3 albedo, uint seed)
     // float hitT = hitCount > 0 ? hitTSum / float(hitCount) : 0.0;
     return albedo * (accumulated / float(SAMPLES));
 }
+#endif
 
 // Kaplanyan/Karis normal-filtering — widen roughness where normals vary fast
 float normalFiltering(vec3 normal, float roughness)

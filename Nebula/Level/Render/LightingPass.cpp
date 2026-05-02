@@ -20,7 +20,7 @@ namespace nbl
         pCommandList->beginLabel("LightingPass");
 
         const auto* level   = mInput.pLevel;
-        RHI::Barrier()
+        auto barriers = RHI::Barrier()
             .addBarrier(mLightingResult->getBarrier(RHI::ImageUsage::ColorAttachment))
             .addBarrier(mInput.pGBufferPass->mWorldPosition->getBarrier(RHI::ImageUsage::ShaderReadOnly))
             .addBarrier(mInput.pGBufferPass->mWorldNormal->getBarrier(RHI::ImageUsage::ShaderReadOnly))
@@ -29,9 +29,14 @@ namespace nbl
             .addBarrier(mInput.pGBufferPass->mViewZ->getBarrier(RHI::ImageUsage::ShaderReadOnly))
             .addBarrier(level->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
             .addBarrier(level->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead))
-            .addBarrier(level->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
-            .addBarrier(level->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse))
-            .insert(pCommandList);
+            .addBarrier(level->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect));
+
+        if (mRHI->getRaytracingSupport())
+        {
+            barriers.addBarrier(level->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
+        }
+
+        barriers.insert(pCommandList);
 
         const auto& geometryBuffers = level->mGeometrySystem->getBuffers();
 
@@ -52,15 +57,17 @@ namespace nbl
             .emissiveFactor         = mEmissiveFactor,
         };
 
+        std::vector descriptors = { mDescriptor->getSet(0), mInput.pTextureManager->getDescriptor()->getSet(0) };
+        if (mRHI->getRaytracingSupport())
+        {
+            descriptors.push_back(mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame));
+        }
+
         mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
             cmd->setViewportScissor(mViewport, mScissor);
 
             mPipeline->bind(cmd);
-            mPipeline->bindDescriptorSets(cmd, {
-                mDescriptor->getSet(0),
-                mInput.pTextureManager->getDescriptor()->getSet(0),
-                mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame),
-            });
+            mPipeline->bindDescriptorSets(cmd, descriptors);
             mPipeline->pushConstants(cmd, &pushConstants);
             cmd->getHandle().draw(3, 1, 0, 0);
         });
@@ -105,10 +112,9 @@ namespace nbl
             .label            = "Lighting_RenderPass",
         });
 
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
+        auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
             .addDescriptorSetLayout(mDescriptor->getLayout())
             .addDescriptorSetLayout(mInput.pTextureManager->getDescriptor()->getLayout())
-            .addDescriptorSetLayout(mInput.pLevel->mTlasSystem->getDescriptor()->getLayout())
             .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
             .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
             {
@@ -120,6 +126,11 @@ namespace nbl
             .addShader({ Configuration::getShaderFilePath("Lighting.frag.spv"), vk::ShaderStageFlagBits::eFragment })
             .addColorAttachmentFormat(mLightingResult->getProperties().format)
             .setDebugName("Lighting_Pipeline");
+
+        if (mRHI->getRaytracingSupport())
+        {
+            pipelineCreateInfo.addDescriptorSetLayout(mInput.pLevel->mTlasSystem->getDescriptor()->getLayout());
+        }
 
         mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }

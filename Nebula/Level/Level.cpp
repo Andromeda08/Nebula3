@@ -32,10 +32,10 @@ namespace nbl
             mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
 
             mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
+            mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
         }
 
         mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
-        mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
 
         /* Example Cameras */ {
             mCameraSystem->addCamera<OrbitCamera>(true);
@@ -155,7 +155,7 @@ namespace nbl
             if (obj->isInstanceDirty)
             {
                 mInstanceSystem->modify(obj->hInstance, [&](InstanceData& data) -> void {
-                    const auto model = obj->transform.getModel();
+                    const auto model = obj->getModel();
                     const auto materialIndex = obj->hMaterial.isNull() ? -1 : static_cast<int32_t>(mMaterialSystem->getGpuIndex(obj->hMaterial));
                     const auto bbox = mGeometrySystem->getGeometry(obj->geometryIndex)->getBoundingBox().getTransformed(model);
 
