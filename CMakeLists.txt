@@ -80,6 +80,8 @@ set(V2_FILES
     Nebula/Level/Render/TonemapPass.cpp
     Nebula/Level/Render/AntiAliasingPass.cpp
     Nebula/Level/Render/AntiAliasingPass.hpp
+    Nebula/Level/GLTF/OnceAgain.hpp
+    Nebula/Level/GLTF/OnceAgain.cpp
 )
 
 add_executable(Nebula3
@@ -281,6 +283,7 @@ target_include_directories(Nebula3 PUBLIC
     External/SDL/include
     External/SDL_ttf/include
     External/spdlog/include
+    External/xxhash
     ${Vulkan_INCLUDE_DIRS}
 )
 

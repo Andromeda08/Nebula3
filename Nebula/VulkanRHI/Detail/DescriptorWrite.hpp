@@ -50,7 +50,7 @@ namespace RHI
         // Combined Image Sampler
         // =============================
 
-        DescriptorWrite& writeCombinedImageSampler(uint32_t binding, uint32_t index, vk::ImageLayout layout, const SPtr<Image>& pImage) noexcept;
+        DescriptorWrite& writeCombinedImageSampler(uint32_t binding, uint32_t index, vk::ImageLayout layout, const SPtr<Image>& pImage, const std::optional<vk::Sampler>& sampler = std::nullopt) noexcept;
 
         DescriptorWrite& writeCombinedImageSamplers(uint32_t binding, vk::ImageLayout layout, const std::vector<SPtr<Image>>& images) noexcept;
 

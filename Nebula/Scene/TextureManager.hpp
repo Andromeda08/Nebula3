@@ -43,6 +43,21 @@ public:
 
     RHI::Image* getTexture(uint32_t slot) const noexcept;
 
+    [[nodiscard]] int32_t createSampler(const vk::SamplerCreateInfo& createInfo) noexcept
+    {
+        try
+        {
+            const auto sampler = mRHI->getDevice()->getHandle().createSampler(createInfo);
+            mSamplers.push_back(sampler);
+        }
+        catch (const vk::SystemError& error)
+        {
+            spdlog::warn("Failed to create Sampler: {}", error.what());
+            return -1;
+        }
+        return static_cast<int32_t>(mSamplers.size()) - 1;
+    }
+
     /**
      * Loads a Texture from the specified file into a given slot.
      * [Note!] The texture will be loaded immediately for now.
@@ -53,6 +68,15 @@ public:
         const std::optional<uint32_t>& slot = std::nullopt,
         const std::optional<vk::SamplerCreateInfo>& samplerInfo = std::nullopt,
         vk::Format format = vk::Format::eR8G8B8A8Srgb) noexcept;
+
+    uint32_t loadTextureFromMemory(
+        const std::string&               label,
+        const stbi_uc*                   pixels,
+        int32_t                          width,
+        int32_t                          height,
+        const std::optional<int32_t>&    samplerSlot = std::nullopt,
+        const std::optional<vk::Format>& format   = std::nullopt,
+        const std::optional<uint32_t>&   slot     = std::nullopt) noexcept;
 
     void update(const RHI::CommandList* commandList) const;
 
@@ -73,7 +97,9 @@ public:
 
 private:
     // Blocking texture load.
-    void loadImmediately(const TextureLoadInfo& textureLoadInfo) noexcept;
+    void loadImmediately(
+        const TextureLoadInfo&        textureLoadInfo,
+        const std::optional<int32_t>& samplerSlot = std::nullopt) noexcept;
 
     // Update slot validity in metadata, mark as dirty if needed.
     void setSlot(uint32_t slot, bool hasTexture) noexcept;
@@ -99,6 +125,9 @@ private:
     }
 
     static constexpr auto sMissingTextureName = "missingTexture.png";
+
+    // Samplers
+    std::vector<vk::Sampler> mSamplers;
 
     // Textures
     std::array<SPtr<RHI::Image>, sMaxTextureCount> mTextures;

@@ -60,14 +60,20 @@ namespace RHI
         return *this;
     }
 
-    DescriptorWrite& DescriptorWrite::writeCombinedImageSampler(const uint32_t binding, const uint32_t index,
-        const vk::ImageLayout layout, const SPtr<Image>& pImage) noexcept
+    DescriptorWrite& DescriptorWrite::writeCombinedImageSampler(
+        const uint32_t                    binding,
+        const uint32_t                    index,
+        const vk::ImageLayout             layout,
+        const SPtr<Image>&                pImage,
+        const std::optional<vk::Sampler>& sampler) noexcept
     {
         const auto key   = mWrites.size();
-        mImageInfos[key] = {vk::DescriptorImageInfo()
-            .setImageLayout(layout)
-            .setImageView(pImage->getImageView())
-            .setSampler(pImage->getSampler())};
+        mImageInfos[key] = {
+            vk::DescriptorImageInfo()
+                .setImageLayout(layout)
+                .setImageView(pImage->getImageView())
+                .setSampler(sampler.value_or(pImage->getSampler()))
+        };
 
         const auto write = vk::WriteDescriptorSet()
             .setDstBinding(binding)
