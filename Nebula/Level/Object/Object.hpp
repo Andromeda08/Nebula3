@@ -26,5 +26,15 @@ namespace nbl
         bool        isInstanceDirty = true;
         bool        isFirstUpdate   = true;
         Handle      hInstance       = {};
+
+        [[nodiscard]] glm::mat4 getModel() const
+        {
+            const glm::mat4 local = transform.getModel();
+            if (pParent)
+            {
+                return pParent->getModel() * local;
+            }
+            return local;
+        }
     };
 }
