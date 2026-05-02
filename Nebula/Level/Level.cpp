@@ -1,6 +1,7 @@
 #include "Level.hpp"
 
 #include "Core/Random.hpp"
+#include "GLTF/GLTFLoader.hpp"
 #include "Level/Camera/FlyingCamera.hpp"
 #include "Level/Camera/OrbitCamera.hpp"
 #include "Math/DeltaTime.hpp"
@@ -42,6 +43,21 @@ namespace nbl
             const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
             mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
         }
+
+        /* GLTF Scene */ {
+            GLTFLoader loader({
+                .filePath        = Configuration::getSceneFilePath("bistro.glb"),
+                .pLevel          = this,
+                .pTextureManager = mTextureManager,
+                .pGeometrySystem = mGeometrySystem.get(),
+                .pLightSystem    = mLightSystem.get(),
+                .pMaterialSystem = mMaterialSystem.get(),
+            });
+
+            loader.load();
+        }
+
+        return;
 
         /* Example Geometries, Objects and Materials */ {
             const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());

@@ -15,6 +15,13 @@ namespace nbl
         glm::mat4 _model        = glm::mat4(1.0f);
         bool      _customModel  = false;
 
+        Transform& setCustomMatrix(const glm::mat4& mat)
+        {
+            _model = mat;
+            _customModel = true;
+            return *this;
+        }
+
         glm::mat4 getModel() const
         {
             if (_customModel)
