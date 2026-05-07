@@ -20,12 +20,13 @@ struct ConfigurationData
     bool                enableDebugFeatures = true;
 
     // File paths
-    std::string         baseDirPath         = "../Resources";
+    std::string         baseDirPath         = "C:/Users/andromeda/CLionProjects/Nebula3/Resources";
     std::string         scenesDirName       = "Scenes";
     std::string         fontsDirName        = "Fonts";
     std::string         shadersDirName      = "Gen2_Shaders";
     std::string         shadersBinDirName   = "Gen2_Shaders/bin";
     std::string         texturesDirName     = "Textures";
+    std::string         hairDirName         = "HairModels";
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConfigurationData, app);
 
@@ -54,6 +55,10 @@ public:
     static std::filesystem::path getShaderSourceFilePath(const std::string& shaderFile) noexcept;
 
     static std::filesystem::path getTextureFilePath(const std::string& textureFile) noexcept;
+
+    static std::filesystem::path getHairDir() noexcept;
+
+    static std::filesystem::path getHairFilePath(const std::string& hairFile) noexcept;
 
 private:
     Configuration();

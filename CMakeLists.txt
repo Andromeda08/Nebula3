@@ -33,6 +33,20 @@ set("IMGUI_FILES"
 set(IMNODES_DIR External/imnodes)
 set(IMNODES_FILES ${IMNODES_DIR}/imnodes.cpp)
 
+set(NBL_HAIR_FILES
+    Nebula/Vendor/cy/cyCore.h
+    Nebula/Vendor/cy/cyHairFile.h
+    Nebula/Hair/CyLoader.cpp
+    Nebula/Hair/CyLoader.hpp
+    Nebula/Hair/HairData.hpp
+    Nebula/Hair/HairGeometry.hpp
+    Nebula/Hair/Utils.hpp
+    Nebula/Hair/Render/ClassicHairRenderer.hpp
+    Nebula/Hair/HairGeometry.cpp
+    Nebula/Hair/Utils.cpp
+    Nebula/Hair/Render/ClassicHairRenderer.cpp
+)
+
 set(V2_FILES
     Nebula/Level/Camera/GpuCameraData.hpp
     Nebula/Level/Camera/Camera.hpp
@@ -85,7 +99,7 @@ set(V2_FILES
 )
 
 add_executable(Nebula3
-    ${IMGUI_FILES} ${IMNODES_FILES} ${V2_FILES}
+    ${IMGUI_FILES} ${IMNODES_FILES} ${V2_FILES} ${NBL_HAIR_FILES}
     External/mikktspace/mikktspace.c
     External/mikktspace/mikktspace.h
 
@@ -267,6 +281,7 @@ add_executable(Nebula3
 
 target_include_directories(Nebula3 PUBLIC
     Nebula
+    Nebula/Vendor/cy
     External/fastgltf/include
     External/freetype2
     External/glm

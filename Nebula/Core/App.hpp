@@ -10,6 +10,7 @@
 #include "Window/SDLWindow.hpp"
 
 #include "Game/TitleScreen.hpp"
+#include "Hair/HairGeometry.hpp"
 #include "Level/Level.hpp"
 #include "Level/Render/LevelRenderer.hpp"
 
@@ -37,11 +38,12 @@ private:
     UPtr<TextureManager>         mTextureManager;
 
     UPtr<UserInterface>          mUserInterface;
-    // SPtr<rg::RenderGraphContext> mRenderGraphContext;
-    UPtr<SceneV2>                mScene;
 
     UPtr<nbl::Level>             mLevel;
     UPtr<nbl::LevelRenderer>     mLevelRenderer;
+
+    UPtr<nbl::HairModelSystem>   mHairModelSystem;
+    UPtr<nbl::ClassicHairRenderer> mHairRenderer;
 
     UPtr<TitleScreen>            mTitleScreen;
 };
