@@ -29,6 +29,11 @@ namespace nbl
 
         void drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
+        uint64_t getCameraBuffer(const uint32_t frame) const
+        {
+            return mCameraSystem->getBuffer(frame)->getAddress();
+        }
+
         template <class T = Object>
         requires std::derived_from<T, Object>
         T* addObject(

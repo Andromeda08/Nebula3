@@ -1,6 +1,8 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
+#include "Hair/CyLoader.hpp"
+#include "Hair/Render/ClassicHairRenderer.hpp"
 #include "Scene/SceneV2.hpp"
 #include "Scene/Components/SceneInfoComponent.hpp"
 #include "Scene/Voxel/VoxelScene.hpp"
@@ -38,15 +40,38 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
-    // mScene = makeUnique<SceneV2>(mVulkanRHI, mTextureManager.get(), mUserInterface.get());
-    // mUserInterface->addComponent<SceneInfoComponent>(mScene.get());
-
     mLevel = makeUnique<nbl::Level>(mVulkanRHI, mUserInterface.get(), mTextureManager.get());
     mLevelRenderer = makeUnique<nbl::LevelRenderer>(mVulkanRHI, mTextureManager.get(), mLevel.get());
 
     {
         const auto [w, h] = mWindow->getFramebufferSize();
         mTitleScreen = makeUnique<TitleScreen>(glm::vec2(w, h), mVulkanRHI, mTextureManager.get());
+    }
+
+    /* Load Hair Models */ {
+        mHairModelSystem = makeUnique<nbl::HairModelSystem>(mVulkanRHI);
+        for (const auto& file : std::filesystem::directory_iterator(Configuration::getHairDir()))
+        {
+            if (file.path().extension() != ".hair")
+            {
+                continue;
+            }
+
+            try
+            {
+                const uint32_t hairIndex = mHairModelSystem->addHairGeometry(nbl::CyLoader(file).load());
+                const auto&    hair      = mHairModelSystem->getHairGeometry(hairIndex);
+
+                spdlog::info("Loaded Hair model: {} [v={}, S={}, s={}]", hair.name, hair.vertexCount, hair.strandCount, hair.strandletCount);
+            }
+            catch (const std::runtime_error& ex)
+            {
+                spdlog::error(ex.what());
+            }
+        }
+
+        mHairModelSystem->createBuffers();
+        mHairRenderer = makeUnique<nbl::ClassicHairRenderer>(mVulkanRHI, mHairModelSystem.get());
     }
 
     mWindow->reveal();
@@ -146,6 +171,45 @@ void App::run()
 
         mLevelRenderer->render(frameData, commandList);
         mTitleScreen->render(commandList, frameData);
+
+        mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
+
+        {
+            commandList->beginLabel("Hair_Blit");
+            // Barriers
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mHairRenderer->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
+            barrier.insert(commandList);
+
+            // Blit
+            #pragma region
+            const auto srcExtent = mHairRenderer->getResult(frameData.currentFrame)->getProperties().extent;
+            const auto dstExtent = mVulkanRHI->getSwapchain()->getProperties().extent;
+            const auto region  = vk::ImageBlit2()
+                .setSrcOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
+                })
+                .setSrcSubresource(mHairRenderer->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
+                .setDstOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
+                })
+                .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
+
+            const auto blit = vk::BlitImageInfo2()
+                .setSrcImage(mHairRenderer->getResult(frameData.currentFrame)->getImage())
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex))
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(vk::Filter::eLinear)
+                .setRegions(region);
+            #pragma endregion
+            commandList->getHandle().blitImage2(blit);
+
+            commandList->endLabel();
+        }
 
         commandList->endLabel();
 

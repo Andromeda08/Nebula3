@@ -50,6 +50,18 @@ std::filesystem::path Configuration::getTextureFilePath(const std::string& textu
     return std::format("{}/{}/{}", config.baseDirPath, config.texturesDirName, textureFile);
 }
 
+std::filesystem::path Configuration::getHairDir() noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}", config.baseDirPath, config.hairDirName);
+}
+
+std::filesystem::path Configuration::getHairFilePath(const std::string& hairFile) noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}/{}", config.baseDirPath, config.hairDirName, hairFile);
+}
+
 Configuration::Configuration()
 {
     #ifdef NBL_CONFIG_REGEN

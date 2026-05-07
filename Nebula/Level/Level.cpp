@@ -38,10 +38,10 @@ namespace nbl
         mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
 
         /* Example Cameras */ {
-            mCameraSystem->addCamera<OrbitCamera>(true);
-
             const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
             mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+
+            mCameraSystem->addCamera<OrbitCamera>(true);
         }
 
         /* GLTF Scene */ {
@@ -54,7 +54,7 @@ namespace nbl
                 .pMaterialSystem = mMaterialSystem.get(),
             });
 
-            loader.load();
+            // loader.load();
         }
 
         /* Emissive cubes */ {
