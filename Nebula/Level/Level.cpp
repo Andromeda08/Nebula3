@@ -57,6 +57,22 @@ namespace nbl
             loader.load();
         }
 
+        /* Emissive cubes */ {
+            const int32_t cubeIdx = mGeometrySystem->addGeometry(Cube::createGeometry());
+
+            for (int32_t i = 0; i < 512; i++)
+            {
+                const auto hMat = mMaterialSystem->acquire({
+                    .solidColor  = glm::vec4(glm::xyz(Random::getColor()), 1.0f),
+                    .pIsEmissive = true,
+                });
+                auto transform = Transform()
+                    .setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
+                    .setScale(glm::vec3(2.0f));
+                addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube-#{}", i));
+            }
+        }
+
         return;
 
         /* Example Geometries, Objects and Materials */ {
