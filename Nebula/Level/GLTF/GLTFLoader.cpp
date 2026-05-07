@@ -440,6 +440,24 @@ namespace nbl
             }
         }
 
+        if (node.lightIndex.has_value())
+        {
+            const auto& light = asset.lights[*node.lightIndex];
+            if (light.type == fastgltf::LightType::Point)
+            {
+                const auto hLight = mLightSystem->acquire({
+                    .vector         = glm::vec3(worldTransform[3]),
+                    .color          = glm::vec3(light.color.x(), light.color.y(), light.color.z()),
+                    .intensity      = 5000.0f,
+                    .isEnabled      = true,
+                    .castsShadows   = true,
+                    .radius         = 50.0f,
+                    .type           = LightType::Point,
+                    .name           = fmt::format("light_{}", *node.lightIndex)
+                });
+            }
+        }
+
         for (const size_t childIndex : node.children)
         {
             processNode(asset, childIndex, worldTransform);
