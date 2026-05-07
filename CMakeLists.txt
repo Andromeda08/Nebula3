@@ -80,8 +80,8 @@ set(V2_FILES
     Nebula/Level/Render/TonemapPass.cpp
     Nebula/Level/Render/AntiAliasingPass.cpp
     Nebula/Level/Render/AntiAliasingPass.hpp
-    Nebula/Level/GLTF/OnceAgain.hpp
-    Nebula/Level/GLTF/OnceAgain.cpp
+    Nebula/Level/GLTF/GLTFLoader.hpp
+    Nebula/Level/GLTF/GLTFLoader.cpp
 )
 
 add_executable(Nebula3
