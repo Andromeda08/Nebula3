@@ -106,8 +106,6 @@ namespace nbl
         static constexpr auto   sAttrTexCoord1 = "TEXCOORD_1";
         static constexpr auto   sAttrTangent   = "TANGENT";
 
-        SPtr<spdlog::logger>    mLogger;
-
         std::filesystem::path   mPath;
         std::string             mName;
         Level*                  mLevel;

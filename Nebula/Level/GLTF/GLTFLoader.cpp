@@ -8,12 +8,10 @@
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Core/Ranges.hpp"
 #include "Level/Transform.hpp"
 #include "Math/DeltaTime.hpp"
-
 
 namespace nbl
 {
@@ -26,14 +24,6 @@ namespace nbl
     , mLightSystem(params.pLightSystem)
     , mMaterialSystem(params.pMaterialSystem)
     {
-        mLogger = spdlog::stdout_color_mt("GLTFLoader");
-        mLogger->set_pattern("[%^%l%$] %v");
-        mLogger->set_level(spdlog::level::err);
-
-        #ifndef NDEBUG
-        mLogger->set_level(spdlog::level::debug);
-        #endif
-
         mDefaultMaterial = mMaterialSystem->acquire(MaterialData());
     }
 
