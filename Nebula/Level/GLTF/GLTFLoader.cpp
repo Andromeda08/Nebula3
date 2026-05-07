@@ -1,6 +1,7 @@
 #include "GLTFLoader.hpp"
 
 #include <ranges>
+#include <regex>
 #include <thread>
 #include <variant>
 
@@ -257,6 +258,14 @@ namespace nbl
         // Create Materials
         for (const auto& [materialIndex, material] : enumerate(asset.materials))
         {
+            bool isEmissive = false;
+            /* Bistro Extras */ if (mName.contains("bistro"))
+            {
+                const auto name = std::string(material.name);
+                static std::regex pattern(R"(^Paris_StringLights_.+_Color_Emissive$)");
+                isEmissive = std::regex_match(name, pattern);
+            }
+
             const auto& pbr = material.pbrData;
             MaterialData mat = {
                 .solidColor             = glm::make_vec4(&pbr.baseColorFactor[0]),
@@ -265,7 +274,7 @@ namespace nbl
                 .hMetallicRoughnessMap  = -1,
                 .pMetallicFactor        = pbr.metallicFactor,
                 .pRoughnessFactor       = pbr.roughnessFactor,
-                .pIsEmissive            = false,
+                .pIsEmissive            = isEmissive,
                 .rtHitGroup             = 0,
             };
 
