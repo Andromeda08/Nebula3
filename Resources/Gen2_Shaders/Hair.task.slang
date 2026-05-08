@@ -55,20 +55,21 @@ struct HairStrandDesc
 
 struct PushConstants
 {
-    float4x4 model;
-    float4 diffuse;
-    float4 specular;
-    HairVertex *vertexBuffer;
-    HairAttributes *attribBuffer;
-    HairStrandDesc *strandDescBuffer;
-    float4 *debugColorBuffer;
-    CameraData *cameraBuffer;
-    uint hairFirstVertex;
-    uint hairVertexCount;
-    uint hairFirstStrand;
-    uint hairStrandCount;
-    RenderingMode renderingMode;
-    uint _pad0;
+    float4x4        model;
+    float4          diffuse;
+    float4          specular;
+    HairVertex*     vertexBuffer;
+    HairAttributes* attribBuffer;
+    HairStrandDesc* strandDescBuffer;
+    float4*         debugColorBuffer;
+    CameraData*     cameraBuffer;
+    uint            hairFirstVertex;
+    uint            hairVertexCount;
+    uint            hairFirstStrand;
+    uint            hairStrandCount;
+    RenderingMode   renderingMode;
+    float           specularFactor;
+    int             _pad0;
 };
 
 [[vk::push_constant]]

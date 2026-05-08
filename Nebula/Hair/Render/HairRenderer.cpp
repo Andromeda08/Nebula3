@@ -1,5 +1,8 @@
 #include "HairRenderer.hpp"
 
+#include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Core/Random.hpp"
 
 namespace nbl
@@ -16,7 +19,7 @@ namespace nbl
     void HairRenderer::render(
         const RHI::CommandList* pCommandList,
         const RHI::FrameData&   frameData,
-        const uint32_t          hairIndex,
+        const uint32_t          _hairIndex,
         const uint64_t          cameraBuffer)
     {
         pCommandList->beginLabel("Hair");
@@ -31,12 +34,12 @@ namespace nbl
 
         mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
         {
-            const auto& info = mHairModels->mHairInfos[hairIndex];
+            const auto& info = mHairModels->mHairInfos[mHairIndex];
             const auto pushConstants = PushConstants
             {
                 .model                   = model,
-                .diffuse                 = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f),
-                .specular                = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f),
+                .diffuse                 = mDiffuse,
+                .specular                = mSpecular,
                 .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
                 .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
                 .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
@@ -47,13 +50,19 @@ namespace nbl
                 .firstStrand             = info.firstStrand,
                 .strandCount             = info.strandCount,
                 .renderMode              = std::to_underlying(mRenderingMode),
+                .useCustomColors         = mUseCustomColor ? 1 : 0,
+                .specularFactor          = mSpecularFactor,
                 ._pad0                   = 0,
             };
 
             mPipeline->bind(cmd);
             mPipeline->pushConstants(cmd, &pushConstants);
 
-            const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
+            auto taskGroupSizeX = mHairModels->getHairGeometry(static_cast<size_t>(mHairIndex)).taskGroupSizeX;
+            if (mUseCustomWgSize)
+            {
+                taskGroupSizeX = static_cast<uint32_t>(mCustomTaskWgSize);
+            }
             cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
         });
 
@@ -118,5 +127,27 @@ namespace nbl
             .setDebugName("Hair_Classic_Pipeline");
 
         mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+    }
+
+    void HairRendererUI::draw()
+    {
+        ImGui::Begin("Hair Renderer Config");
+
+        ImGui::SliderInt("Hair Model", &mHairRenderer->mHairIndex, 0, mHairRenderer->mHairModels->getModelCount() - 1);
+
+        ImGui::DragFloat("Specular", &mHairRenderer->mSpecularFactor, 0.05f, 0.0f, 32.0f);
+
+        ImGui::SeparatorText("Task Workgroup Size");
+        const auto defaultGroupSize = mHairRenderer->mHairModels->getHairGeometry(mHairRenderer->mHairIndex).taskGroupSizeX;
+        ImGui::Text("Default size: %u", defaultGroupSize);
+        ImGui::Checkbox("Override", &mHairRenderer->mUseCustomWgSize);
+        ImGui::SliderInt("X", &mHairRenderer->mCustomTaskWgSize, 0, defaultGroupSize);
+
+        ImGui::SeparatorText("Custom Color");
+        ImGui::Checkbox("Enable", &mHairRenderer->mUseCustomColor);
+        ImGui::ColorEdit4("Diffuse", glm::value_ptr(mHairRenderer->mDiffuse));
+        ImGui::ColorEdit4("Specular", glm::value_ptr(mHairRenderer->mSpecular));
+
+        ImGui::End();
     }
 }

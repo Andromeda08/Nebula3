@@ -21,6 +21,7 @@ struct MeshVertex
     float4 position : SV_Position;
     float3 worldPosition;
     float3 worldTangent;
+    float3 color;
 };
 
 struct CameraData
@@ -70,7 +71,9 @@ struct PushConstants
     uint            hairFirstStrand;
     uint            hairStrandCount;
     RenderingMode   renderingMode;
-    uint            _pad0;
+    int             useCustomColor;
+    float           specularFactor;
+    int             _pad0;
 };
 
 [[vk::push_constant]]
@@ -100,6 +103,9 @@ float4 main(MeshVertex input) : SV_Target
     float3 L = normalize(lightPos - input.worldPosition);
     float3 V = normalize(pc.cameraBuffer.eye.xyz - input.worldPosition);
 
-    float3 color = kajiyaKay(pc.diffuse.rgb, pc.specular.rgb, 16.0, T, L, V);
+    float3 diffuse  = pc.useCustomColor == 1 ? pc.diffuse.rgb : input.color;
+    float3 specular = pc.useCustomColor == 1 ? pc.specular.rgb : input.color;
+
+    float3 color = kajiyaKay(diffuse, specular, pc.specularFactor, T, L, V);
     return float4(color, 1.0);
 }

@@ -72,6 +72,7 @@ App::App()
 
         mHairModelSystem->createBuffers();
         mHairRenderer = makeUnique<nbl::HairRenderer>(mVulkanRHI, mHairModelSystem.get());
+        mUserInterface->addComponent<nbl::HairRendererUI>(mHairRenderer.get());
     }
 
     mWindow->reveal();
