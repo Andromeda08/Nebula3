@@ -239,7 +239,21 @@ void main(
     // 3 and 2 are constructed from 0 and 1 offset by their respecitve
     // thickness in the direction cross(View, Tangent)
 
-    float3 T = makeWorldTangent(currVertex, nextVertex);
+    float3 T_out = makeWorldTangent(currVertex, nextVertex);
+    float3 T_in;
+
+    const bool isStrandRoot = (strandletIndex == 0) && (threadIndex == 0);
+    if (isStrandRoot)
+    {
+        T_in = T_out;
+    }
+    else
+    {
+        HairVertex prevVertex = pc.vertexBuffer[bufferIndex - 1];
+        T_in = makeWorldTangent(prevVertex, currVertex);
+    }
+
+    float3 T = normalize(T_in + T_out);
     float3 V = getViewDirection(currVertex);
 
     float4 offsetDir = float4(normalize(cross(V, T)), 0.0);
