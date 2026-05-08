@@ -41,10 +41,13 @@ set(NBL_HAIR_FILES
     Nebula/Hair/HairData.hpp
     Nebula/Hair/HairGeometry.hpp
     Nebula/Hair/Utils.hpp
-    Nebula/Hair/Render/ClassicHairRenderer.hpp
     Nebula/Hair/HairGeometry.cpp
     Nebula/Hair/Utils.cpp
+    Nebula/Hair/Render/ClassicHairRenderer.hpp
     Nebula/Hair/Render/ClassicHairRenderer.cpp
+    Nebula/Hair/Render/HairRenderingMode.hpp
+    Nebula/Hair/Render/HairRenderer.hpp
+    Nebula/Hair/Render/HairRenderer.cpp
 )
 
 set(V2_FILES
