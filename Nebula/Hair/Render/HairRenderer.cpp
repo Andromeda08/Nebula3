@@ -54,7 +54,7 @@ namespace nbl
             mPipeline->pushConstants(cmd, &pushConstants);
 
             const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
-            cmd->getHandle().drawMeshTasksEXT(1, 1, 1);
+            cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
         });
 
         pCommandList->endLabel();
