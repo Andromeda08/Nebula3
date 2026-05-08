@@ -7,6 +7,7 @@
 #include "Hair/HairGeometry.hpp"
 #include "Level/Transform.hpp"
 #include "Level/Render/Templates.hpp"
+#include "UserInterface/IComponent.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
@@ -34,7 +35,9 @@ namespace nbl
             uint32_t  strandCount;
             // Renderer Config
             uint32_t  renderMode;
-            uint32_t  _pad0;
+            int32_t   useCustomColors;
+            float     specularFactor;
+            int32_t   _pad0;
         };
 
     public:
@@ -48,6 +51,8 @@ namespace nbl
         }
 
     private:
+        friend class HairRendererUI;
+
         void createDebugColors();
 
         void createResources();
@@ -59,6 +64,14 @@ namespace nbl
 
         HairRenderingMode                       mRenderingMode = HairRenderingMode::Default;
 
+        int32_t                                 mHairIndex        = 0;
+        float                                   mSpecularFactor   = 16.0f;
+        bool                                    mUseCustomColor   = false;
+        glm::vec4                               mDiffuse          = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f);
+        glm::vec4                               mSpecular         = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f);
+        bool                                    mUseCustomWgSize  = false;
+        int32_t                                 mCustomTaskWgSize = 0;
+
         std::array<glm::vec4, 1024>             mDebugColors;
         SPtr<RHI::Buffer>                       mDebugColorsBuffer;
 
@@ -68,5 +81,20 @@ namespace nbl
         PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
         PerFrameArray<SPtr<RHI::Image>>         mRenderTarget;
         PerFrameArray<SPtr<RHI::Image>>         mDepthBuffer;
+    };
+
+    class HairRendererUI : public IComponent
+    {
+    public:
+        explicit HairRendererUI(HairRenderer* pHairRenderer)
+        : IComponent()
+        , mHairRenderer(pHairRenderer)
+        {
+        }
+
+        void draw() override;
+
+    private:
+        HairRenderer* mHairRenderer;
     };
 }

@@ -69,9 +69,14 @@ namespace nbl
 
         [[nodiscard]] uint32_t addHairGeometry(const HairGeometry& hairGeometry);
 
-        [[nodiscard]] const HairGeometry& getHairGeometry(const uint32_t i) const noexcept;
+        [[nodiscard]] const HairGeometry& getHairGeometry(uint32_t i) const noexcept;
 
         void createBuffers();
+
+        [[nodiscard]] uint32_t getModelCount() const noexcept
+        {
+            return static_cast<uint32_t>(mHairGeometries.size());
+        }
 
     private:
         friend class ClassicHairRenderer;

@@ -30,6 +30,7 @@ struct MeshVertex
     float4 position : SV_Position;
     float3 worldPosition;
     float3 worldTangent;
+    float3 color;
 };
 
 struct CameraData
@@ -79,7 +80,8 @@ struct PushConstants
     uint            hairFirstStrand;
     uint            hairStrandCount;
     RenderingMode   renderingMode;
-    uint            _pad0;
+    float           specularFactor;
+    int             _pad0;
 };
 
 [[vk::push_constant]]
@@ -270,8 +272,8 @@ void main(
     // For both vertices and triangles
     const uint outOffset = threadIndex * 2;
 
-    verts[outOffset + 0] = { mul(VP, v0), v0.xyz, T };
-    verts[outOffset + 1] = { mul(VP, v3), v3.xyz, T };
+    verts[outOffset + 0] = { mul(VP, v0), v0.xyz, T, currAttribs.color.rgb };
+    verts[outOffset + 1] = { mul(VP, v3), v3.xyz, T, currAttribs.color.rgb };
     
     tris[outOffset + 0] = uint3(0, 2, 1) + outOffset;
     tris[outOffset + 1] = uint3(2, 3, 1) + outOffset;
