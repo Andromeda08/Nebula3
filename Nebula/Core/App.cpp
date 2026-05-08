@@ -71,7 +71,7 @@ App::App()
         }
 
         mHairModelSystem->createBuffers();
-        mHairRenderer = makeUnique<nbl::ClassicHairRenderer>(mVulkanRHI, mHairModelSystem.get());
+        mHairRenderer = makeUnique<nbl::HairRenderer>(mVulkanRHI, mHairModelSystem.get());
     }
 
     mWindow->reveal();

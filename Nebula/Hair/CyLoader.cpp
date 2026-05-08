@@ -6,6 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <spdlog/fmt/fmt.h>
 
+#include "Core/Random.hpp"
+
 namespace nbl
 {
     CyLoader::CyLoader(const std::filesystem::path& path)
@@ -95,14 +97,29 @@ namespace nbl
             };
             geom.strands.push_back(strand);
 
+            for (uint32_t j = 0; j < vertexCount; j++)
+            {
+                float t = (vertexCount > 1)
+                    ? static_cast<float>(j) / static_cast<float>(vertexCount - 1)
+                    : 0.0f;
+                geom.attributes[firstVertex + j].thickness = glm::mix(0.1f, 0.75f, t);
+            }
+
             // HairStrandlet(s)
-            const uint32_t strandletCount = std::ceil(static_cast<double>(vertexCount) / static_cast<double>(gHairMaxStrandletSize));
+            // const uint32_t strandletCount = std::ceil(static_cast<double>(vertexCount) / static_cast<double>(gHairMaxStrandletSize));
+            const uint32_t strandletCount = (vertexCount > 1)
+                ? ((vertexCount - 1) + (gHairMaxStrandletSize - 1) - 1) / (gHairMaxStrandletSize - 1)
+                : 1;
             for (auto j = 0; j < strandletCount; j++)
             {
                 // Remainder calc. for the last strandlet.
-                const uint32_t strandletVertexCount = (j != strandletCount - 1)
-                    ? gHairMaxStrandletSize
-                    : (vertexCount - (j * gHairMaxStrandletSize));
+                // const uint32_t strandletVertexCount = (j != strandletCount - 1)
+                //     ? gHairMaxStrandletSize
+                //     : (vertexCount - (j * gHairMaxStrandletSize));
+
+                const uint32_t firstStrandletVertex = j * (gHairMaxStrandletSize - 1);  // stride 31
+                const uint32_t remaining            = vertexCount - firstStrandletVertex;
+                const uint32_t strandletVertexCount = std::min(gHairMaxStrandletSize, remaining);
 
                 HairStrandlet strandlet = {
                     .strandId    = strand.id,
@@ -121,9 +138,6 @@ namespace nbl
             };
             geom.strandDescs.push_back(desc);
 
-            //geom.taskGroupSizeX = static_cast<uint32_t>(std::floor(geom.getStrandCount() / gHairMaxStrandletSize));
-            geom.taskGroupSizeX = (geom.strandCount + gHairMaxStrandletSize - 1) / gHairMaxStrandletSize;
-
             firstVertex += vertexCount;
         }
 
@@ -131,6 +145,9 @@ namespace nbl
         geom.strandCount    = geom.strands.size();
         geom.strandletCount = geom.strandlets.size();
         geom.name           = mPath.filename().stem().string();
+
+        //geom.taskGroupSizeX = static_cast<uint32_t>(std::floor(geom.getStrandCount() / gHairMaxStrandletSize));
+        geom.taskGroupSizeX = (geom.strandCount + gHairMaxStrandletSize - 1) / gHairMaxStrandletSize;
 
         return geom;
     }

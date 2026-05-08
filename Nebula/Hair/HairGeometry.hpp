@@ -75,6 +75,7 @@ namespace nbl
 
     private:
         friend class ClassicHairRenderer;
+        friend class HairRenderer;
 
         SPtr<RHI::VulkanRHI>        mRHI;
 

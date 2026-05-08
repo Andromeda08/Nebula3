@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "HairRenderingMode.hpp"
 #include "Core/Random.hpp"
 #include "Core/Types.hpp"
 #include "Hair/HairGeometry.hpp"
@@ -13,14 +14,6 @@
 
 namespace nbl
 {
-    enum class HairRenderingMode : uint32_t
-    {
-        Default         = 0,
-        DebugQuads      = 1,
-        DebugStrands    = 2,
-        DebugStrandlets = 3,
-    };
-
     class ClassicHairRenderer
     {
         struct PushConstants
@@ -31,6 +24,7 @@ namespace nbl
             glm::vec4 specular;
             // Buffer References
             uint64_t  vertexBufferAddress;
+            // uint64_t  attributesBufferAddress;
             uint64_t  strandDescBufferAddress;
             uint64_t  debugColorBufferAddress;
             uint64_t  cameraBufferAddress;
@@ -79,6 +73,7 @@ namespace nbl
                     .diffuse                 = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f),
                     .specular                = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f),
                     .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
+                    // .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
                     .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
                     .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
                     .cameraBufferAddress     = cameraBuffer,
@@ -94,7 +89,7 @@ namespace nbl
                 mPipeline->pushConstants(cmd, &pushConstants);
 
                 const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
-                cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
+                cmd->getHandle().drawMeshTasksEXT(1, 1, 1);
             });
 
             pCommandList->endLabel();
