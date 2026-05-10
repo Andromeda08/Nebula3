@@ -48,6 +48,8 @@ set(NBL_HAIR_FILES
     Nebula/Hair/Render/HairRenderingMode.hpp
     Nebula/Hair/Render/HairRenderer.hpp
     Nebula/Hair/Render/HairRenderer.cpp
+    Nebula/Hair/Render/Complex/SoftwareRasterizer.hpp
+    Nebula/Hair/Render/Complex/SoftwareRasterizer.cpp
 )
 
 set(V2_FILES

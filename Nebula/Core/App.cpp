@@ -75,6 +75,8 @@ App::App()
         mUserInterface->addComponent<nbl::HairRendererUI>(mHairRenderer.get());
     }
 
+    mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
+
     mWindow->reveal();
 }
 
@@ -174,6 +176,8 @@ void App::run()
         mTitleScreen->render(commandList, frameData);
 
         mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
+
+        mSoftwareRasterizer->execute(commandList, frameData);
 
         {
             commandList->beginLabel("Hair_Blit");
