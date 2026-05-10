@@ -1,3 +1,5 @@
-slangc Hair.task.slang -profile glsl_460+spirv_1_6 -target spirv -stage amplification -entry main -o ./bin/hair.task.spv
-slangc Hair.mesh.slang -profile glsl_460+spirv_1_6 -target spirv -stage mesh          -entry main -o ./bin/hair.mesh.spv
-slangc Hair.frag.slang -profile glsl_460+spirv_1_6 -target spirv -stage fragment      -entry main -o ./bin/hair.frag.spv
+slangc Hair.task.slang       -profile glsl_460+spirv_1_6 -target spirv -stage amplification -entry main -o ./bin/hair.task.spv
+slangc Hair.mesh.slang       -profile glsl_460+spirv_1_6 -target spirv -stage mesh          -entry main -o ./bin/hair.mesh.spv
+slangc Hair.frag.slang       -profile glsl_460+spirv_1_6 -target spirv -stage fragment      -entry main -o ./bin/hair.frag.spv
+slangc Rasterizer.comp.slang -profile glsl_460+spirv_1_6 -target spirv -stage compute       -entry main -o ./bin/Rasterizer.comp.spv
+slangc Resolve.comp.slang -profile glsl_460+spirv_1_6 -target spirv -stage compute       -entry main -o ./bin/Resolve.comp.spv
