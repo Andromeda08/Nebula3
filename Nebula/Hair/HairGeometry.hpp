@@ -71,12 +71,19 @@ namespace nbl
 
         [[nodiscard]] const HairGeometry& getHairGeometry(uint32_t i) const noexcept;
 
+        [[nodiscard]] const GlobalHairInfo& getHairInfo(uint32_t i) const noexcept;
+
         void createBuffers();
 
         [[nodiscard]] uint32_t getModelCount() const noexcept
         {
             return static_cast<uint32_t>(mHairGeometries.size());
         }
+
+        [[nodiscard]] uint64_t getVertexAddress() const noexcept { return mHairVertices->getAddress(); }
+        [[nodiscard]] uint64_t getAttributesAddress() const noexcept { return mHairAttributes->getAddress(); }
+        [[nodiscard]] uint64_t getStrandDescriptionsAddress() const noexcept { return mStrandDescriptions->getAddress(); }
+        [[nodiscard]] uint64_t getHairInfoAddress() const noexcept { return mGlobalHairInfo->getAddress(); }
 
     private:
         friend class ClassicHairRenderer;

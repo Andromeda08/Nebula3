@@ -19,6 +19,7 @@ namespace RHI
         TransferSrc,
         TransferDst,
         DrawIndirect,
+        ComputeIndirect,
         Vertex,
         Index,
         StorageRead,
@@ -76,6 +77,9 @@ namespace RHI
             }
             case DrawIndirect: {
                 return { A::eIndirectCommandRead, S::eDrawIndirect };
+            }
+            case ComputeIndirect: {
+                return { A::eIndirectCommandRead, S::eComputeShader };
             }
             case Vertex: {
                 return { A::eVertexAttributeRead, S::eVertexInput };
