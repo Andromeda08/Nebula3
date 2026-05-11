@@ -34,6 +34,11 @@ namespace nbl
         return mHairGeometries[i];
     }
 
+    const GlobalHairInfo& HairModelSystem::getHairInfo(const uint32_t i) const noexcept
+    {
+        return mHairInfos[i];
+    }
+
     void HairModelSystem::createBuffers()
     {
         // Allocate storage buffers

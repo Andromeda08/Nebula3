@@ -77,6 +77,8 @@ App::App()
 
     mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
 
+    mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
+
     mWindow->reveal();
 }
 
@@ -172,12 +174,14 @@ void App::run()
         // =====================================
         commandList->beginLabel("Rendering");
 
-        mLevelRenderer->render(frameData, commandList);
-        mTitleScreen->render(commandList, frameData);
+        // mLevelRenderer->render(frameData, commandList);
+        // mTitleScreen->render(commandList, frameData);
 
         mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
 
-        mSoftwareRasterizer->execute(commandList, frameData);
+        // mSoftwareRasterizer->execute(commandList, frameData);
+
+        mHybrid->execute(commandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
 
         {
             commandList->beginLabel("Hair_Blit");

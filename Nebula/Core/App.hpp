@@ -12,6 +12,7 @@
 #include "Game/TitleScreen.hpp"
 #include "Hair/HairGeometry.hpp"
 #include "Hair/Render/HairRenderer.hpp"
+#include "Hair/Render/Complex/HybridHairRenderer.hpp"
 #include "Hair/Render/Complex/SoftwareRasterizer.hpp"
 #include "Level/Level.hpp"
 #include "Level/Render/LevelRenderer.hpp"
@@ -48,6 +49,7 @@ private:
     UPtr<nbl::HairRenderer>      mHairRenderer;
 
     UPtr<nbl::SoftwareRasterizer> mSoftwareRasterizer;
+    UPtr<nbl::HybridHairRenderer> mHybrid;
 
     UPtr<TitleScreen>            mTitleScreen;
 };

@@ -50,6 +50,10 @@ set(NBL_HAIR_FILES
     Nebula/Hair/Render/HairRenderer.cpp
     Nebula/Hair/Render/Complex/SoftwareRasterizer.hpp
     Nebula/Hair/Render/Complex/SoftwareRasterizer.cpp
+    Nebula/Hair/Render/Complex/Shared.hpp
+    Nebula/Hair/Render/Complex/HybridHair_MeshStage.hpp
+    Nebula/Hair/Render/Complex/HybridHairRenderer.hpp
+    Nebula/Hair/Render/Complex/HybridHair_SoftwareStage.hpp
 )
 
 set(V2_FILES
