@@ -282,6 +282,16 @@ namespace RHI
                 .setRayTracingValidation(true);
         }
     );
+
+    def_VulkanExt(
+        ShaderImageInt64AtomicsEXT,
+        vk::EXTShaderImageAtomicInt64ExtensionName,
+        vk::PhysicalDeviceShaderImageAtomicInt64FeaturesEXT,
+        [&]() -> void {
+            mFeatureStruct = vk::PhysicalDeviceShaderImageAtomicInt64FeaturesEXT()
+                .setShaderImageInt64Atomics(true);
+        }
+    );
     #pragma endregion
 }
 

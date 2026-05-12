@@ -41,7 +41,7 @@ App::App()
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
     mLevel = makeUnique<nbl::Level>(mVulkanRHI, mUserInterface.get(), mTextureManager.get());
-    mLevelRenderer = makeUnique<nbl::LevelRenderer>(mVulkanRHI, mTextureManager.get(), mLevel.get());
+    // mLevelRenderer = makeUnique<nbl::LevelRenderer>(mVulkanRHI, mTextureManager.get(), mLevel.get());
 
     {
         const auto [w, h] = mWindow->getFramebufferSize();
@@ -71,13 +71,14 @@ App::App()
         }
 
         mHairModelSystem->createBuffers();
-        mHairRenderer = makeUnique<nbl::HairRenderer>(mVulkanRHI, mHairModelSystem.get());
-        mUserInterface->addComponent<nbl::HairRendererUI>(mHairRenderer.get());
+        // mHairRenderer = makeUnique<nbl::HairRenderer>(mVulkanRHI, mHairModelSystem.get());
+        // mUserInterface->addComponent<nbl::HairRendererUI>(mHairRenderer.get());
     }
 
-    mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
+    // mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
 
     mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
+    mUserInterface->addComponent<nbl::HybridHairRendererUI>(mHybrid.get());
 
     mWindow->reveal();
 }
@@ -177,7 +178,7 @@ void App::run()
         // mLevelRenderer->render(frameData, commandList);
         // mTitleScreen->render(commandList, frameData);
 
-        mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
+        // mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
 
         // mSoftwareRasterizer->execute(commandList, frameData);
 
@@ -187,20 +188,20 @@ void App::run()
             commandList->beginLabel("Hair_Blit");
             // Barriers
             const auto barrier = RHI::Barrier()
-                .addBarrier(mHairRenderer->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
+                .addBarrier(mHybrid->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
                 .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
             barrier.insert(commandList);
 
             // Blit
             #pragma region
-            const auto srcExtent = mHairRenderer->getResult(frameData.currentFrame)->getProperties().extent;
+            const auto srcExtent = mHybrid->getResult(frameData.currentFrame)->getProperties().extent;
             const auto dstExtent = mVulkanRHI->getSwapchain()->getProperties().extent;
             const auto region  = vk::ImageBlit2()
                 .setSrcOffsets({
                     vk::Offset3D { 0, 0, 0 },
                     vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
                 })
-                .setSrcSubresource(mHairRenderer->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
+                .setSrcSubresource(mHybrid->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
                 .setDstOffsets({
                     vk::Offset3D { 0, 0, 0 },
                     vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
@@ -208,7 +209,7 @@ void App::run()
                 .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
 
             const auto blit = vk::BlitImageInfo2()
-                .setSrcImage(mHairRenderer->getResult(frameData.currentFrame)->getImage())
+                .setSrcImage(mHybrid->getResult(frameData.currentFrame)->getImage())
                 .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
                 .setDstImage(mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex))
                 .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
