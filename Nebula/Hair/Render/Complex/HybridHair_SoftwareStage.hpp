@@ -108,7 +108,7 @@ namespace nbl
                 };
 
                 RHI::Barrier()
-                    .addBarrier(counterBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Compute_Write))
+                    .addBarrier(counterBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Compute_Read))
                     .addBarrier(indirectArgs->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Compute_Write))
                     .insert(pCommandList);
 
