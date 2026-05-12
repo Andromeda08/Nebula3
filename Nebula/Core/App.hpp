@@ -46,9 +46,9 @@ private:
     UPtr<nbl::LevelRenderer>     mLevelRenderer;
 
     UPtr<nbl::HairModelSystem>   mHairModelSystem;
-    UPtr<nbl::HairRenderer>      mHairRenderer;
+    // UPtr<nbl::HairRenderer>      mHairRenderer;
 
-    UPtr<nbl::SoftwareRasterizer> mSoftwareRasterizer;
+    // UPtr<nbl::SoftwareRasterizer> mSoftwareRasterizer;
     UPtr<nbl::HybridHairRenderer> mHybrid;
 
     UPtr<TitleScreen>            mTitleScreen;

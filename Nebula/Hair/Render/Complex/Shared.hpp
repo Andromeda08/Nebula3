@@ -41,12 +41,23 @@ namespace nbl
         vk::Extent2D  renderResolution = { 1920, 1080 };
 
         // Hair Model Index
-        int32_t hairIndex = 0;
+        int32_t   hairIndex = 0;
 
         // Color override options
         bool      overrideColors = false;
         glm::vec3 diffuse        = glm::vec3(0.32549f, 0.23921f, 0.20784f);
         glm::vec3 specular       = glm::vec3(0.41568f, 0.30588f, 0.21960f);
+        float     specularFactor = 16.0f;
+
+        // Task workgroup override
+        bool    useCustomWgSize  = false;
+        int32_t customTaskWgSize = 0;
+
+        // Hybrid config
+        float   smallTriangleThreshold = 4.0f;
+
+        // Debug visualization blend
+        float   debugAlphaBlend = 0.5f;
     };
 
     /**

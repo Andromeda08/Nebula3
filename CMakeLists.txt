@@ -54,6 +54,7 @@ set(NBL_HAIR_FILES
     Nebula/Hair/Render/Complex/HybridHair_MeshStage.hpp
     Nebula/Hair/Render/Complex/HybridHairRenderer.hpp
     Nebula/Hair/Render/Complex/HybridHair_SoftwareStage.hpp
+    Nebula/Hair/Render/Complex/HybridHair_DebugCompose.hpp
 )
 
 set(V2_FILES
