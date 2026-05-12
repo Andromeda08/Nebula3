@@ -2,6 +2,11 @@
 A cross-platform rendering engine built with Vulkan.
 
 <p align="center">
+  <img src="./Resources/hair_preview.png" width="75%" />
+</p>
+<p align="center">[Preview] GPU-driven hybrid hair rendering (mesh shader, compute rasterizer)</p>
+
+<p align="center">
   <img src="./Resources/bistro_test.png" width="75%" />
 </p>
 <p align="center">Bistro Scene with RT Shadows</p>
