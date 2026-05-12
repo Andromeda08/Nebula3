@@ -18,24 +18,24 @@ namespace nbl
         mCameraSystem = makeUnique<CameraSystem>(rhi);
         mUserInterface->addComponent<CameraSystemUI>(mCameraSystem.get());
 
-        mGeometrySystem = makeUnique<GeometrySystem>(rhi);
+        // mGeometrySystem = makeUnique<GeometrySystem>(rhi);
 
-        mLightSystem = makeUnique<LightSystem>(rhi);
-        mUserInterface->addComponent<LightSystemUI>(mLightSystem.get());
+        // mLightSystem = makeUnique<LightSystem>(rhi);
+        // mUserInterface->addComponent<LightSystemUI>(mLightSystem.get());
 
-        mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 4096);
-        mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 65536);
+        // mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 4096);
+        // mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 65536);
 
-        if (mRHI->getRaytracingSupport())
-        {
-            mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
-            mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
+        // if (mRHI->getRaytracingSupport())
+        // {
+        //     mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
+        //     mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
 
-            mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
-            mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
-        }
+        //     mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
+        //     mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
+        // }
 
-        mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
+        // mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
 
         /* Example Cameras */ {
             const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
@@ -43,6 +43,8 @@ namespace nbl
 
             mCameraSystem->addCamera<OrbitCamera>(true);
         }
+
+        return;
 
         /* GLTF Scene */ {
             GLTFLoader loader({
@@ -146,6 +148,7 @@ namespace nbl
     void Level::onEvent(const SDL_Event& event) noexcept
     {
         mCameraSystem->onEvent(event);
+        return;
 
         if (mSelectObjectFeature)
         {
@@ -156,6 +159,8 @@ namespace nbl
     void Level::onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
     {
         mCameraSystem->onUpdate(frameData);
+        return;
+
         mLightSystem->onUpdate(pCommandList);
         mMaterialSystem->onUpdate(pCommandList);
 

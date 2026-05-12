@@ -32,6 +32,8 @@ namespace nbl
             .addBarrier(mDebugColorsBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::StorageRead))
             .insert(pCommandList);
 
+        pCommandList->setViewportScissor(mViewport, mScissor);
+
         mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
         {
             const auto& info = mHairModels->mHairInfos[mHairIndex];

@@ -226,7 +226,7 @@ namespace nbl
                 mResolveRenderTargets[i] = mRHI->createImage({
                     .extent     = mRenderResolution,
                     .format     = vk::Format::eR16G16B16A16Sfloat,
-                    .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst,
+                    .usageFlags = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
                     .debugName  = fmt::format("HybridHair_Resolve_Target_{}", i),
                 });
 

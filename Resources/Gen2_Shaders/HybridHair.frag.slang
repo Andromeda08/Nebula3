@@ -29,9 +29,9 @@ float4 main(MeshVertex input) : SV_Target
     float3 L = normalize(lightPos - input.worldPosition);
     float3 V = normalize(pc.cameraBuffer.eye.xyz - input.worldPosition);
 
-    float3 diffuse  = pc.diffuse.rgb; // pc.useCustomColor == 1 ? pc.diffuse.rgb : input.color;
-    float3 specular = pc.specular.rgb; // pc.useCustomColor == 1 ? pc.specular.rgb : input.color;
+    float3 diffuse  = pc.useCustomColor == 1 ? pc.diffuse.rgb : input.color;
+    float3 specular = pc.useCustomColor == 1 ? pc.specular.rgb : input.color;
 
-    float3 color = kajiyaKay(diffuse, specular, 16.0, T, L, V);
+    float3 color = kajiyaKay(diffuse, specular, pc.specularFactor, T, L, V);
     return float4(color, 1.0);
 }

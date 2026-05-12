@@ -36,6 +36,10 @@ namespace nbl
             float     smallTriangleThreshold;
             float     width;
             float     height;
+
+            // Extras
+            float     specularFactor;
+            int32_t   useCustomColor;
         };
 
     public:
@@ -99,15 +103,21 @@ namespace nbl
                         .strandCount                = info.strandCount,
                         .smallTriangleCounterBuffer = counterBuffer->getAddress(),
                         .maxSmallTriangles          = info.vertexCount * 2,
-                        .smallTriangleThreshold     = 4.0f,
+                        .smallTriangleThreshold     = mShared->config.smallTriangleThreshold,
                         .width                      = mViewport.width,
                         .height                     = mViewport.height,
+                        .specularFactor             = mShared->config.specularFactor,
+                        .useCustomColor             = mShared->config.overrideColors ? 1 : 0,
                     };
 
                     mPipeline->bind(cmd);
                     mPipeline->pushConstants(cmd, &pushConstants);
 
-                    const auto taskGroupSizeX = mShared->hairModels->getHairGeometry(static_cast<size_t>(mShared->config.hairIndex)).taskGroupSizeX;
+                    auto taskGroupSizeX = mShared->hairModels->getHairGeometry(static_cast<size_t>(mShared->config.hairIndex)).taskGroupSizeX;
+                    if (mShared->config.useCustomWgSize)
+                    {
+                        taskGroupSizeX = mShared->config.customTaskWgSize;
+                    }
                     cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
                 });
 

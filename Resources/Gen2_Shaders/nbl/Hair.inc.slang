@@ -89,6 +89,9 @@ struct MeshPushConstants
     float                smallTriangleThreshold;
     float                width;
     float                height;
+
+    float                specularFactor;
+    int32_t              useCustomColor;
 };
 
 struct VisibilityPushConstants
