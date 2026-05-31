@@ -72,6 +72,11 @@ namespace RHI
             return mSetCount;
         }
 
+        [[nodiscard]] const std::string& getLabel() const noexcept
+        {
+            return mDebugName;
+        }
+
     private:
         void createPool();
 
