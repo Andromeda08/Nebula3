@@ -27,6 +27,12 @@ namespace RHI
         SPtr<IWindow> pWindow = nullptr;
     };
 
+    struct PendingDelete
+    {
+        SPtr<Resource>  buffer;
+        uint64_t        frameToRelease;
+    };
+
     class VulkanRHI
     {
     public:
@@ -87,5 +93,7 @@ namespace RHI
         UPtr<Swapchain>     mSwapchain;
         UPtr<CommandQueue>  mGraphicsQueue;
         UPtr<FrameSync>     mFrameSync;
+
+        std::vector<PendingDelete> mDeletionQueue;
     };
 }

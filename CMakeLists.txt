@@ -106,6 +106,7 @@ set(V2_FILES
     Nebula/Level/Render/AntiAliasingPass.hpp
     Nebula/Level/GLTF/GLTFLoader.hpp
     Nebula/Level/GLTF/GLTFLoader.cpp
+    Nebula/VulkanRHI/Render/Pipeline.hpp
 )
 
 add_executable(Nebula3
