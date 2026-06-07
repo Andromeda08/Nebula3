@@ -46,7 +46,7 @@ namespace nbl
 
         /* GLTF Scene */ {
             GLTFLoader loader({
-                .filePath        = Configuration::getSceneFilePath("area2.glb"),
+                .filePath        = Configuration::getSceneFilePath("map.glb"),
                 .pLevel          = this,
                 .pTextureManager = mTextureManager,
                 .pGeometrySystem = mGeometrySystem.get(),

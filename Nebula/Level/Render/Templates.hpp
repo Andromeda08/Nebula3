@@ -49,13 +49,15 @@ namespace nbl
      * @param loadOp Default: Clear
      * @param storeOp Default: Store
      * @param clearValue Default: (1.0f, 0) for depth (0.0f RGB 1.0f A) for color
+     * @param pResolve Image to use as resolve target when pImage is multisampled
      * @return RHI Attachment description
      */
     [[nodiscard]] inline RHI::Attachment makeAttachment(
         const SPtr<RHI::Image>&              pImage,
         const vk::AttachmentLoadOp           loadOp     = vk::AttachmentLoadOp::eClear,
         const vk::AttachmentStoreOp          storeOp    = vk::AttachmentStoreOp::eStore,
-        const std::optional<vk::ClearValue>& clearValue = std::nullopt)
+        const std::optional<vk::ClearValue>& clearValue = std::nullopt,
+        const SPtr<RHI::Image>&              pResolve = nullptr)
     {
         const auto isDepth = vk::hasDepthComponent(pImage->getProperties().format);
         const auto _clearValue = clearValue.value_or(isDepth
@@ -65,15 +67,37 @@ namespace nbl
             ? vk::ImageLayout::eDepthAttachmentOptimal
             : vk::ImageLayout::eColorAttachmentOptimal;
 
+        auto attachmentInfo = vk::RenderingAttachmentInfo()
+            .setClearValue(_clearValue)
+            .setImageLayout(_layout)
+            .setImageView(pImage->getImageView())
+            .setLoadOp(loadOp)
+            .setStoreOp(pResolve ? vk::AttachmentStoreOp::eDontCare : storeOp);
+
+        if (pResolve)
+        {
+            attachmentInfo
+                .setResolveImageLayout(_layout)
+                .setResolveImageView(pResolve->getImageView())
+                .setResolveMode(isDepth
+                    ? vk::ResolveModeFlagBits::eSampleZero
+                    : vk::ResolveModeFlagBits::eAverage);
+        }
+
         return {
             .image = pImage->getImage(),
-            .attachmentInfo = vk::RenderingAttachmentInfo()
-                .setClearValue(_clearValue)
-                .setImageLayout(_layout)
-                .setImageView(pImage->getImageView())
-                .setLoadOp(loadOp)
-                .setStoreOp(storeOp)
+            .attachmentInfo = std::move(attachmentInfo),
         };
+    }
+
+    [[nodiscard]] inline RHI::Attachment makeResolvedAttachment(const SPtr<RHI::Image>& pMultisampled, const SPtr<RHI::Image>& pResolve)
+    {
+        return makeAttachment(
+            pMultisampled,
+            vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp::eDontCare,
+            std::nullopt,
+            pResolve);
     }
 
     [[nodiscard]] inline vk::Rect2D getRenderAreaForAttachment(const RHI::Image* pImage)

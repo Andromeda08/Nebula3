@@ -9,55 +9,56 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
 {
     mFont48 = makeUnique<FontFace>(mTextureManager, Configuration::getFontFilePath("KHInterference-Regular.otf"), 32.0f);
     mFont16 = makeUnique<FontFace>(mTextureManager, Configuration::getFontFilePath("PPFraktionMono-Regular.otf"), 16.0f);
+    mExodus = makeUnique<FontFace>(mTextureManager, Configuration::getFontFilePath("ExodusDemo-Striped.otf"), 128.0f);
 
-    mQuads.push_back({
-        .center          = glm::vec2(mScreen.size.x - mScreen.padding.x - 24.0f, mScreen.size.y - mScreen.padding.y - 24.0f),
-        .sideLengths     = { 16.0f, 16.0f },
-        .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
-        .textureIndex    = -1
-    });
+    //mQuads.push_back({
+    //    .center          = glm::vec2(mScreen.size.x - mScreen.padding.x - 24.0f, mScreen.size.y - mScreen.padding.y - 24.0f),
+    //    .sideLengths     = { 16.0f, 16.0f },
+    //    .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
+    //    .textureIndex    = -1
+    //});
 
-    mQuads.push_back({
-        .center          = glm::vec2(mScreen.size.x - mScreen.padding.x - 24.0f, mScreen.padding.y + 24.0f),
-        .sideLengths     = { 16.0f, 16.0f },
-        .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
-        .textureIndex    = -1
-    });
+    //mQuads.push_back({
+    //    .center          = glm::vec2(mScreen.size.x - mScreen.padding.x - 24.0f, mScreen.padding.y + 24.0f),
+    //    .sideLengths     = { 16.0f, 16.0f },
+    //    .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
+    //    .textureIndex    = -1
+    //});
 
-    mQuads.push_back({
-        .center          = glm::vec2(mScreen.padding.x + 24.0f, mScreen.padding.y + 24.0f),
-        .sideLengths     = { 16.0f, 16.0f },
-        .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
-        .textureIndex    = -1
-    });
+    //mQuads.push_back({
+    //    .center          = glm::vec2(mScreen.padding.x + 24.0f, mScreen.padding.y + 24.0f),
+    //    .sideLengths     = { 16.0f, 16.0f },
+    //    .backgroundColor = glm::vec4(0.32f, 0.0f, 1.0f, 1.0f),
+    //    .textureIndex    = -1
+    //});
 
-    mQuads.push_back({
-        .center          = mScreen.getAnchorPosition(Anchor::TopCenter, glm::vec2(128.0f, 32.0f)),
-        .sideLengths     = { 128.0f, 32.0f },
-        .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
-        .textureIndex    = -1,
-    });
+    //mQuads.push_back({
+    //    .center          = mScreen.getAnchorPosition(Anchor::TopCenter, glm::vec2(128.0f, 32.0f)),
+    //    .sideLengths     = { 128.0f, 32.0f },
+    //    .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
+    //    .textureIndex    = -1,
+    //});
 
-    mQuads.push_back({
-        .center          = mScreen.getAnchorPosition(Anchor::BottomCenter, glm::vec2(128.0f, 32.0f)),
-        .sideLengths     = { 128.0f, 32.0f },
-        .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
-        .textureIndex    = -1,
-    });
+    //mQuads.push_back({
+    //    .center          = mScreen.getAnchorPosition(Anchor::BottomCenter, glm::vec2(128.0f, 32.0f)),
+    //    .sideLengths     = { 128.0f, 32.0f },
+    //    .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
+    //    .textureIndex    = -1,
+    //});
 
-    mQuads.push_back({
-        .center          = mScreen.getAnchorPosition(Anchor::MiddleLeft, glm::vec2(32.0f, 128.0f)),
-        .sideLengths     = { 32.0f, 128.0f },
-        .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
-        .textureIndex    = -1,
-    });
+    //mQuads.push_back({
+    //    .center          = mScreen.getAnchorPosition(Anchor::MiddleLeft, glm::vec2(32.0f, 128.0f)),
+    //    .sideLengths     = { 32.0f, 128.0f },
+    //    .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
+    //    .textureIndex    = -1,
+    //});
 
-    mQuads.push_back({
-        .center          = mScreen.getAnchorPosition(Anchor::MiddleRight, glm::vec2(32.0f, 128.0f)),
-        .sideLengths     = { 32.0f, 128.0f },
-        .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
-        .textureIndex    = -1,
-    });
+    //mQuads.push_back({
+    //    .center          = mScreen.getAnchorPosition(Anchor::MiddleRight, glm::vec2(32.0f, 128.0f)),
+    //    .sideLengths     = { 32.0f, 128.0f },
+    //    .backgroundColor = glm::vec4(0.76078f, 0.99608f, 0.04314f, 1.0f),
+    //    .textureIndex    = -1,
+    //});
 
     uint32_t              base = 0;
     std::vector<UIVertex> vertices;
@@ -75,18 +76,25 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
         base += geom.vertices.size();
     }
 
-    mText.push_back({
-        .text     = "Nebula 3",
-        .position = glm::vec2(mScreen.padding.x, mScreen.size.y - mScreen.padding.y - 38.0f),
-        .color    = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
-        .pFont    = mFont48.get(),
-    });
+    // mText.push_back({
+    //     .text     = "Nebula 3",
+    //     .position = glm::vec2(mScreen.padding.x, mScreen.size.y - mScreen.padding.y - 38.0f),
+    //     .color    = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+    //     .pFont    = mFont48.get(),
+    // });
+
+    // mText.push_back({
+    //     .text     = "/ GI and Systems Preview /",
+    //     .position = glm::vec2(mScreen.padding.x, mScreen.size.y - mScreen.padding.y - 16.0f),
+    //     .color    = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+    //     .pFont    = mFont16.get(),
+    // });
 
     mText.push_back({
-        .text     = "/ GI and Systems Preview /",
-        .position = glm::vec2(mScreen.padding.x, mScreen.size.y - mScreen.padding.y - 16.0f),
-        .color    = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
-        .pFont    = mFont16.get(),
+        .text     = "FORSAKEN",
+        .position = mScreen.getAnchorPosition(Anchor::Center),
+        .color    = glm::vec4(1.0f),
+        .pFont    = mExodus.get(),
     });
 
     for (auto& txt : mText)

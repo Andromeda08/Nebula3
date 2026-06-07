@@ -216,12 +216,4 @@ namespace RHI
             return *this;
         }
     };
-
-    class GraphicsPipeline2 : public PipelineBase
-    {
-    public:
-
-    private:
-
-    };
 }

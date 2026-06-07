@@ -14,6 +14,7 @@
 #include "Hair/Render/HairRenderer.hpp"
 #include "Hair/Render/Complex/HybridHairRenderer.hpp"
 #include "Hair/Render/Complex/SoftwareRasterizer.hpp"
+#include "Interface/Interface.hpp"
 #include "Level/Level.hpp"
 #include "Level/Render/LevelRenderer.hpp"
 
@@ -51,6 +52,7 @@ private:
     // UPtr<nbl::SoftwareRasterizer> mSoftwareRasterizer;
     UPtr<nbl::HybridHairRenderer> mHybrid;
 
+    UPtr<nbl::Interface>         mInterface;
     UPtr<TitleScreen>            mTitleScreen;
 };
 
