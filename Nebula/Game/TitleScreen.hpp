@@ -125,6 +125,7 @@ private:
 
     UPtr<FontFace>              mFont48;
     UPtr<FontFace>              mFont16;
+    UPtr<FontFace>              mExodus;
     std::vector<TextElement>    mText;
 
     std::vector<Quad>           mQuads;

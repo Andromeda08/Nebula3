@@ -193,6 +193,11 @@ public:
             penX += (g.advance >> 6);
         }
 
+        for (const auto& vertex : geo.vertices)
+        {
+            geo.bounds.expandBy(glm::vec3(vertex.pos, 0.0f));
+        }
+
         return std::move(geo);
     }
 

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include "Math/BoundingBox.hpp"
 
 #include "VulkanRHI/Rendering/VertexTraits.hpp"
 
@@ -31,6 +32,7 @@ struct UIVertex
 
 struct UIGeometry
 {
-    std::vector<UIVertex> vertices;
-    std::vector<uint32_t> indices;
+    std::vector<UIVertex>   vertices;
+    std::vector<uint32_t>   indices;
+    nbl::BoundingBox        bounds;
 };

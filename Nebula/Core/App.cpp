@@ -80,6 +80,16 @@ App::App()
     mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
     mUserInterface->addComponent<nbl::HybridHairRendererUI>(mHybrid.get());
 
+    nbl::InterfaceParams ip = {
+        { 1920.0f, 1080.0f },
+        { 64.0f, 64.0f },
+        mVulkanRHI,
+        mTextureManager.get(),
+        {},
+        true
+    };
+    mInterface = makeUnique<nbl::Interface>(ip);
+
     mWindow->reveal();
 }
 
@@ -176,50 +186,52 @@ void App::run()
         commandList->beginLabel("Rendering");
 
         mLevelRenderer->render(frameData, commandList);
-        // mTitleScreen->render(commandList, frameData);
+        //mTitleScreen->render(commandList, frameData);
+
+        mInterface->render(commandList, frameData);
 
         // mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
 
         // mSoftwareRasterizer->execute(commandList, frameData);
 
-        mHybrid->execute(commandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
+        // mHybrid->execute(commandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
 
-        //{
-        //    commandList->beginLabel("Hair_Blit");
-        //    // Barriers
-        //    const auto barrier = RHI::Barrier()
-        //        .addBarrier(mHybrid->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
-        //        .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
-        //    barrier.insert(commandList);
+        {
+            commandList->beginLabel("Blit");
+            // Barriers
+            const auto barrier = RHI::Barrier()
+                .addBarrier(mInterface->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
+                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
+            barrier.insert(commandList);
 
-        //    // Blit
-        //    #pragma region
-        //    const auto srcExtent = mHybrid->getResult(frameData.currentFrame)->getProperties().extent;
-        //    const auto dstExtent = mVulkanRHI->getSwapchain()->getProperties().extent;
-        //    const auto region  = vk::ImageBlit2()
-        //        .setSrcOffsets({
-        //            vk::Offset3D { 0, 0, 0 },
-        //            vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
-        //        })
-        //        .setSrcSubresource(mHybrid->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
-        //        .setDstOffsets({
-        //            vk::Offset3D { 0, 0, 0 },
-        //            vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
-        //        })
-        //        .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
+            // Blit
+            #pragma region
+            const auto srcExtent = mInterface->getResult(frameData.currentFrame)->getProperties().extent;
+            const auto dstExtent = mVulkanRHI->getSwapchain()->getProperties().extent;
+            const auto region  = vk::ImageBlit2()
+                .setSrcOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
+                })
+                .setSrcSubresource(mInterface->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
+                .setDstOffsets({
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
+                })
+                .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
 
-        //    const auto blit = vk::BlitImageInfo2()
-        //        .setSrcImage(mHybrid->getResult(frameData.currentFrame)->getImage())
-        //        .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
-        //        .setDstImage(mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex))
-        //        .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
-        //        .setFilter(vk::Filter::eLinear)
-        //        .setRegions(region);
-        //    #pragma endregion
-        //    commandList->getHandle().blitImage2(blit);
+            const auto blit = vk::BlitImageInfo2()
+                .setSrcImage(mInterface->getResult(frameData.currentFrame)->getImage())
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex))
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(vk::Filter::eLinear)
+                .setRegions(region);
+            #pragma endregion
+            commandList->getHandle().blitImage2(blit);
 
-        //    commandList->endLabel();
-        //}
+            commandList->endLabel();
+        }
 
         commandList->endLabel();
 

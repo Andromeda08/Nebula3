@@ -107,6 +107,8 @@ set(V2_FILES
     Nebula/Level/GLTF/GLTFLoader.hpp
     Nebula/Level/GLTF/GLTFLoader.cpp
     Nebula/VulkanRHI/Render/Pipeline.hpp
+    Nebula/Interface/Interface.hpp
+    Nebula/Interface/Interface.cpp
 )
 
 add_executable(Nebula3
