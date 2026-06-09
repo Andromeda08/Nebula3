@@ -77,8 +77,8 @@ App::App()
 
     // mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
 
-    mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
-    mUserInterface->addComponent<nbl::HybridHairRendererUI>(mHybrid.get());
+    // mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
+    //  mUserInterface->addComponent<nbl::HybridHairRendererUI>(mHybrid.get());
 
     nbl::InterfaceParams ip = {
         { 1920.0f, 1080.0f },
@@ -88,7 +88,7 @@ App::App()
         {},
         true
     };
-    mInterface = makeUnique<nbl::Interface>(ip);
+    // mInterface = makeUnique<nbl::Interface>(ip);
 
     mWindow->reveal();
 }
@@ -188,7 +188,7 @@ void App::run()
         mLevelRenderer->render(frameData, commandList);
         //mTitleScreen->render(commandList, frameData);
 
-        mInterface->render(commandList, frameData);
+        // mInterface->render(commandList, frameData);
 
         // mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
 
@@ -196,6 +196,7 @@ void App::run()
 
         // mHybrid->execute(commandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
 
+        /*
         {
             commandList->beginLabel("Blit");
             // Barriers
@@ -232,6 +233,7 @@ void App::run()
 
             commandList->endLabel();
         }
+        */
 
         commandList->endLabel();
 

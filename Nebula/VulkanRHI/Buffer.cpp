@@ -18,7 +18,7 @@ namespace RHI
             .bufferType = mProperties.type,
             .bufferInfo = vk::BufferCreateInfo()
                 .setSize(createInfo.size)
-                .setUsage(getBufferUsageFlags(mProperties.type, mDevice->getFeatureLevel() >= FeatureLevel::Complete)),
+                .setUsage(getBufferUsageFlags(mProperties.type, gFeatures.rayTracing)),
         };
 
         const auto allocation = mDevice->allocateBuffer(allocInfo);

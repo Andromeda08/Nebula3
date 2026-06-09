@@ -24,7 +24,7 @@ namespace nbl
 
         ~TonemapPass() = default;
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
         [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
 
@@ -34,16 +34,15 @@ namespace nbl
         void createResources() noexcept;
         void createPipeline()  noexcept;
 
-        PushConstant            mPushConstant;
+        PushConstant                    mPushConstant;
 
-        SPtr<RHI::VulkanRHI>    mRHI;
+        SPtr<RHI::VulkanRHI>            mRHI;
 
-        SPtr<RHI::Image>        mInput;
-        SPtr<RHI::Image>        mOutput;
+        SPtr<RHI::Image>                mInput;
+        SPtr<RHI::Image>                mOutput;
 
-        SPtr<RHI::Descriptor>   mDescriptor;
-        SPtr<RHI::RenderPass>   mRenderPass;
-        SPtr<RHI::Pipeline>     mPipeline;
+        SPtr<RHI::Descriptor>           mDescriptor;
+        SPtr<RHI::GraphicsPipeline2>    mPipeline;
     };
 
 }

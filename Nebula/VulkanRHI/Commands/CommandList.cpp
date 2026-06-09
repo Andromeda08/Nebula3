@@ -1,7 +1,9 @@
 #include "CommandList.hpp"
 
+#include "Core/Random.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Image.hpp"
+#include "VulkanRHI/Render/Pipeline.hpp"
 
 namespace RHI
 {
@@ -34,17 +36,110 @@ namespace RHI
         mCommandBuffer.end();
     }
 
+    void CommandList::draw(
+        const uint32_t vertexCount, const uint32_t instanceCount,
+        const uint32_t firstVertex, const uint32_t firstInstance
+    ) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::Graphics, "No graphics pipeline is bound.");
+        mCommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void CommandList::drawIndexed(
+        const uint32_t indexCount,   const uint32_t instanceCount, const uint32_t firstIndex,
+        const int32_t  vertexOffset, const uint32_t firstInstance
+    ) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::Graphics, "No graphics pipeline is bound.");
+        mCommandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
+    void CommandList::drawIndexedIndirect(
+        const Buffer*  pBuffer,   const uint64_t offset,
+        const uint32_t drawCount, const uint32_t stride
+    ) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::Graphics, "No graphics pipeline is bound.");
+        mCommandBuffer.drawIndexedIndirect(pBuffer->getHandle(), offset, drawCount, stride);
+    }
+
+    void CommandList::bindPipeline(PipelineBase* pPipeline)
+    {
+        mBoundPipeline = pPipeline;
+        mCommandBuffer.bindPipeline(pPipeline->getBindPoint(), pPipeline->getHandle());
+    }
+
+    void CommandList::bindDescriptorSet(const vk::DescriptorSet& descriptorSet, const uint32_t setIndex) const
+    {
+        exitOnAssert(mBoundPipeline, "No pipeline is bound.");
+        mCommandBuffer.bindDescriptorSets(
+            mBoundPipeline->getBindPoint(),
+            mBoundPipeline->getLayout(),
+            setIndex,
+            1, &descriptorSet,
+            0, nullptr);
+    }
+
+    void CommandList::pushConstants(const void* pData) const
+    {
+        exitOnAssert(mBoundPipeline, "No pipeline is bound.");
+        if (const auto& pcr = mBoundPipeline->getPushConstantRange(); pcr.has_value())
+        {
+            mCommandBuffer.pushConstants(
+                mBoundPipeline->getLayout(),
+                pcr->stageFlags,
+                pcr->offset,
+                pcr->size,
+                pData);
+        }
+    }
+
+    void CommandList::dispatch(const uint32_t x, const uint32_t y, const uint32_t z) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::Compute, "No compute pipeline is bound.");
+        mCommandBuffer.dispatch(x, y, z);
+    }
+
+    void CommandList::dispatchIndirect(const Buffer* pBuffer, uint64_t offset) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::Compute, "No compute pipeline is bound.");
+        mCommandBuffer.dispatchIndirect(pBuffer->getHandle(), 0);
+    }
+
+    void CommandList::traceRays(const uint32_t x, const uint32_t y, const uint32_t rayDepth) const
+    {
+        exitOnAssert(mBoundPipeline && mBoundPipeline->getType() == PipelineType2::RayTracing, "No ray tracing pipeline is bound.");
+
+        const auto* rt  = dynamic_cast<RayTracingPipeline2*>(mBoundPipeline);
+        const auto* sbt = rt->getShaderBindingTable();
+
+        const uint32_t depth = std::min(rayDepth, rt->getMaxDepth());
+        if (rayDepth > rt->getMaxDepth())
+        {
+            spdlog::warn("The specified depth exceeds the maximum of the currently bound ray tracing pipeline.");
+        }
+
+        mCommandBuffer.traceRaysKHR(
+            sbt->getRaygenRegion(), sbt->getMissRegion(), sbt->getHitRegion(), sbt->getCallRegion(),
+            x, y, depth);
+    }
+
     void CommandList::beginLabel(const std::array<float, 3>& color, const std::string& name) const
+    {
+        beginLabel(name, color);
+    }
+
+    void CommandList::beginLabel(const std::string& label, const std::array<float, 3>& color) const
     {
         if (!mDebug)
         {
             return;
         }
 
-        const auto label = vk::DebugUtilsLabelEXT()
+        const auto labelInfo = vk::DebugUtilsLabelEXT()
             .setColor({ color[0], color[1], color[2], 1.0f })
-            .setPLabelName(name.c_str());
-        mCommandBuffer.beginDebugUtilsLabelEXT(label);
+            .setPLabelName(label.c_str());
+        mCommandBuffer.beginDebugUtilsLabelEXT(labelInfo);
     }
 
     void CommandList::beginLabel(const std::string& name) const
@@ -55,6 +150,7 @@ namespace RHI
         }
 
         const auto label = vk::DebugUtilsLabelEXT()
+            .setColor({ Random::unit(), Random::unit(), Random::unit(), 1.0f })
             .setPLabelName(name.c_str());
         mCommandBuffer.beginDebugUtilsLabelEXT(label);
     }

@@ -75,7 +75,7 @@ namespace nbl
                     .extent        = { static_cast<uint32_t>(mSize.size.x), static_cast<uint32_t>(mSize.size.y) },
                     .format        = vk::Format::eR16G16B16A16Sfloat,
                     .usageFlags    = eColorAttachment | eSampled | eTransferSrc | eTransferDst,
-                    .samples       = vk::SampleCountFlagBits::e8,
+                    .samples       = vk::SampleCountFlagBits::e4,
                     .createSampler = true,
                     .debugName     = fmt::format("UI_Result_{}", i),
                 });
@@ -103,7 +103,7 @@ namespace nbl
                 .configure([](RHI::GraphicsPipelineStateInfo& stateInfo) {
                     stateInfo.addAttributeDescriptions<UIVertex>(0, 0);
                     stateInfo.addBindingDescriptions<UIVertex>(0);
-                    stateInfo.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e8);
+                    stateInfo.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e4);
                 })
                 .setCullMode(vk::CullModeFlagBits::eNone)
                 .addAttachmentState(RHI::PipelineUtils::makeColorBlendAttachmentState()

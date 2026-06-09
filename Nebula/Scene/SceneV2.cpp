@@ -18,7 +18,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManage
     mLightSystem = makeUnique<LightSystem>(mRHI);
     mMaterialPool = makeUnique<MaterialPool>(mRHI, "Material", 4096);
 
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         mTLASManager = TLASManager::create({ mRHI, mInstancePool.get() });
     }
@@ -65,11 +65,11 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManage
 
     using enum vk::ShaderStageFlagBits;
     vk::ShaderStageFlags shaderStageFlags = eVertex | eFragment | eCompute;
-    if (mRHI->getMeshShaderSupport())
+    if (mRHI->getFeatures().meshShaders)
     {
         shaderStageFlags |= eMeshEXT | eTaskEXT;
     }
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         shaderStageFlags |= eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR;
     }
@@ -79,7 +79,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManage
         { SceneBindings_Lights, vk::DescriptorType::eStorageBuffer, 1, shaderStageFlags },
         { SceneBindings_Materials, vk::DescriptorType::eStorageBuffer, 1, shaderStageFlags },
     };
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         bindings.push_back({ 3, vk::DescriptorType::eAccelerationStructureKHR, 1, shaderStageFlags });
     }
@@ -92,7 +92,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManage
             .writeStorageBuffer(SceneBindings_Lights, mLightSystem->getDataBuffer())
             .writeStorageBuffer(SceneBindings_Materials, mMaterialPool->getBuffer());
 
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             descriptorWrite.writeAccelerationStructure(SceneBindings_TopLevelAS, mTLASManager->getTLAS());
         }
@@ -154,7 +154,7 @@ SceneV2::SceneV2(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManage
         .rhi        = mRHI,
     });
 
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         mRTAO = RTAOPass::create({
             .resolution = { extent.width, extent.height },
@@ -239,7 +239,7 @@ void SceneV2::onUpdate(const float dt, const RHI::FrameData& frameData, const RH
     mInstancePool->flush(pCommandList, frameData.currentFrame);
 
     // Update Top-Level AS
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         mTLASManager->onUpdate(pCommandList);
 
@@ -326,7 +326,7 @@ void SceneV2::onRender(const RHI::CommandList* commandList, const RHI::FrameData
 
 void SceneV2::initializeObjectSelectionFeature()
 {
-    if (!mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         spdlog::warn("Object selection feature is not available.");
         return;

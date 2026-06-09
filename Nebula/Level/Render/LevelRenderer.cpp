@@ -42,7 +42,7 @@ namespace nbl
         });
     }
 
-    void LevelRenderer::render(const RHI::FrameData& frameData, const RHI::CommandList* commandList) const
+    void LevelRenderer::render(const RHI::FrameData& frameData, RHI::CommandList* commandList) const
     {
         mGBufferPass->execute(commandList, frameData);
         mLightingPass->execute(commandList, frameData);

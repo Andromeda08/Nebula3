@@ -35,7 +35,7 @@ namespace nbl
 
         using enum vk::ShaderStageFlagBits;
         vk::ShaderStageFlags shaderStageFlags = eVertex | eFragment | eCompute | eRaygenKHR | eAnyHitKHR | eClosestHitKHR | eMissKHR | eIntersectionKHR | eCallableKHR;
-        if (mRHI->getMeshShaderSupport())
+        if (mRHI->getFeatures().meshShaders)
         {
             shaderStageFlags |= eMeshEXT | eTaskEXT;
         }

@@ -5,11 +5,15 @@
 
 #include "Extensions.hpp"
 #include "Core/Macro.hpp"
+#include "Core/Ranges.hpp"
 #include "Core/Types.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
 namespace RHI
 {
+    template <class T>
+    concept IsExtClass = std::is_base_of_v<Extension, T>;
+
     // Extension Management & Utils
     // =============================
     class DeviceExtensions
@@ -20,12 +24,18 @@ namespace RHI
         DeviceExtensions();
 
         // Add & Check Extensions
-        // =============================
+        // ============================================================
+        #pragma region
 
-        DeviceExtensions& addExtension(const char* extensionName, const FeatureOption option) noexcept;
+        /**
+         * Add an extension by its name.
+         */
+        DeviceExtensions& addExtension(const char* extensionName, FeatureOption option) noexcept;
 
-        template <class T>
-        requires std::is_base_of_v<Extension, T>
+        /**
+         * Add an extension by its representative class.
+         */
+        template <IsExtClass T>
         DeviceExtensions& addExtension(const FeatureOption option) noexcept
         {
             if (checkIsExtensionRegistered(T::sName))
@@ -39,25 +49,71 @@ namespace RHI
             return *this;
         }
 
+        /**
+         * Add the extensions required by the current platform. (e.g. portability on Apple)
+         */
         DeviceExtensions& addPlatformRequiredExtensions() noexcept;
 
+        /**
+         * Does the extension list contain the specified extension.
+         * @param extensionName
+         */
         [[nodiscard]] bool hasExtension(const char* extensionName) const noexcept;
 
-        template <class T>
-        requires std::is_base_of_v<Extension, T>
+        /**
+         * Does the extension list contain the specified extension.
+         * @tparam T Extension class
+         */
+        template <IsExtClass T>
         [[nodiscard]] bool hasExtension() const noexcept
         {
             return mUniqueExtensionNames.contains(T::sName);
         }
 
-        // Device Creation & Support
-        // =============================
+        /**
+         * Check if the specified extension is active.
+         * @param extensionName
+         */
+        [[nodiscard]] bool isActive(const char* extensionName) const
+        {
+            return contains(mActiveExtensionNames, extensionName);
+        }
 
+        /**
+         * Check if the specified extension is active.
+         * @tparam T Extension class
+         */
+        template <IsExtClass T>
+        [[nodiscard]] bool isActive() const
+        {
+            return contains(mActiveExtensionNames, T::sName);
+        }
+
+        #pragma endregion
+
+        // Device Creation & Extension Support
+        // ============================================================
+        #pragma region
+
+        /**
+         * Computes a score for the specified physical device based, for a positive score
+         * the given physical device must support the required extensions and feature set.
+         * @param physicalDevice
+         * @return Final score
+         */
         [[nodiscard]] int32_t evaluateDeviceSupport(const vk::PhysicalDevice& physicalDevice) const noexcept;
 
+        /**
+         * Set supported extensions as supported, find and store active extensions and query properties.
+         */
         void postPhysicalDeviceSelection(const vk::PhysicalDevice& physicalDevice) noexcept;
 
+        /**
+         * Currently only used to chain feature structs to DeviceCreateInfo.
+         */
         void preDeviceCreation(vk::DeviceCreateInfo& deviceCreateInfo) const noexcept;
+
+        #pragma endregion
 
         // Accessors & Utils
         // =============================
@@ -72,8 +128,7 @@ namespace RHI
             return mFeatures;
         }
 
-        template <class T>
-        requires std::is_base_of_v<Extension, T>
+        template <IsExtClass T>
         [[nodiscard]] std::optional<std::reference_wrapper<const typename T::PropertiesType>> getExtensionProperties() const noexcept
         {
             auto it = std::ranges::find_if(mDeviceExtensions, [&](const auto& ext) -> bool { return std::string_view{T::sName} == ext->getName(); });

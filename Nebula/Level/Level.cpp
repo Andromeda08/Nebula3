@@ -26,7 +26,7 @@ namespace nbl
         mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 4096);
         mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 65536);
 
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
             mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
@@ -46,7 +46,7 @@ namespace nbl
 
         /* GLTF Scene */ {
             GLTFLoader loader({
-                .filePath        = Configuration::getSceneFilePath("map.glb"),
+                .filePath        = Configuration::getSceneFilePath("bistro.glb"),
                 .pLevel          = this,
                 .pTextureManager = mTextureManager,
                 .pGeometrySystem = mGeometrySystem.get(),
@@ -161,7 +161,7 @@ namespace nbl
         mMaterialSystem->onUpdate(pCommandList);
 
         mGeometrySystem->onUpdate(frameData, pCommandList);
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             mBlasSystem->onUpdate(frameData, pCommandList);
         }
@@ -196,7 +196,7 @@ namespace nbl
 
         mInstanceSystem->onUpdate(pCommandList);
 
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             mTlasSystem->onUpdate(frameData, pCommandList);
         }

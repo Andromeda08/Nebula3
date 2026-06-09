@@ -4,7 +4,7 @@
 
 SceneGeometry::SceneGeometry(const SPtr<RHI::VulkanRHI>& rhi): mRHI(rhi)
 {
-    mRaytracing = mRHI->getFeatureLevel() >= RHI::FeatureLevel::Complete;
+    mRaytracing = mRHI->getFeatures().rayTracing;
     if (mRaytracing)
     {
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR asProps;

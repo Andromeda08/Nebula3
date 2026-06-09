@@ -138,7 +138,7 @@ public:
         obj->boundingBox   = mGeometry->getGeometry(geometryIndex)->getBoundingBox().getTransformed(obj->transform.getModel());
 
         // Ray Tracing
-        obj->blasAddress   = mRHI->getRaytracingSupport() ? mGeometry->getBlasAddress(geometryIndex) : 0,
+        obj->blasAddress   = mRHI->getFeatures().rayTracing ? mGeometry->getBlasAddress(geometryIndex) : 0,
 
         // Set handles and indices
         obj->geometryIndex = geometryIndex;

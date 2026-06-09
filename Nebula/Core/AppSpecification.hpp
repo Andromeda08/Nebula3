@@ -7,7 +7,7 @@
 
 struct AppSpecification
 {
-    Size2D      windowSize  = Resolution::w1920h1080();
+    Size2D      windowSize  = Resolution::w1280h720();
     std::string windowTitle = "Nebula Engine";
     std::string appName     = "Nebula Application";
 };

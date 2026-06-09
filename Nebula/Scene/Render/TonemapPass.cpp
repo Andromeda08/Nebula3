@@ -92,7 +92,7 @@ void TonemapPass::createPipeline() noexcept
         .addShader({ Configuration::getShaderFilePath("FSQuad.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
         .addShader({ Configuration::getShaderFilePath("Tonemap.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
         .addColorAttachmentFormat(mOutput->getProperties().format)
-        .setDebugName("Tonemap_Pipeline");
+        .setDebugName("Tonemap_PipelineX");
 
     mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
 }

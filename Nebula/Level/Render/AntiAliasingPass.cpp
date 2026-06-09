@@ -13,9 +13,9 @@ namespace nbl
         createPipeline();
     }
 
-    void AntiAliasingPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void AntiAliasingPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
     {
-        pCommandList->beginLabel("Tonemap_Pass");
+        pCommandList->beginLabel("AntiAliasing_Pass");
 
         RHI::Barrier()
             .addBarrier(mInput->getBarrier(RHI::ImageUsage::ShaderReadOnly))
@@ -27,12 +27,18 @@ namespace nbl
             1.0f / static_cast<float>(mInput->getProperties().extent.height),
         };
 
-        mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-            mPipeline->bind(cmd);
-            mPipeline->pushConstants(cmd, &pushConstant);
-            mPipeline->bindDescriptorSet(cmd, mDescriptor->getSet());
-            cmd->getHandle().draw(3, 1, 0, 0);
-        });
+        RHI::Rendering()
+            .setLabel("AntiAliasing_RenderPass")
+            .setRenderArea(mOutput->getProperties().extent)
+            .addAttachment(mOutput)
+            .setViewportScissor(pCommandList)
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
+            {
+                cmd->bindPipeline(mPipeline.get());
+                cmd->pushConstants(&pushConstant);
+                cmd->bindDescriptorSet(mDescriptor->getSet(), 0);
+                cmd->draw(3, 1, 0, 0);
+            });
 
         pCommandList->endLabel();
     }
@@ -62,23 +68,17 @@ namespace nbl
 
     void AntiAliasingPass::createPipeline() noexcept
     {
-        mRenderPass = mRHI->createRenderPass({
-            .renderArea = getRenderAreaForAttachment(mOutput.get()),
-            .colorAttachments = { makeAttachment(mOutput) },
-            .label = "AntiAliasing_RenderPass",
-        });
+        const auto graphicsPS = RHI::GraphicsPS()
+            .setCullMode(vk::CullModeFlagBits::eNone)
+            .addDefaultAttachmentState(1)
+            .addAttachmentFormat(mOutput->getProperties().format);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("FXAA")
+            .addShader("FXAA.vert.spv")
+            .addShader("FXAA.frag.spv")
+            .addDescriptorLayout(0, mDescriptor.get())
+            .setPushConstant<PushConstant>(vk::ShaderStageFlagBits::eFragment);
 
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eFragment)
-            .addDescriptorSetLayout(mDescriptor->getLayout())
-            .setStateInfo(RHI::GraphicsPipelineStateInfo()
-                .setCullMode(vk::CullModeFlagBits::eNone)
-                .addDefaultAttachmentStates(1))
-            .addShader({ Configuration::getShaderFilePath("FXAA.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("FXAA.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mOutput->getProperties().format)
-            .setDebugName("AntiAliasing_Pipeline");
-
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 }
