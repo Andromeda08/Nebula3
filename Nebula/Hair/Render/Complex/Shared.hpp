@@ -93,7 +93,7 @@ namespace nbl
          * An array of colors that can be used for a variety of debug or visualization purposes.
          * e.g. index, primitive ID, strand...
          */
-        static constexpr size_t            sColorCount = 1024;
+        static constexpr uint32_t          sColorCount = 1024;
         std::array<glm::vec3, sColorCount> colors;
         SPtr<RHI::Buffer>                  colorsBuffer;
 

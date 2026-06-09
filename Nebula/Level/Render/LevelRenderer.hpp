@@ -17,7 +17,7 @@ namespace nbl
     public:
         explicit LevelRenderer(const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManager, Level* pLevel);
 
-        void render(const RHI::FrameData& frameData, const RHI::CommandList* commandList) const;
+        void render(const RHI::FrameData& frameData, RHI::CommandList* commandList) const;
 
     private:
         void blitToSwapchain(RHI::Image* pImage, const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;

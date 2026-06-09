@@ -15,10 +15,10 @@
 #include "Raytracing.hpp"
 #include "Rendering.hpp"
 #include "Swapchain.hpp"
-#include "Texture.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
+#include "Render/Pipeline.hpp"
 
 namespace RHI
 {
@@ -39,18 +39,23 @@ namespace RHI
         nbl_DISABLE_COPY(VulkanRHI);
         nbl_CTOR_SHARED(VulkanRHI);
 
-        FrameData beginFrame() const;
-        void      endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const;
+        [[nodiscard]] FrameData beginFrame() const;
 
-        bool      isFrameComplete(uint64_t frame) const;
+        void endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const;
 
-        CommandQueue* getGraphicsQueue() const { return mGraphicsQueue.get(); }
-        Swapchain*    getSwapchain() const { return mSwapchain.get(); }
+        // Check if the specified frame has been completed using the corresponding Fence.
+        [[nodiscard]] bool isFrameComplete(uint64_t frame) const;
 
-        SPtr<Buffer>     createBuffer(const RHIBufferCreateInfo& createInfo) const;
-        SPtr<Image>      createImage(const RHIImageCreateInfo& createInfo) const;
-        SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
-        SPtr<Texture>    createTexture(const RHITextureCreateInfo& createInfo) const;
+        [[nodiscard]] SPtr<Instance> getInstance()      const { return mInstance; }
+        [[nodiscard]] SPtr<Device>   getDevice()        const { return mDevice; }
+        [[nodiscard]] CommandQueue*  getGraphicsQueue() const { return mGraphicsQueue.get(); }
+        [[nodiscard]] Swapchain*     getSwapchain()     const { return mSwapchain.get(); }
+
+        [[nodiscard]] SPtr<Buffer>     createBuffer    (const RHIBufferCreateInfo&     createInfo) const;
+        [[nodiscard]] SPtr<Image>      createImage     (const RHIImageCreateInfo&      createInfo) const;
+        [[nodiscard]] SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
+
+        UPtr<GraphicsPipeline2>  createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const;
 
         UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
         UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
@@ -58,34 +63,15 @@ namespace RHI
 
         UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
 
-        SPtr<Device> getDevice() const { return mDevice; }
-        SPtr<Instance> getInstance() const { return mInstance; }
-
-        FeatureLevel getFeatureLevel() const noexcept
-        {
-            return mFeatureLevel;
-        }
-
-        [[nodiscard]] bool getRaytracingSupport() const noexcept
-        {
-            return mFeatureLevel >= FeatureLevel::Complete;
-        }
-
-        [[nodiscard]] bool getMeshShaderSupport() const noexcept
-        {
-            return mFeatureLevel >= FeatureLevel::Complete;
-        }
-
-        [[nodiscard]] bool getNVRTXSupport() const noexcept
-        {
-            return mFeatureLevel >= FeatureLevel::Nvidia;
-        }
-
         void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
+
+        [[nodiscard]] const RHIFeatures& getFeatures() const
+        {
+             return gFeatures;
+        }
 
     private:
         SPtr<IWindow>       mWindow;
-        FeatureLevel        mFeatureLevel;
 
         SPtr<Instance>      mInstance;
         UPtr<DebugContext>  mDebugContext;

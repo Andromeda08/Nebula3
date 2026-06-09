@@ -14,7 +14,6 @@ namespace RHI
 
         if (config.enableDebugFeatures)
         {
-            // mLayers.push_back(gVulkanValidationLayerName);
             mExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
         mExtensions.append_range(Platform::getInstanceExtensions());

@@ -1,14 +1,11 @@
 #include "Device.hpp"
 
 #include <vulkan/vk_enum_string_helper.h>
-#include "Texture.hpp"
+
 #include "Core/Ranges.hpp"
 
 namespace RHI
 {
-    // ======================================== //
-    // Vulkan Device                            //
-    // ======================================== //
     Device::Device(const DeviceCreateInfo& createInfo)
     : mInstance(createInfo.instance)
     {
@@ -39,12 +36,11 @@ namespace RHI
             // Mesh shader
             .addExtension<MeshShaderEXT>(FeatureOption::Optional);
 
-        mDebugFeatures  = Configuration::getConfig().enableDebugFeatures;
+        selectPhysicalDevice();
 
-        selectPhysicalDeviceV2();
-
-        const bool isNvidia = mExtensions.getProperties().vendorID == 0x10DE;
-        mFeatureLevel = isNvidia ? FeatureLevel::Nvidia : createInfo.featureLevel;
+        gFeatures.adapterName = mDeviceName;
+        gFeatures.adapterVendor = getAdapterVendor(mExtensions.getProperties());
+        gFeatures.updateFeatureSetsByExtensions(mExtensions);
 
         createDevice();
         createAllocator();
@@ -98,55 +94,12 @@ namespace RHI
         return alloc;
     }
 
-    SPtr<Allocation> Device::allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept
-    {
-        vk::MemoryRequirements finalRequirements = { 0, 0, 0 };
-        for (const auto& image : allocInfo.textures)
-        {
-            vk::MemoryRequirements memoryRequirements;
-            mDevice.getImageMemoryRequirements(image->getHandle(), &memoryRequirements);
-
-            finalRequirements.size           = std::max(finalRequirements.size, memoryRequirements.size);
-            finalRequirements.alignment      = std::max(finalRequirements.alignment, memoryRequirements.alignment);
-            finalRequirements.memoryTypeBits = finalRequirements.memoryTypeBits & memoryRequirements.memoryTypeBits;
-        }
-
-        const auto alloc = makeShared<Allocation>(mAllocator);
-        alloc->mAliasedUse = true;
-
-        VmaAllocationCreateInfo allocationCreateInfo = {};
-        allocationCreateInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-
-        const VkResult result = vmaAllocateMemory(mAllocator, reinterpret_cast<VkMemoryRequirements*>(&finalRequirements),
-            &allocationCreateInfo, &alloc->mAllocation, &alloc->mAllocationInfo);
-        nbl_ASSERT(result == VK_SUCCESS, "Failed to allocate memory for aliased Image use!");
-
-        return alloc;
-    }
-
     void Device::waitIdle() const
     {
         mDevice.waitIdle();
     }
 
     void Device::selectPhysicalDevice()
-    {
-        const auto physicalDevices = mInstance.enumeratePhysicalDevices();
-        const auto candidate = std::ranges::find_if(physicalDevices, [&](const vk::PhysicalDevice& physicalDevice) -> bool {
-            const auto candidateExtensions = physicalDevice.enumerateDeviceExtensionProperties();
-            return evaluateSupport(candidateExtensions, mExtensions.getExtensionNames());
-        });
-
-        exitOnAssert(candidate != std::end(physicalDevices), "No suitable PhysicalDevice was found");
-
-        mPhysicalDevice = *candidate;
-
-        mExtensions.postPhysicalDeviceSelection(mPhysicalDevice);
-        mExtensionNames = mExtensions.getActiveExtensionNames();
-        mDeviceName = std::string(mExtensions.getProperties().deviceName.data());
-    }
-
-    void Device::selectPhysicalDeviceV2()
     {
         std::vector<std::string> availableDeviceNames;
         std::map<vk::PhysicalDevice, int32_t> scores;

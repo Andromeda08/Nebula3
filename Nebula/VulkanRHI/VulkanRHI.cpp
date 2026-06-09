@@ -13,7 +13,6 @@ namespace RHI
     : mWindow(createInfo.pWindow)
     {
         const auto& config = Configuration::getConfig();
-        mFeatureLevel = Platform::isApple ? FeatureLevel::Basic : FeatureLevel::Complete;
 
         const vk::detail::DynamicLoader dynamicLoader;
         const auto vkGetInstanceProcAddr = dynamicLoader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
@@ -27,16 +26,13 @@ namespace RHI
         if (config.enableDebugFeatures)
         {
             mDebugContext = DebugContext::create({ mInstance });
+            gFeatures.debug = true;
         }
 
         // Create Device
         // ==========================
-        mDevice = Device::create({ mFeatureLevel, mInstance->getHandle() });
+        mDevice = Device::create({ mInstance->getHandle() });
         VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice->getHandle());
-
-        // TODO: Device promotes "Complete" to "Nvidia" based on PhysicalDevice selection.
-        // This is a bit nasty...
-        mFeatureLevel = mDevice->getFeatureLevel();
 
         // Create Swapchain
         // ==========================
@@ -59,7 +55,7 @@ namespace RHI
 
         const auto& swapchainProperties = mSwapchain->getProperties();
         spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}, {}x{}]",
-            mDevice->getDeviceName(), getFeatureLevelName(mFeatureLevel), config.enableDebugFeatures ? "Yes" : "No",
+            mDevice->getDeviceName(), "N/A", config.enableDebugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode),
             swapchainProperties.extent.width, swapchainProperties.extent.height);
     }
@@ -138,7 +134,7 @@ namespace RHI
 
     bool VulkanRHI::isFrameComplete(const uint64_t frame) const
     {
-        const vk::Fence fence = mFrameSync->frameInFlight[frame % gFramesInFlight];
+        const vk::Fence  fence  = mFrameSync->frameInFlight[frame % gFramesInFlight];
         const vk::Result result = mDevice->getHandle().getFenceStatus(fence);
 
         if (result == vk::Result::eSuccess)
@@ -176,11 +172,9 @@ namespace RHI
         return Descriptor::create(descriptorInfo);
     }
 
-    SPtr<Texture> VulkanRHI::createTexture(const RHITextureCreateInfo& createInfo) const
+    UPtr<GraphicsPipeline2> VulkanRHI::createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const
     {
-        auto textureInfo = TextureCreateInfo(createInfo);
-        textureInfo.device = mDevice;
-        return Texture::create(textureInfo);
+        return makeUnique<GraphicsPipeline2>(std::move(ps), common, mDevice);
     }
 
     UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
@@ -197,10 +191,6 @@ namespace RHI
 
     UPtr<RaytracingPipeline> VulkanRHI::createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const
     {
-        if (mFeatureLevel < FeatureLevel::Complete)
-        {
-            exitWithError("[RHI] Error: Raytracing Pipeline is not supported at the current feature level!");
-        }
         createInfo.setDevice(mDevice);
         return RaytracingPipeline::create(createInfo);
     }

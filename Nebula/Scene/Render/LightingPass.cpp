@@ -29,7 +29,7 @@ void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::Fram
         .addBarrier(mInput.cubeMap->getBarrier(RHI::ImageUsage::ShaderReadOnly))
         .addBarrier(mInput.skyData->getBarrier(RHI::BufferUsage::Compute, RHI::BufferUsage::Fragment));
 
-    if (mRHI->getRaytracingSupport())
+    if (mRHI->getFeatures().rayTracing)
     {
         barriers.addBarrier(mInput.tlasManager->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
     }

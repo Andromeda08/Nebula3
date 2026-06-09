@@ -13,7 +13,7 @@ namespace nbl
         createPipeline();
     }
 
-    void TonemapPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void TonemapPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
     {
         pCommandList->beginLabel("Tonemap_Pass");
 
@@ -22,12 +22,19 @@ namespace nbl
             .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
             .insert(pCommandList);
 
-        mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-            mPipeline->bind(cmd);
-            mPipeline->pushConstants(cmd, &mPushConstant);
-            mPipeline->bindDescriptorSet(cmd, mDescriptor->getSet());
-            cmd->getHandle().draw(3, 1, 0, 0);
-        });
+        RHI::Rendering()
+            .setLabel("Tonemap_RenderPass")
+            .setRenderArea(mOutput->getProperties().extent)
+            .addAttachment(mOutput)
+            .setViewportScissor(pCommandList)
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
+            {
+                cmd->bindPipeline(mPipeline.get());
+                cmd->pushConstants(&mPushConstant);
+                cmd->bindDescriptorSet(mDescriptor->getSet(), 0);
+                cmd->draw(3, 1, 0, 0);
+            });
+
 
         pCommandList->endLabel();
     }
@@ -57,23 +64,17 @@ namespace nbl
 
     void TonemapPass::createPipeline() noexcept
     {
-        mRenderPass = mRHI->createRenderPass({
-            .renderArea = getRenderAreaForAttachment(mOutput.get()),
-            .colorAttachments = { makeAttachment(mOutput) },
-            .label = "Tonemap_RenderPass",
-        });
+        const auto graphicsPS = RHI::GraphicsPS()
+            .setCullMode(vk::CullModeFlagBits::eNone)
+            .addDefaultAttachmentState(1)
+            .addAttachmentFormat(mOutput->getProperties().format);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("Tonemap")
+            .addShader("FSQuad.vert.spv")
+            .addShader("Tonemap.frag.spv")
+            .addDescriptorLayout(0, mDescriptor.get())
+            .setPushConstant<PushConstant>(vk::ShaderStageFlagBits::eFragment);
 
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eFragment)
-            .addDescriptorSetLayout(mDescriptor->getLayout())
-            .setStateInfo(RHI::GraphicsPipelineStateInfo()
-                .setCullMode(vk::CullModeFlagBits::eNone)
-                .addDefaultAttachmentStates(1))
-            .addShader({ Configuration::getShaderFilePath("FSQuad.vert.spv").string(), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("Tonemap.frag.spv").string(), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mOutput->getProperties().format)
-            .setDebugName("Tonemap_Pipeline");
-
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 }

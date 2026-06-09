@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Allocation.hpp"
+#include "RHIFeatures.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
@@ -21,8 +22,7 @@ namespace RHI
 {
     struct DeviceCreateInfo
     {
-        FeatureLevel    featureLevel;
-        vk::Instance    instance;
+        vk::Instance instance;
     };
 
     template <class T>
@@ -43,11 +43,6 @@ namespace RHI
     {
         vk::Image*          pHandle;
         vk::ImageCreateInfo imageInfo;
-    };
-
-    struct AliasedImageMemoryAllocationInfo
-    {
-        std::vector<SPtr<class Texture>> textures;
     };
 
     class Device
@@ -73,48 +68,45 @@ namespace RHI
         [[nodiscard]] SPtr<Allocation> allocateImage(const ImageMemoryAllocationInfo& allocInfo) noexcept;
 
         /**
-         * Allocate memory for aliased images.
-         * @param allocInfo
-         * @return Allocation reference
+         * Device-level wait idle.
          */
-        [[nodiscard]] SPtr<Allocation> allocateAliasedImageMemory(const AliasedImageMemoryAllocationInfo& allocInfo) noexcept;
-
         void waitIdle() const;
 
+        /**
+         * Set the debug label of the given Vulkan handle.
+         * @tparam T Vulkan handle type
+         * @param nameObjectInfo
+         */
         template <class T>
         void nameObject(const NameObjectInfo<T>& nameObjectInfo) const;
-
-        const DeviceQueue& getGraphicsQueue() const { return mGraphicsQueue; }
-
-        VmaAllocator getAllocator() const { return mAllocator; }
-
-        vk::PhysicalDevice getPhysicalDevice() const { return mPhysicalDevice; }
-        vk::Device getHandle() const { return mDevice; }
-        const std::string& getDeviceName() const noexcept { return mDeviceName; }
-
-        FeatureLevel getFeatureLevel() const noexcept { return mFeatureLevel; }
 
         [[nodiscard]] const DeviceExtensions& getDeviceExtensions() const noexcept
         {
             return mExtensions;
         }
 
+        [[nodiscard]] vk::PhysicalDevice  getPhysicalDevice() const { return mPhysicalDevice; }
+        [[nodiscard]] vk::Device          getHandle()         const { return mDevice; }
+        [[nodiscard]] VmaAllocator        getAllocator()      const { return mAllocator; }
+        [[nodiscard]] const DeviceQueue&  getGraphicsQueue()  const { return mGraphicsQueue; }
+        [[nodiscard]] const std::string&  getDeviceName()     const { return mDeviceName; }
+
     private:
         void selectPhysicalDevice();
-
-        void selectPhysicalDeviceV2();
 
         void createDevice();
 
         void createAllocator();
 
+        /**
+         * Find a device queue by required and excluded flags with the option to exclude specific family indices.
+         * @return Queue family info when found
+         */
         [[nodiscard]] std::optional<QueueFamilyInfo> findQueueFamily(
             vk::QueueFlags               requiredFlags,
             vk::QueueFlags               excludedFlags    = {},
             const std::set<QueueFamily>& excludedFamilies = {}) const noexcept;
 
-        FeatureLevel                        mFeatureLevel;
-        bool                                mDebugFeatures;
         vk::Instance                        mInstance;
         vk::PhysicalDevice                  mPhysicalDevice;
         vk::PhysicalDeviceProperties        mPhysicalDeviceProperties;
@@ -134,7 +126,7 @@ namespace RHI
     template<class T>
     void Device::nameObject(const NameObjectInfo<T>& nameObjectInfo) const
     {
-        if (!mDebugFeatures)
+        if (!gFeatures.debug)
         {
             return;
         }

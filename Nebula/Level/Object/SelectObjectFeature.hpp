@@ -30,7 +30,7 @@ namespace nbl
         , mInstanceSystem(pInstanceSystem)
         , mTlasSystem(pTlasSystem)
         {
-            if (!mRHI->getRaytracingSupport())
+            if (!mRHI->getFeatures().rayTracing)
             {
                 spdlog::warn("Object selection feature is not available.");
                 return;

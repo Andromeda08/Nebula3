@@ -31,7 +31,7 @@ namespace nbl
             .addBarrier(level->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead))
             .addBarrier(level->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect));
 
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             barriers.addBarrier(level->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
         }
@@ -58,7 +58,7 @@ namespace nbl
         };
 
         std::vector descriptors = { mDescriptor->getSet(0), mInput.pTextureManager->getDescriptor()->getSet(0) };
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             descriptors.push_back(mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame));
         }
@@ -127,7 +127,7 @@ namespace nbl
             .addColorAttachmentFormat(mLightingResult->getProperties().format)
             .setDebugName("Lighting_Pipeline");
 
-        if (mRHI->getRaytracingSupport())
+        if (mRHI->getFeatures().rayTracing)
         {
             pipelineCreateInfo.addDescriptorSetLayout(mInput.pLevel->mTlasSystem->getDescriptor()->getLayout());
         }
