@@ -12,7 +12,7 @@
 #include "Level/Geometry/Geometry.hpp"
 #include "Level/Geometry/GeometrySystem.hpp"
 #include "Level/Material/MaterialPool.hpp"
-#include "Scene/TextureManager.hpp"
+#include "../TextureManager.hpp"
 
 namespace nbl
 {

@@ -5,7 +5,7 @@
 #include "Level/Render/GBufferPass.hpp"
 #include "Level/Render/LightingPass.hpp"
 #include "Level/Render/TonemapPass.hpp"
-#include "Scene/TextureManager.hpp"
+#include "../TextureManager.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace nbl

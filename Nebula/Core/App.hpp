@@ -3,25 +3,15 @@
 #include <string>
 #include <typeindex>
 #include <typeinfo>
-#include <vector>
+#include <unordered_map>
 
 #include "Types.hpp"
 #include "View.hpp"
 #include "Input/Gamepad.hpp"
 #include "Math/DeltaTime.hpp"
-#include "Scene/Scene.hpp"
-#include "Scene/SceneV2.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 #include "Window/SDLWindow.hpp"
-
-#include "Game/TitleScreen.hpp"
-#include "Hair/HairGeometry.hpp"
-#include "Hair/Render/HairRenderer.hpp"
-#include "Hair/Render/Complex/HybridHairRenderer.hpp"
-#include "Hair/Render/Complex/SoftwareRasterizer.hpp"
-#include "Interface/FadeEffect.hpp"
-#include "Interface/Interface.hpp"
 
 class App
 {
@@ -83,16 +73,6 @@ private:
 
     std::unordered_map<std::type_index, UPtr<nbl::View>> mViews;
     nbl::View*                                           mActiveView;
-
-    UPtr<nbl::HairModelSystem>   mHairModelSystem;
-    // UPtr<nbl::HairRenderer>      mHairRenderer;
-
-    // UPtr<nbl::SoftwareRasterizer> mSoftwareRasterizer;
-    UPtr<nbl::HybridHairRenderer> mHybrid;
-
-    UPtr<nbl::Interface>         mInterface;
-    UPtr<nbl::FadeEffect>        mFadeEffect;
-    UPtr<TitleScreen>            mTitleScreen;
 };
 
 extern App* gApplication;

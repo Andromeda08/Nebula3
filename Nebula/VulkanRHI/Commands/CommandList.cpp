@@ -3,6 +3,7 @@
 #include "Core/Random.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Image.hpp"
+#include "VulkanRHI/Swapchain.hpp"
 #include "VulkanRHI/Render/Pipeline.hpp"
 
 namespace RHI
@@ -163,6 +164,46 @@ namespace RHI
         }
 
         mCommandBuffer.endDebugUtilsLabelEXT();
+    }
+
+    void CommandList::blitToSwapchain(Image* pSrcImage, Swapchain* pSwapchain, const uint32_t acquiredIndex) const
+    {
+        beginLabel(fmt::format("blitToSwapchain_{}", acquiredIndex));
+        
+        Barrier()
+            .addBarrier(pSrcImage->getBarrier(ImageUsage::TransferSrc))
+            .addBarrier(pSwapchain->getBarrier(acquiredIndex, ImageUsage::TransferDst))
+            .insert(mCommandBuffer);
+        
+        #pragma region "Blit setup"
+        
+        const auto srcExtent = pSrcImage->getProperties().extent;
+        const auto dstExtent = pSwapchain->getProperties().extent;
+        const auto region  = vk::ImageBlit2()
+            .setSrcOffsets({
+                vk::Offset3D { 0, 0, 0 },
+                vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
+            })
+            .setSrcSubresource(pSrcImage->getProperties().getSubresourceLayers())
+            .setDstOffsets({
+                vk::Offset3D { 0, 0, 0 },
+                vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
+            })
+            .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
+
+        const auto blit = vk::BlitImageInfo2()
+            .setSrcImage(pSrcImage->getImage())
+            .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+            .setDstImage(pSwapchain->getImage(acquiredIndex))
+            .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+            .setFilter(vk::Filter::eLinear)
+            .setRegions(region);
+        
+        #pragma endregion
+        
+        mCommandBuffer.blitImage2(blit);
+        
+        endLabel();
     }
 
     void CommandList::setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const
