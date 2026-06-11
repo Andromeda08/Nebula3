@@ -12,10 +12,10 @@ namespace nbl
 
     struct BoundingBoxDebugPass_Params
     {
-        Level*               pLevel             = nullptr;
-        SPtr<RHI::Image>     renderTarget       = nullptr;
-        SPtr<RHI::Image>     gBufferDepthBuffer = nullptr;
-        SPtr<RHI::VulkanRHI> rhi                = nullptr;
+        Level*                          pLevel             = nullptr;
+        PerFrameArray<SPtr<RHI::Image>> renderTargets      = { nullptr, nullptr };
+        SPtr<RHI::Image>                gBufferDepthBuffer = nullptr;
+        SPtr<RHI::VulkanRHI>            rhi                = nullptr;
     };
 
     /**
@@ -39,7 +39,7 @@ namespace nbl
 
         ~BoundingBoxDebugPass() = default;
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
     private:
         friend class BoundingBoxDebugPassUI;
@@ -48,18 +48,13 @@ namespace nbl
 
         bool hasSelectedObject() const;
 
-        bool                        mVisualizeAABBs      = false;
-        bool                        mFocusSelectedObject = false;
-        glm::vec4                   mBoxColor            = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
+        bool        mVisualizeAABBs      = false;
+        bool        mFocusSelectedObject = false;
+        glm::vec4   mBoxColor            = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
 
-        SPtr<RHI::VulkanRHI>        mRHI;
-
-        BoundingBoxDebugPass_Params mInput;
-
-        vk::Rect2D                  mScissor;
-        vk::Viewport                mViewport;
-        SPtr<RHI::RenderPass>       mRenderPass;
-        SPtr<RHI::Pipeline>         mPipeline;
+        SPtr<RHI::VulkanRHI>            mRHI;
+        BoundingBoxDebugPass_Params     mInput;
+        SPtr<RHI::GraphicsPipeline2>    mPipeline;
     };
 
     class BoundingBoxDebugPassUI : public IComponent

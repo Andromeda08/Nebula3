@@ -49,11 +49,11 @@ namespace nbl
 
         ~LightingPass() = default;
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
-        [[nodiscard]] const SPtr<RHI::Image>& getResult() const noexcept
+        [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t currentFrame) const noexcept
         {
-            return mLightingResult;
+            return mLightingResult[currentFrame];
         }
 
     private:
@@ -61,24 +61,19 @@ namespace nbl
 
         void init() noexcept;
 
-        SPtr<RHI::VulkanRHI>        mRHI;
+        SPtr<RHI::VulkanRHI>            mRHI;
 
-        bool                        mEnableShadows  = true;
-        bool                        mEnableGI       = true;
-        int32_t                     mSampleCount    = 8;
-        float                       mAmbientFactor  = 0.05f;
-        float                       mShadowFactor   = 0.1f;
-        float                       mEmissiveFactor = 5.0f;
+        bool                            mEnableShadows  = true;
+        bool                            mEnableGI       = true;
+        int32_t                         mSampleCount    = 8;
+        float                           mAmbientFactor  = 0.05f;
+        float                           mShadowFactor   = 0.1f;
+        float                           mEmissiveFactor = 5.0f;
 
-        LightingPass_Params         mInput;
-
-        vk::Rect2D                  mScissor;
-        vk::Viewport                mViewport;
-        SPtr<RHI::Descriptor>       mDescriptor;
-        SPtr<RHI::RenderPass>       mRenderPass;
-        SPtr<RHI::Pipeline>         mPipeline;
-
-        SPtr<RHI::Image>            mLightingResult;
+        LightingPass_Params             mInput;
+        SPtr<RHI::Descriptor>           mDescriptor;
+        SPtr<RHI::GraphicsPipeline2>    mPipeline;
+        PerFrameArray<SPtr<RHI::Image>> mLightingResult;
     };
 
     class LightingPassUI : public IComponent

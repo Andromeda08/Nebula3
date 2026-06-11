@@ -90,7 +90,7 @@ namespace RHI
         std::vector<Image*>                        mImages;
         std::vector<Image*>                        mResolveImages;
         std::vector<vk::RenderingAttachmentInfo>   mAttachmentInfos;
-        std::optional<vk::RenderingAttachmentInfo> mDepthAttachmentInfo;
+        std::optional<vk::RenderingAttachmentInfo> mDepthAttachmentInfo = std::nullopt;
     };
 }
 

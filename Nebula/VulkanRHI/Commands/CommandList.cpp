@@ -81,6 +81,17 @@ namespace RHI
             0, nullptr);
     }
 
+    void CommandList::bindDescriptorSets(const std::vector<vk::DescriptorSet>& descriptorSets, const uint32_t firstSet) const
+    {
+        exitOnAssert(mBoundPipeline, "No pipeline is bound.");
+        mCommandBuffer.bindDescriptorSets(
+            mBoundPipeline->getBindPoint(),
+            mBoundPipeline->getLayout(),
+            firstSet,
+            descriptorSets.size(), descriptorSets.data(),
+            0, nullptr);
+    }
+
     void CommandList::pushConstants(const void* pData) const
     {
         exitOnAssert(mBoundPipeline, "No pipeline is bound.");

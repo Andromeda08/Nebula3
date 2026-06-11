@@ -68,6 +68,8 @@ namespace RHI
         // Bind a descriptor set at the specified index.
         void bindDescriptorSet(const vk::DescriptorSet& descriptorSet, uint32_t setIndex = 0) const;
 
+        void bindDescriptorSets(const std::vector<vk::DescriptorSet>& descriptorSets, uint32_t firstSet = 0) const;
+
         // Push constants, configuration based on the currently bound pipeline.
         void pushConstants(const void* pData) const;
 

@@ -27,20 +27,20 @@ namespace RHI
         const SPtr<Image>& pImage, const vk::AttachmentLoadOp loadOp, const vk::AttachmentStoreOp storeOp,
         const std::optional<vk::ClearValue>& clearValue, const SPtr<Image>& pResolve)
     {
-        const auto isDepth     = vk::hasDepthComponent(pImage->getProperties().format);
+        const bool isDepth     = vk::hasDepthComponent(pImage->getProperties().format);
         const auto _clearValue = clearValue.value_or(isDepth
-                                                         ? vk::ClearValue().setDepthStencil({1.0f, 0})
-                                                         : vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}));
+            ? vk::ClearValue().setDepthStencil({1.0f, 0})
+            : vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}));
         const auto _layout = isDepth
-                                 ? vk::ImageLayout::eDepthAttachmentOptimal
-                                 : vk::ImageLayout::eColorAttachmentOptimal;
+            ? vk::ImageLayout::eDepthAttachmentOptimal
+            : vk::ImageLayout::eColorAttachmentOptimal;
 
         auto attachmentInfo = vk::RenderingAttachmentInfo()
-                              .setClearValue(_clearValue)
-                              .setImageLayout(_layout)
-                              .setImageView(pImage->getImageView())
-                              .setLoadOp(loadOp)
-                              .setStoreOp(pResolve ? vk::AttachmentStoreOp::eDontCare : storeOp);
+            .setClearValue(_clearValue)
+            .setImageLayout(_layout)
+            .setImageView(pImage->getImageView())
+            .setLoadOp(loadOp)
+            .setStoreOp(pResolve ? vk::AttachmentStoreOp::eDontCare : storeOp);
 
         if (pResolve)
         {
@@ -48,14 +48,22 @@ namespace RHI
                 .setResolveImageLayout(_layout)
                 .setResolveImageView(pResolve->getImageView())
                 .setResolveMode(isDepth
-                                    ? vk::ResolveModeFlagBits::eSampleZero
-                                    : vk::ResolveModeFlagBits::eAverage);
+                    ? vk::ResolveModeFlagBits::eSampleZero
+                    : vk::ResolveModeFlagBits::eAverage);
 
             mResolveImages.push_back(pResolve.get());
         }
 
         mImages.push_back(pImage.get());
-        mAttachmentInfos.push_back(attachmentInfo);
+
+        if (isDepth)
+        {
+            mDepthAttachmentInfo = attachmentInfo;
+        }
+        else
+        {
+            mAttachmentInfos.push_back(attachmentInfo);
+        }
 
         return *this;
     }
@@ -457,17 +465,21 @@ namespace RHI
 
     void PipelineBase::createPipelineLayout()
     {
-        std::vector<uint32_t> keys;
-        for (const auto& key : mDescriptors | std::views::keys)
+        std::vector<vk::DescriptorSetLayout> layouts;
+        if (!mDescriptors.empty())
         {
-            keys.push_back(key);
-        }
-        std::ranges::sort(keys);
+            std::vector<uint32_t> keys;
+            for (const auto& key : mDescriptors | std::views::keys)
+            {
+                keys.push_back(key);
+            }
+            std::ranges::sort(keys);
 
-        std::vector<vk::DescriptorSetLayout> layouts(keys.back() + 1, VK_NULL_HANDLE);
-        for (const auto setIndex : keys)
-        {
-            layouts[setIndex] = mDescriptors[setIndex]->getLayout();
+            layouts.resize(keys.back() + 1, VK_NULL_HANDLE);
+            for (const auto setIndex : keys)
+            {
+                layouts[setIndex] = mDescriptors[setIndex]->getLayout();
+            }
         }
 
         auto layoutCreateInfo = vk::PipelineLayoutCreateInfo()

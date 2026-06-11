@@ -17,33 +17,41 @@ namespace nbl
     {
         pCommandList->beginLabel("AntiAliasing_Pass");
 
+        const auto& input  = mInput[frameData.currentFrame];
+        const auto& output = mOutput[frameData.currentFrame];
+
         RHI::Barrier()
-            .addBarrier(mInput->getBarrier(RHI::ImageUsage::ShaderReadOnly))
-            .addBarrier(mOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
+            .addBarrier(input->getBarrier(RHI::ImageUsage::ShaderReadOnly))
+            .addBarrier(output->getBarrier(RHI::ImageUsage::ColorAttachment))
             .insert(pCommandList);
 
         const auto pushConstant = PushConstant {
-            1.0f / static_cast<float>(mInput->getProperties().extent.width),
-            1.0f / static_cast<float>(mInput->getProperties().extent.height),
+            1.0f / static_cast<float>(input->getProperties().extent.width),
+            1.0f / static_cast<float>(input->getProperties().extent.height),
         };
 
         RHI::Rendering()
             .setLabel("AntiAliasing_RenderPass")
-            .setRenderArea(mOutput->getProperties().extent)
-            .addAttachment(mOutput)
+            .setRenderArea(output->getProperties().extent)
+            .addAttachment(output)
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
             {
                 cmd->bindPipeline(mPipeline.get());
                 cmd->pushConstants(&pushConstant);
-                cmd->bindDescriptorSet(mDescriptor->getSet(), 0);
+                cmd->bindDescriptorSet(mDescriptor->getSet(frameData.currentFrame), 0);
                 cmd->draw(3, 1, 0, 0);
             });
 
         pCommandList->endLabel();
     }
 
-    SPtr<RHI::Image> AntiAliasingPass::getResult() const noexcept
+    const SPtr<RHI::Image>& AntiAliasingPass::getResult(const uint32_t currentFrame) const noexcept
+    {
+        return mOutput[currentFrame];
+    }
+
+    const PerFrameArray<SPtr<RHI::Image>>& AntiAliasingPass::getResults() const noexcept
     {
         return mOutput;
     }
@@ -51,19 +59,21 @@ namespace nbl
     void AntiAliasingPass::createResources() noexcept
     {
         using enum vk::ImageUsageFlagBits;
-        mOutput = makeRenderTarget(mRHI.get(), "AntiAliasing_Result", mInput->getProperties().format);
 
         mDescriptor = mRHI->createDescriptor({
-            .bindings = {
-                { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            },
-            .setCount = 1,
+            .bindings = {{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }},
+            .setCount = 2,
             .debugName = "AntiAliasing_Descriptor",
         });
 
-        const auto descriptorWrite = RHI::DescriptorWrite()
-            .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput);
-        mDescriptor->write(0, descriptorWrite);
+        for (size_t i = 0; i < mInput.size(); i++)
+        {
+            mOutput[i] = makeRenderTarget(mRHI.get(), "AntiAliasing_Result", mInput[i]->getProperties().format);
+
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput[i]);
+            mDescriptor->write(i, descriptorWrite);
+        }
     }
 
     void AntiAliasingPass::createPipeline() noexcept
@@ -71,7 +81,7 @@ namespace nbl
         const auto graphicsPS = RHI::GraphicsPS()
             .setCullMode(vk::CullModeFlagBits::eNone)
             .addDefaultAttachmentState(1)
-            .addAttachmentFormat(mOutput->getProperties().format);
+            .addAttachmentFormat(mOutput[0]->getProperties().format);
         const auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("FXAA")
             .addShader("FXAA.vert.spv")

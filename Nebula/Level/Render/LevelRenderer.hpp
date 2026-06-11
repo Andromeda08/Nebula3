@@ -20,8 +20,6 @@ namespace nbl
         void render(const RHI::FrameData& frameData, RHI::CommandList* commandList) const;
 
     private:
-        void blitToSwapchain(RHI::Image* pImage, const RHI::CommandList* commandList, const RHI::FrameData& frameData) const;
-
         SPtr<RHI::VulkanRHI>        mRHI;
         TextureManager*             mTextureManager;
         Level*                      mLevel;
