@@ -15,13 +15,14 @@ namespace nbl
         mInput.pLevel->mUserInterface->addComponent<LightingPassUI>(this);
     }
 
-    void LightingPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void LightingPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
     {
-        pCommandList->beginLabel("LightingPass");
+        pCommandList->beginLabel("LightingPass::execute()");
 
         const auto* level   = mInput.pLevel;
+        const auto& pOutput = mLightingResult[frameData.currentFrame];
         auto barriers = RHI::Barrier()
-            .addBarrier(mLightingResult->getBarrier(RHI::ImageUsage::ColorAttachment))
+            .addBarrier(pOutput->getBarrier(RHI::ImageUsage::ColorAttachment))
             .addBarrier(mInput.pGBufferPass->mWorldPosition->getBarrier(RHI::ImageUsage::ShaderReadOnly))
             .addBarrier(mInput.pGBufferPass->mWorldNormal->getBarrier(RHI::ImageUsage::ShaderReadOnly))
             .addBarrier(mInput.pGBufferPass->mAlbedoBuffer->getBarrier(RHI::ImageUsage::ShaderReadOnly))
@@ -63,14 +64,17 @@ namespace nbl
             descriptors.push_back(mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame));
         }
 
-        mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-            cmd->setViewportScissor(mViewport, mScissor);
-
-            mPipeline->bind(cmd);
-            mPipeline->bindDescriptorSets(cmd, descriptors);
-            mPipeline->pushConstants(cmd, &pushConstants);
-            cmd->getHandle().draw(3, 1, 0, 0);
-        });
+        RHI::Rendering()
+            .setLabel("Lighting_RenderPass")
+            .setRenderArea(pOutput->getProperties().extent)
+            .addAttachment(pOutput)
+            .setViewportScissor(pCommandList)
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
+                cmd->bindPipeline(mPipeline.get());
+                cmd->bindDescriptorSets(descriptors);
+                cmd->pushConstants(&pushConstants);
+                cmd->getHandle().draw(3, 1, 0, 0);
+            });
 
         pCommandList->endLabel();
     }
@@ -97,42 +101,29 @@ namespace nbl
             .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mViewZ);
         mDescriptor->write(0, descriptorWrite);
 
-        mLightingResult = makeRenderTarget(mRHI.get(), "Lighting_Result");
+        for (size_t i = 0; i < mLightingResult.size(); i++)
+        {
+            mLightingResult[i] = makeRenderTarget(mRHI.get(), fmt::format("Lighting_Result_{}", i));
+        }
 
-        mScissor = getRenderAreaForAttachment(mLightingResult.get());
-        mViewport = vk::Viewport {
-            0.0f, 0.0f,
-            static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
-            0.0f, 1.0f
-        };
-
-        mRenderPass = mRHI->createRenderPass({
-            .renderArea       = mScissor,
-            .colorAttachments = { makeAttachment(mLightingResult) },
-            .label            = "Lighting_RenderPass",
-        });
-
-        auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .addDescriptorSetLayout(mDescriptor->getLayout())
-            .addDescriptorSetLayout(mInput.pTextureManager->getDescriptor()->getLayout())
-            .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-            .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
-            {
-                stateInfo
-                    .setCullMode(vk::CullModeFlagBits::eNone)
-                    .addDefaultAttachmentStates(1);
-            }))
-            .addShader({ Configuration::getShaderFilePath("FSQuad.vert.spv"), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("Lighting.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mLightingResult->getProperties().format)
-            .setDebugName("Lighting_Pipeline");
+        const auto graphicsPS = RHI::GraphicsPS()
+            .setCullMode(vk::CullModeFlagBits::eNone)
+            .addDefaultAttachmentState(1)
+            .addAttachmentFormat(mLightingResult[0]->getProperties().format);
+        auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("Lighting")
+            .addShader("FSQuad.vert.spv")
+            .addShader("Lighting.frag.spv")
+            .addDescriptorLayout(0, mDescriptor.get())
+            .addDescriptorLayout(1, mInput.pTextureManager->getDescriptor().get())
+            .setPushConstant<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
 
         if (mRHI->getFeatures().rayTracing)
         {
-            pipelineCreateInfo.addDescriptorSetLayout(mInput.pLevel->mTlasSystem->getDescriptor()->getLayout());
+            pipelineInfo.addDescriptorLayout(2, mInput.pLevel->mTlasSystem->getDescriptor().get());
         }
 
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 
     LightingPassUI::LightingPassUI(LightingPass* pPass)

@@ -6,7 +6,7 @@ namespace nbl
 {
     struct Tonemap_Params
     {
-        SPtr<RHI::Image>     color;
+        vk::Format           outputFormat;
         SPtr<RHI::VulkanRHI> rhi;
     };
 
@@ -24,25 +24,20 @@ namespace nbl
 
         ~TonemapPass() = default;
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(const SPtr<RHI::Image>& input, RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
-        [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
+        [[nodiscard]] const SPtr<RHI::Image>& getResult(uint32_t currentFrame) const noexcept;
+
+        [[nodiscard]] const PerFrameArray<SPtr<RHI::Image>>& getResults() const noexcept;
 
     private:
         friend class SceneInfoComponent;
 
-        void createResources() noexcept;
-        void createPipeline()  noexcept;
-
-        PushConstant                    mPushConstant;
-
         SPtr<RHI::VulkanRHI>            mRHI;
-
-        SPtr<RHI::Image>                mInput;
-        SPtr<RHI::Image>                mOutput;
-
         SPtr<RHI::Descriptor>           mDescriptor;
         SPtr<RHI::GraphicsPipeline2>    mPipeline;
+        PerFrameArray<SPtr<RHI::Image>> mOutput;
+        PushConstant                    mPushConstant;
     };
 
 }

@@ -11,9 +11,9 @@ namespace nbl
         init();
     }
 
-    void GBufferPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void GBufferPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
     {
-        pCommandList->beginLabel("GBufferPass");
+        pCommandList->beginLabel("GBufferPass::execute()");
 
         const auto* level = mInput.pLevel;
         RHI::Barrier()
@@ -30,32 +30,42 @@ namespace nbl
             .addBarrier(level->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
             .insert(pCommandList);
 
-        mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-            cmd->setViewportScissor(mViewport, mScissor);
+        RHI::Rendering()
+            .setLabel("G-Buffer_RenderPass")
+            .setRenderArea(mWorldPosition->getProperties().extent)
+            .addAttachment(mWorldPosition)
+            .addAttachment(mWorldNormal)
+            .addAttachment(mMotionVectors)
+            .addAttachment(mViewZ)
+            .addAttachment(mAlbedoBuffer)
+            .addAttachment(mEmissiveBuffer)
+            .addAttachment(mParamsBuffer)
+            .addAttachment(mDepthBuffer)
+            .setViewportScissor(pCommandList)
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
+                const auto [w, h] = mWorldPosition->getProperties().extent;
+                const PushConstants pc = {
+                    .instanceBuffer            = level->mInstanceSystem->getBuffer()->getAddress(),
+                    .instanceIndirectionBuffer = level->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getAddress(),
+                    .cameraBuffer              = level->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+                    .previousCameraBuffer      = level->mCameraSystem->getPreviousBuffer(frameData.currentFrame)->getAddress(),
+                    .materialBuffer            = level->mMaterialSystem->getBuffer()->getAddress(),
+                    .renderRes                 = glm::uvec2(w, h),
+                };
 
-            const auto [w, h] = mWorldPosition->getProperties().extent;
-            const PushConstants pc = {
-                .instanceBuffer            = level->mInstanceSystem->getBuffer()->getAddress(),
-                .instanceIndirectionBuffer = level->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getAddress(),
-                .cameraBuffer              = level->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
-                .previousCameraBuffer      = level->mCameraSystem->getPreviousBuffer(frameData.currentFrame)->getAddress(),
-                .materialBuffer            = level->mMaterialSystem->getBuffer()->getAddress(),
-                .renderRes                 = glm::uvec2(w, h),
-            };
+                cmd->bindPipeline(mPipeline.get());
+                cmd->bindDescriptorSet(mInput.pTextureManager->getDescriptor()->getSet(0), 0);
+                cmd->pushConstants(&pc);
 
-            mPipeline->bind(cmd);
-            mPipeline->bindDescriptorSet(cmd, mInput.pTextureManager->getDescriptor()->getSet(0));
-            mPipeline->pushConstants(cmd, &pc);
+                static constexpr vk::DeviceSize offsets[1] = { 0 };
+                const auto& buffers = level->mGeometrySystem->getBuffers();
 
-            static constexpr vk::DeviceSize offsets[1] = { 0 };
-            const auto& buffers = level->mGeometrySystem->getBuffers();
+                const std::array vertexBuffers { buffers.getVertexBuffer()->getHandle() };
+                cmd->getHandle().bindVertexBuffers(0, 1, vertexBuffers.data(), offsets);
+                cmd->getHandle().bindIndexBuffer(buffers.getIndexBuffer()->getHandle(), 0, vk::IndexType::eUint32);
 
-            const std::array vertexBuffers { buffers.getVertexBuffer()->getHandle() };
-            cmd->getHandle().bindVertexBuffers(0, 1, vertexBuffers.data(), offsets);
-            cmd->getHandle().bindIndexBuffer(buffers.getIndexBuffer()->getHandle(), 0, vk::IndexType::eUint32);
-
-            level->drawIndexedIndirect(cmd, frameData);
-        });
+                level->drawIndexedIndirect(cmd, frameData);
+            });
 
         pCommandList->endLabel();
     }
@@ -88,50 +98,24 @@ namespace nbl
         mParamsBuffer   = makeRenderTarget(mRHI.get(), "GBuffer_Params",        vk::Format::eR16G16Sfloat,       std::nullopt, samplerInfo);
         mDepthBuffer    = makeRenderTarget(mRHI.get(), "GBuffer_Depth",         vk::Format::eD32Sfloat);
 
-        mScissor = getRenderAreaForAttachment(mWorldPosition.get());
-        mViewport = vk::Viewport {
-            0.0f, 0.0f,
-            static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
-            0.0f, 1.0f
-        };
+        const auto graphicsPS = RHI::GraphicsPS()
+            .addDefaultAttachmentState(7)
+            .addAttachmentFormat(mWorldPosition->getProperties().format)
+            .addAttachmentFormat(mWorldNormal->getProperties().format)
+            .addAttachmentFormat(mMotionVectors->getProperties().format)
+            .addAttachmentFormat(mViewZ->getProperties().format)
+            .addAttachmentFormat(mAlbedoBuffer->getProperties().format)
+            .addAttachmentFormat(mEmissiveBuffer->getProperties().format)
+            .addAttachmentFormat(mParamsBuffer->getProperties().format)
+            .addAttachmentFormat(mDepthBuffer->getProperties().format)
+            .addVertexType<Vertex>();
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("G-Buffer")
+            .addShader("GBuffer.vert.spv")
+            .addShader("GBuffer.frag.spv")
+            .addDescriptorLayout(0, mInput.pTextureManager->getDescriptor().get())
+            .setPushConstant<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
 
-        mRenderPass = mRHI->createRenderPass({
-            .renderArea       = mScissor,
-            .colorAttachments = {
-                makeAttachment(mWorldPosition),
-                makeAttachment(mWorldNormal),
-                makeAttachment(mMotionVectors),
-                makeAttachment(mViewZ),
-                makeAttachment(mAlbedoBuffer),
-                makeAttachment(mEmissiveBuffer),
-                makeAttachment(mParamsBuffer),
-            },
-            .depthAttachment  = makeAttachment(mDepthBuffer),
-            .label            = "GBuffer_RenderPass",
-        });
-
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .addDescriptorSetLayout(mInput.pTextureManager->getDescriptor()->getLayout())
-            .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-            .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
-            {
-                stateInfo
-                    .addDefaultAttachmentStates(7)
-                    .addAttributeDescriptions<Vertex>(0, 0)
-                    .addBindingDescriptions<Vertex>(0);
-            }))
-            .addShader({ Configuration::getShaderFilePath("GBuffer.vert.spv"), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("GBuffer.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mWorldPosition->getProperties().format)
-            .addColorAttachmentFormat(mWorldNormal->getProperties().format)
-            .addColorAttachmentFormat(mMotionVectors->getProperties().format)
-            .addColorAttachmentFormat(mViewZ->getProperties().format)
-            .addColorAttachmentFormat(mAlbedoBuffer->getProperties().format)
-            .addColorAttachmentFormat(mEmissiveBuffer->getProperties().format)
-            .addColorAttachmentFormat(mParamsBuffer->getProperties().format)
-            .setDepthAttachmentFormat(mDepthBuffer->getProperties().format)
-            .setDebugName("GBuffer_Pipeline");
-
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 }

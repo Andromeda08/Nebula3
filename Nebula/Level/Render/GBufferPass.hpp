@@ -39,7 +39,7 @@ namespace nbl
 
         ~GBufferPass() = default;
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
         [[nodiscard]] const SPtr<RHI::Image>& getAlbedoBuffer() const noexcept;
 
@@ -48,15 +48,9 @@ namespace nbl
     private:
         void init() noexcept;
 
-        SPtr<RHI::VulkanRHI>        mRHI;
-
-        GBufferPass_Params          mInput;
-
-        vk::Rect2D                  mScissor;
-        vk::Viewport                mViewport;
-
-        SPtr<RHI::RenderPass>       mRenderPass;
-        SPtr<RHI::Pipeline>         mPipeline;
+        SPtr<RHI::VulkanRHI>         mRHI;
+        GBufferPass_Params           mInput;
+        SPtr<RHI::GraphicsPipeline2> mPipeline;
 
     public:
         SPtr<RHI::Image>            mWorldPosition;     // RGBA 16 Float

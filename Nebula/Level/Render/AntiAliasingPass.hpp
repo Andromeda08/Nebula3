@@ -7,8 +7,8 @@ namespace nbl
 {
     struct AntiAliasing_Params
     {
-        SPtr<RHI::Image>     input;
-        SPtr<RHI::VulkanRHI> rhi;
+        PerFrameArray<SPtr<RHI::Image>> input;
+        SPtr<RHI::VulkanRHI>            rhi;
     };
 
     class AntiAliasingPass
@@ -28,7 +28,9 @@ namespace nbl
 
         void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
 
-        [[nodiscard]] SPtr<RHI::Image> getResult() const noexcept;
+        [[nodiscard]] const SPtr<RHI::Image>& getResult(uint32_t currentFrame) const noexcept;
+
+        [[nodiscard]] const PerFrameArray<SPtr<RHI::Image>>& getResults() const noexcept;
 
     private:
         void createResources() noexcept;
@@ -36,8 +38,8 @@ namespace nbl
 
         SPtr<RHI::VulkanRHI>         mRHI;
 
-        SPtr<RHI::Image>             mInput;
-        SPtr<RHI::Image>             mOutput;
+        PerFrameArray<SPtr<RHI::Image>> mInput;
+        PerFrameArray<SPtr<RHI::Image>> mOutput;
 
         SPtr<RHI::Descriptor>        mDescriptor;
         SPtr<RHI::GraphicsPipeline2> mPipeline;

@@ -28,8 +28,8 @@ namespace nbl
         const auto isDepth = vk::hasDepthComponent(format);
 
         using enum vk::ImageUsageFlagBits;
-        const vk::ImageUsageFlags usageFlags = (isDepth ? eDepthStencilAttachment : eColorAttachment)
-            | eTransferSrc | eTransferDst | eSampled | eStorage;
+        const vk::ImageUsageFlags usageFlags = (isDepth ? eDepthStencilAttachment : eColorAttachment | eStorage)
+            | eTransferSrc | eTransferDst | eSampled;
 
         const auto _extent = extent.value_or(pRHI->getSwapchain()->getProperties().extent);
 

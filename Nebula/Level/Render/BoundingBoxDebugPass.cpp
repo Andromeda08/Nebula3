@@ -18,88 +18,67 @@ namespace nbl
         mInput.pLevel->mUserInterface->addComponent<BoundingBoxDebugPassUI>(this);
     }
 
-    void BoundingBoxDebugPass::execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void BoundingBoxDebugPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
     {
         if (!mVisualizeAABBs)
         {
             return;
         }
 
-        pCommandList->beginLabel("BoundingBoxDebugPass");
-
-        pCommandList->setViewportScissor(mViewport, mScissor);
-
-        RHI::Barrier()
-            .addBarrier(mInput.renderTarget->getBarrier(RHI::ImageUsage::ColorAttachment))
-            .addBarrier(mInput.gBufferDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
-            .insert(pCommandList);
-
-        mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-        {
-            mPipeline->bind(cmd);
-
-            auto pushConstant = PushConstants {
-                .boxColor       = mBoxColor,
-                .instanceBuffer = mInput.pLevel->mInstanceSystem->getBuffer()->getAddress(),
-                .cameraBuffer   = mInput.pLevel->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
-                .instanceIndex  = 0 /* !! Set before draw calls !! */,
-            };
-
-            // Render for selected object
-            const auto* selectedObject = mInput.pLevel->getSelectedObject();
-            if (mFocusSelectedObject && selectedObject != nullptr)
+        RHI::Rendering()
+            .setLabel("BoundingBoxVis_RenderPass")
+            .setRenderArea(mInput.renderTargets[frameData.currentFrame]->getProperties().extent)
+            .addAttachment(mInput.renderTargets[frameData.currentFrame], vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore)
+            .addAttachment(mInput.gBufferDepthBuffer, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone)
+            .insertBarriers(pCommandList)
+            .setViewportScissor(pCommandList)
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
             {
-                pushConstant.instanceIndex = mInput.pLevel->mInstanceSystem->getGpuIndex(selectedObject->hInstance);
-                mPipeline->pushConstants(cmd, &pushConstant);
-                cmd->getHandle().draw(24, 1, 0, 0);
-            }
-            // Render all bounding boxes
-            else
-            {
-                for (const auto& object : mInput.pLevel->getObjects())
+                cmd->bindPipeline(mPipeline.get());
+
+                auto pushConstant = PushConstants {
+                    .boxColor       = mBoxColor,
+                    .instanceBuffer = mInput.pLevel->mInstanceSystem->getBuffer()->getAddress(),
+                    .cameraBuffer   = mInput.pLevel->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+                    .instanceIndex  = 0 /* !! Set before draw calls !! */,
+                };
+
+                // Render for selected object
+                const auto* selectedObject = mInput.pLevel->getSelectedObject();
+                if (mFocusSelectedObject && selectedObject != nullptr)
                 {
-                    pushConstant.instanceIndex = mInput.pLevel->mInstanceSystem->getGpuIndex(object->hInstance);
-                    mPipeline->pushConstants(cmd, &pushConstant);
+                    pushConstant.instanceIndex = mInput.pLevel->mInstanceSystem->getGpuIndex(selectedObject->hInstance);
+                    cmd->pushConstants(&pushConstant);
                     cmd->getHandle().draw(24, 1, 0, 0);
                 }
-            }
-        });
-
-        pCommandList->endLabel();
+                // Render all bounding boxes
+                else
+                {
+                    for (const auto& object : mInput.pLevel->getObjects())
+                    {
+                        pushConstant.instanceIndex = mInput.pLevel->mInstanceSystem->getGpuIndex(object->hInstance);
+                        cmd->pushConstants(&pushConstant);
+                        cmd->getHandle().draw(24, 1, 0, 0);
+                    }
+                }
+            });
     }
 
     void BoundingBoxDebugPass::init() noexcept
     {
-        mScissor = getRenderAreaForAttachment(mInput.renderTarget.get());
-        mViewport = vk::Viewport {
-            0.0f, 0.0f,
-            static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
-            0.0f, 1.0f
-        };
+        const auto graphicsPS = RHI::GraphicsPS()
+            .setCullMode(vk::CullModeFlagBits::eNone)
+            .setTopology(vk::PrimitiveTopology::eLineList)
+            .addDefaultAttachmentState(1)
+            .addAttachmentFormat(mInput.renderTargets[0]->getProperties().format)
+            .addAttachmentFormat(mInput.gBufferDepthBuffer->getProperties().format);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("BoundingBoxVis")
+            .addShader("BoundingBoxDebug.vert.spv")
+            .addShader("BoundingBoxDebug.frag.spv")
+            .setPushConstant<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
 
-        mRenderPass = mRHI->createRenderPass({
-            .renderArea       = mScissor,
-            .colorAttachments = { makeAttachment(mInput.renderTarget, vk::AttachmentLoadOp::eLoad) },
-            .depthAttachment  = makeAttachment(mInput.gBufferDepthBuffer, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone),
-            .label            = "BoundingBoxDebug_RenderPass",
-        });
-
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-            .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
-            {
-                stateInfo
-                    .addDefaultAttachmentStates(1)
-                    .setCullMode(vk::CullModeFlagBits::eNone)
-                    .setTopology(vk::PrimitiveTopology::eLineList);
-            }))
-            .addShader({ Configuration::getShaderFilePath("BoundingBoxDebug.vert.spv"), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("BoundingBoxDebug.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mInput.renderTarget->getProperties().format)
-            .setDepthAttachmentFormat(mInput.gBufferDepthBuffer->getProperties().format)
-            .setDebugName("BoundingBoxDebug_Pipeline");
-
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 
     bool BoundingBoxDebugPass::hasSelectedObject() const
