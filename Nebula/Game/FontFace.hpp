@@ -12,7 +12,7 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "UIGeometry.hpp"
-#include "Scene/TextureManager.hpp"
+#include "../Level/TextureManager.hpp"
 
 struct FontGlyph
 {

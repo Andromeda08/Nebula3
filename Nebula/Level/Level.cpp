@@ -7,7 +7,7 @@
 #include "Math/DeltaTime.hpp"
 #include "Object/ObjectEditorUI.hpp"
 #include "Object/RotatingObject.hpp"
-#include "Scene/TextureManager.hpp"
+#include "TextureManager.hpp"
 #include "UserInterface/UserInterface.hpp"
 
 namespace nbl

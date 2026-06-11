@@ -1,6 +1,13 @@
 #pragma once
+
+#include <string>
+#include <typeindex>
+#include <unordered_map>
+#include <SDL3/SDL.h>
+
+#include "Core/Types.hpp"
+#include "Level/TextureManager.hpp"
 #include "Input/Gamepad.hpp"
-#include "Scene/TextureManager.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -46,5 +53,22 @@ namespace nbl
         UserInterface*       mUserInterface;
 
         std::string          mName;
+    };
+
+    class ViewSelectUI : public IComponent
+    {
+    public:
+        explicit ViewSelectUI(std::unordered_map<std::type_index, UPtr<View>>& views, View** ppActiveView)
+        : IComponent()
+        , mViews(views)
+        , mActiveViewRef(ppActiveView)
+        {
+        }
+
+        void draw() override;
+
+    private:
+        std::unordered_map<std::type_index, UPtr<View>>& mViews;
+        View**                                           mActiveViewRef = nullptr;
     };
 }

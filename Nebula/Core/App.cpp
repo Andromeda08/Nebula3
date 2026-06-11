@@ -1,13 +1,10 @@
 #include "App.hpp"
 
 #include "Configuration.hpp"
-#include "Hair/CyLoader.hpp"
-#include "Hair/Render/ClassicHairRenderer.hpp"
-#include "Scene/SceneV2.hpp"
-#include "Scene/Components/SceneInfoComponent.hpp"
-#include "Scene/Voxel/VoxelScene.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
+#include "Views/HairView.hpp"
 #include "Views/LevelView.hpp"
+#include "Views/UITestView.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "Window/SplashWindow.hpp"
 
@@ -41,55 +38,14 @@ App::App()
     });
     mUserInterface->addComponent<StatisticsComponent>(mVulkanRHI, &mCPUFramerate);
 
+    mUserInterface->addComponent<nbl::ViewSelectUI>(mViews, &mActiveView);
+
     addView<nbl::LevelView>();
-
+    if constexpr (!RHI::Platform::isApple)
     {
-        const auto [w, h] = mWindow->getFramebufferSize();
-        mTitleScreen = makeUnique<TitleScreen>(glm::vec2(w, h), mVulkanRHI, mTextureManager.get());
+        addView<nbl::HairView>();
     }
-
-    /* Load Hair Models */ {
-        mHairModelSystem = makeUnique<nbl::HairModelSystem>(mVulkanRHI);
-        for (const auto& file : std::filesystem::directory_iterator(Configuration::getHairDir()))
-        {
-            if (file.path().extension() != ".hair")
-            {
-                continue;
-            }
-
-            try
-            {
-                const uint32_t hairIndex = mHairModelSystem->addHairGeometry(nbl::CyLoader(file).load());
-                const auto&    hair      = mHairModelSystem->getHairGeometry(hairIndex);
-
-                spdlog::info("Loaded Hair model: {} [v={}, S={}, s={}]", hair.name, hair.vertexCount, hair.strandCount, hair.strandletCount);
-            }
-            catch (const std::runtime_error& ex)
-            {
-                spdlog::error(ex.what());
-            }
-        }
-
-        mHairModelSystem->createBuffers();
-        // mHairRenderer = makeUnique<nbl::HairRenderer>(mVulkanRHI, mHairModelSystem.get());
-        // mUserInterface->addComponent<nbl::HairRendererUI>(mHairRenderer.get());
-    }
-
-    // mSoftwareRasterizer = makeUnique<nbl::SoftwareRasterizer>(mVulkanRHI);
-
-    // mHybrid = makeUnique<nbl::HybridHairRenderer>(mVulkanRHI, mHairModelSystem.get());
-    //  mUserInterface->addComponent<nbl::HybridHairRendererUI>(mHybrid.get());
-
-    nbl::InterfaceParams ip = {
-        { 1920.0f, 1080.0f },
-        { 64.0f, 64.0f },
-        mVulkanRHI,
-        mTextureManager.get(),
-        {},
-        true
-    };
-    mInterface = makeUnique<nbl::Interface>(ip);
-    mFadeEffect = makeUnique<nbl::FadeEffect>(mVulkanRHI);
+    addView<nbl::UITestView>();
 
     mWindow->reveal();
 }
@@ -135,7 +91,10 @@ void App::run()
             // If ImGui didn't want to consume any input continue with Scene handlers.
             if (!UserInterface::wantCaptureInput())
             {
-                if (mActiveView) { mActiveView->onEvent(event); }
+                if (mActiveView)
+                {
+                    mActiveView->onEvent(event);
+                }
             }
 
             switch (event.type)
@@ -170,7 +129,10 @@ void App::run()
         commandList->beginLabel("Updates");
 
         mTextureManager->update(commandList);
-        if (mActiveView) { mActiveView->onUpdate(dt, commandList, frameData); }
+        if (mActiveView)
+        {
+            mActiveView->onUpdate(dt, commandList, frameData);
+        }
         mUserInterface->update();
 
         commandList->endLabel();
@@ -178,62 +140,11 @@ void App::run()
         // =====================================
         // Rendering
         // =====================================
-        mFadeEffect->trigger();
-
         commandList->beginLabel("Rendering");
-
-        if (mActiveView) { mActiveView->onRender(commandList, frameData); }
-
-        //mTitleScreen->render(commandList, frameData);
-
-        mInterface->render(commandList, frameData);
-        mFadeEffect->execute(mInterface->getResult(frameData.currentFrame), commandList, frameData);
-
-        // mHairRenderer->render(commandList, frameData, 0, mLevel->getCameraBuffer(frameData.currentFrame));
-
-        // mSoftwareRasterizer->execute(commandList, frameData);
-
-        // mHybrid->execute(commandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
-
-        /*
+        if (mActiveView)
         {
-            commandList->beginLabel("Blit");
-            // Barriers
-            const auto barrier = RHI::Barrier()
-                .addBarrier(mFadeEffect->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::TransferSrc))
-                .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::TransferDst));
-            barrier.insert(commandList);
-
-            // Blit
-            #pragma region
-            const auto srcExtent = mFadeEffect->getResult(frameData.currentFrame)->getProperties().extent;
-            const auto dstExtent = mVulkanRHI->getSwapchain()->getProperties().extent;
-            const auto region  = vk::ImageBlit2()
-                .setSrcOffsets({
-                    vk::Offset3D { 0, 0, 0 },
-                    vk::Offset3D { static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 }
-                })
-                .setSrcSubresource(mFadeEffect->getResult(frameData.currentFrame)->getProperties().getSubresourceLayers())
-                .setDstOffsets({
-                    vk::Offset3D { 0, 0, 0 },
-                    vk::Offset3D { static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 }
-                })
-                .setDstSubresource({ vk::ImageAspectFlagBits::eColor, 0, 0, 1 });
-
-            const auto blit = vk::BlitImageInfo2()
-                .setSrcImage(mFadeEffect->getResult(frameData.currentFrame)->getImage())
-                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
-                .setDstImage(mVulkanRHI->getSwapchain()->getImage(frameData.acquiredIndex))
-                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setFilter(vk::Filter::eLinear)
-                .setRegions(region);
-            #pragma endregion
-            commandList->getHandle().blitImage2(blit);
-
-            commandList->endLabel();
+            mActiveView->onRender(commandList, frameData);
         }
-        */
-
         commandList->endLabel();
 
         // =====================================

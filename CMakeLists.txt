@@ -115,6 +115,9 @@ set(V2_FILES
     Nebula/Interface/FadeEffect.hpp
     Nebula/Core/View.hpp
     Nebula/Views/LevelView.hpp
+    Nebula/Views/HairView.hpp
+    Nebula/Views/UITestView.hpp
+    Nebula/Core/View.cpp
 )
 
 add_executable(Nebula3
@@ -190,20 +193,9 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp
     Nebula/VulkanRHI/Allocation.hpp
-    Nebula/Scene/Types/Vertex.hpp
-    Nebula/Scene/Types/GPUObjectInstanceData.hpp
+    Nebula/Level/Vertex.hpp
+    Nebula/Level/GPUObjectInstanceData.hpp
     Nebula/VulkanRHI/Rendering/VertexTraits.hpp
-    Nebula/Scene/Scene.hpp
-    Nebula/Scene/Types/Light.hpp
-    Nebula/Scene/Scene.cpp
-    Nebula/Scene/Components/SceneInfoComponent.hpp
-    Nebula/Scene/Components/SceneInfoComponent.cpp
-    Nebula/Scene/Geometry/Geometry.hpp
-    Nebula/Scene/Geometry/Geometry.cpp
-    Nebula/Scene/Types/CameraData.hpp
-    Nebula/Scene/Camera/ICamera.hpp
-    Nebula/Scene/Object.hpp
-    Nebula/Scene/Camera/FlyingCamera.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
@@ -213,81 +205,32 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Allocation.cpp
     Nebula/VulkanRHI/Frame.cpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
-    Nebula/Scene/TextureManager.hpp
-    Nebula/Scene/TextureManager.cpp
+    Nebula/Level/TextureManager.hpp
+    Nebula/Level/TextureManager.cpp
     Nebula/Core/Platform.hpp
     Nebula/Window/SDLWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp
     Nebula/Window/SDLWindow.cpp
-    Nebula/Scene/Camera/FlyingCamera.cpp
     Nebula/Core/Ranges.hpp
     Nebula/Math/HeightMap.hpp
     Nebula/Core/Random.hpp
     Nebula/Math/HeightMap.cpp
-    Nebula/Scene/Voxel/TerrainGenerator.hpp
-    Nebula/Scene/Voxel/TerrainGenerator.cpp
-    Nebula/Scene/Voxel/VoxelScene.hpp
-    Nebula/Scene/Voxel/GPUVoxelInstanceData.hpp
-    Nebula/Scene/Voxel/Features/FoliageGenerator.hpp
-    Nebula/Scene/Voxel/IFeatureGenerator.hpp
-    Nebula/Scene/Voxel/VoxelData.hpp
-    Nebula/Scene/Voxel/Features/FoliageGenerator.cpp
-    Nebula/Scene/Voxel/Features/PillarGenerator.hpp
-    Nebula/Scene/Types/Light.hpp
-    Nebula/Scene/LightSystem.hpp
-    Nebula/Scene/LightSystem.cpp
-    Nebula/Scene/Voxel/vxlRenderPath.hpp
-    Nebula/Scene/Voxel/vxlRenderPath.cpp
-    Nebula/Scene/Voxel/VoxelScene.cpp
-    Nebula/Scene/Render/SSAOPass.hpp
-    Nebula/Scene/Render/SSAOPass.cpp
-    Nebula/Scene/Render/Voxel_GBufferPass.hpp
-    Nebula/Scene/Render/Voxel_GBufferPass.cpp
-    Nebula/Scene/Render/LightingPass.hpp
-    Nebula/Scene/Render/LightingPass.cpp
-    Nebula/Scene/Render/RenderPass.hpp
-    Nebula/Scene/Render/FXAAPass.hpp
-    Nebula/Scene/Render/FXAAPass.cpp
     Nebula/VulkanRHI/Common.hpp
-    Nebula/Scene/SceneV2.hpp
-    Nebula/Scene/SceneGeometry.hpp
-    Nebula/Scene/SceneGeometry.cpp
     Nebula/VulkanRHI/Raytracing/AccelerationStructure.hpp
     Nebula/VulkanRHI/Raytracing/AccelerationStructure.cpp
-    Nebula/Scene/InstancePool.hpp
-    Nebula/Scene/InstancePool.cpp
     Nebula/Math/Transform.cpp
-    Nebula/Scene/TLASManager.hpp
-    Nebula/Scene/TLASManager.cpp
-    Nebula/Scene/Render/Indirect_GBufferPass.hpp
-    Nebula/Scene/Render/Indirect_GBufferPass.cpp
     Nebula/VulkanRHI/Detail/DescriptorWrite.cpp
-    Nebula/Scene/Render/RTAOPass.hpp
-    Nebula/Scene/Render/RTAOPass.cpp
-    Nebula/Scene/SceneV2.cpp
     Nebula/Window/SplashWindow.hpp
     Nebula/Window/SplashWindow.cpp
-    Nebula/Scene/Render/ProceduralSky.hpp
-    Nebula/Scene/Render/ProceduralSky.cpp
     Nebula/VulkanRHI/Detail/Extensions.hpp
     Nebula/VulkanRHI/Detail/Extensions.cpp
     Nebula/VulkanRHI/Detail/DeviceExtensions.hpp
     Nebula/VulkanRHI/Detail/DeviceExtensions.cpp
-    Nebula/Scene/Render/TonemapPass.hpp
-    Nebula/Scene/Render/TonemapPass.cpp
-    Nebula/Scene/GLTF/GLTFLoader.hpp
-    Nebula/Scene/GLTF/GLTFLoader.cpp
     Nebula/Input/DualSense.hpp
     Nebula/Input/Gamepad.hpp
-    Nebula/Scene/Render/FullRT.hpp
-    Nebula/Scene/Render/FullRT.cpp
     Nebula/Input/Gamepad.cpp
     Nebula/Math/BoundingBox.hpp
     Nebula/Math/BoundingBox.cpp
-    Nebula/Scene/Render/AABBOverlayPass.cpp
-    Nebula/Scene/Render/AABBOverlayPass.hpp
-    Nebula/Scene/Render/BloomPass.hpp
-    Nebula/Scene/Render/BloomPass.cpp
     Nebula/Level/SlotPool.hpp
     Nebula/Level/Material/MaterialPool.hpp
     Nebula/Game/TitleScreen.hpp

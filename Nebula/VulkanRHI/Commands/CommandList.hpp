@@ -11,6 +11,7 @@ namespace RHI
     class Descriptor;
     class Image;
     class PipelineBase;
+    class Swapchain;
 }
 
 namespace RHI
@@ -116,6 +117,15 @@ namespace RHI
         void endLabel() const;
 
         #pragma endregion
+
+        /**
+         * Blit from the src image to the swapchain image specified by the ACQUIRED image index.
+         * Note: this function will insert the required pre-blit barriers.
+         * @param pSrcImage
+         * @param pSwapchain
+         * @param acquiredIndex
+         */
+        void blitToSwapchain(Image* pSrcImage, Swapchain* pSwapchain, uint32_t acquiredIndex) const;
 
         void copyBufferToImage(const BufferImageCopyInfo& copyInfo) const;
 
