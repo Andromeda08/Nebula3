@@ -5,6 +5,12 @@ set(CMAKE_CXX_STANDARD 23)
 
 find_package(Vulkan REQUIRED)
 
+if (APPLE)
+    find_package(Freetype REQUIRED)
+else ()
+    add_compile_options(/arch:AVX2)
+endif ()
+
 # Shader Tools
 include(Tools/nrt/cmake/nrt.cmake)
 nrt_build()
@@ -19,8 +25,6 @@ add_subdirectory(External/SDL               EXCLUDE_FROM_ALL)
 add_subdirectory(External/SDL_ttf           EXCLUDE_FROM_ALL)
 add_subdirectory(External/spdlog            EXCLUDE_FROM_ALL)
 add_subdirectory(External/meshopt           EXCLUDE_FROM_ALL)
-
-add_compile_options(/arch:AVX2)
 
 set("IMGUI_DIR" External/imgui)
 set("IMGUI_FILES"
@@ -266,15 +270,19 @@ target_link_libraries(Nebula3 PUBLIC
     ${NLOHMANN_JSON_TARGET_NAME}
     ${Vulkan_LIBRARIES}
     glm::glm
-    # gemmi::gemmi_cpp
     GPUOpen::VulkanMemoryAllocator
     SDL3::SDL3
     SDL3_ttf::SDL3_ttf
     spdlog::spdlog
     fastgltf::fastgltf
     meshoptimizer
-    freetype
 )
+
+if (APPLE)
+    target_link_libraries(Nebula3 PUBLIC Freetype::Freetype)
+else ()
+    target_link_libraries(Nebula3 PUBLIC freetype)
+endif ()
 
 target_compile_definitions(Nebula3 PUBLIC
     NBL_CONFIG_REGEN
