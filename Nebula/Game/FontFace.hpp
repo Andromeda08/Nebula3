@@ -156,7 +156,7 @@ public:
         // const float penY = position.y + (bounds.ascent - bounds.descent) * 0.5f;
 
         float penX = position.x;
-        float penY = position.y - bounds.ascent;
+        float penY = position.y + bounds.ascent;
 
         for (const char c : text)
         {

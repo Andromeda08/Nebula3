@@ -109,6 +109,12 @@ set(V2_FILES
     Nebula/VulkanRHI/Render/Pipeline.hpp
     Nebula/Interface/Interface.hpp
     Nebula/Interface/Interface.cpp
+    Nebula/VulkanRHI/RHIFeatures.hpp
+    Nebula/VulkanRHI/RHIFeatures.cpp
+    Nebula/VulkanRHI/Render/Pipeline.cpp
+    Nebula/Interface/FadeEffect.hpp
+    Nebula/Core/View.hpp
+    Nebula/Views/LevelView.hpp
 )
 
 add_executable(Nebula3
@@ -209,8 +215,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Detail/DescriptorWrite.hpp
     Nebula/Scene/TextureManager.hpp
     Nebula/Scene/TextureManager.cpp
-    Nebula/VulkanRHI/Texture.hpp
-    Nebula/VulkanRHI/Texture.cpp
     Nebula/Core/Platform.hpp
     Nebula/Window/SDLWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp

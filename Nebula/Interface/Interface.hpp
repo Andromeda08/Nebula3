@@ -153,7 +153,7 @@ namespace nbl
             {
                 case Center:
                 default: {
-                    return center - elemSize;
+                    return center - (elemSize / 2.0f);
                 }
             }
         }
@@ -183,7 +183,7 @@ namespace nbl
             glm::mat4 proj;
             glm::vec4 color;
             int32_t   textureIndex = -1;
-            int32_t   isText = 0;
+            int32_t   isText       = 0;
         };
     public:
         explicit Interface(const InterfaceParams& params);
