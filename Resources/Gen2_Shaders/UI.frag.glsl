@@ -11,19 +11,18 @@ layout (set = 0, binding = 0)       uniform          sampler2D uTextures[MAX_TEX
 layout (set = 0, binding = 1, r32i) readonly uniform iimage2D  uTextureMeta;
 
 layout(push_constant) uniform PushConstants {
-    mat4 proj;
-    vec4 color;
-    int  textureIndex;
-    int  isText;
+    mat4  proj;
+    vec4  color;
+    int   textureIndex;
+    int   isText;
 };
 
 void main()
 {
     vec4 finalColor = color;
-    if (isText == 1)
-    {
-        vec4 s = texture(uTextures[textureIndex], inUV);
-        finalColor = vec4(color.rgb, color.a * s.a);
-    }
+
+    vec4 s = texture(uTextures[textureIndex], inUV);
+    finalColor = vec4(color.rgb, color.a * s.a);
+
     outColor = finalColor;
 }

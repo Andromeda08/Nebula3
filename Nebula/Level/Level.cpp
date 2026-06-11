@@ -54,7 +54,7 @@ namespace nbl
                 .pMaterialSystem = mMaterialSystem.get(),
             });
 
-            loader.load();
+            // loader.load();
         }
 
         /* Emissive cubes */ {
@@ -69,7 +69,7 @@ namespace nbl
                 auto transform = Transform()
                     .setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
                     .setScale(glm::vec3(2.0f));
-                // addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube-#{}", i));
+                addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube-#{}", i));
             }
         }
 

@@ -1,6 +1,12 @@
 #pragma once
 
+#include <string>
+#include <typeindex>
+#include <typeinfo>
+#include <vector>
+
 #include "Types.hpp"
+#include "View.hpp"
 #include "Input/Gamepad.hpp"
 #include "Math/DeltaTime.hpp"
 #include "Scene/Scene.hpp"
@@ -14,9 +20,8 @@
 #include "Hair/Render/HairRenderer.hpp"
 #include "Hair/Render/Complex/HybridHairRenderer.hpp"
 #include "Hair/Render/Complex/SoftwareRasterizer.hpp"
+#include "Interface/FadeEffect.hpp"
 #include "Interface/Interface.hpp"
-#include "Level/Level.hpp"
-#include "Level/Render/LevelRenderer.hpp"
 
 class App
 {
@@ -25,6 +30,39 @@ public:
 
     App();
     static UPtr<App> create() noexcept;
+
+    template <class T, class... Args>
+    requires std::is_base_of_v<nbl::View, T>
+    T* addView(Args&&... args)
+    {
+        const auto typeIndex = std::type_index(typeid(T));
+        if (!mViews.contains(typeIndex))
+        {
+            mViews.insert_or_assign(typeIndex, makeUnique<T>(
+                mGamepadManager.get(), mVulkanRHI, mTextureManager.get(), mUserInterface.get(),
+                std::forward<Args>(args)...));
+            if (!mActiveView)
+            {
+                mActiveView = mViews[typeIndex].get();
+                spdlog::info("Active View: {}", mActiveView->getName());
+            }
+        }
+        else
+        {
+            spdlog::warn("A View of type {} already exists.", typeid(T).name());
+        }
+        return static_cast<T*>(mViews[typeIndex].get());
+    }
+
+    template <class T>
+    requires std::is_base_of_v<nbl::View, T>
+    [[nodiscard]] T* getView()
+    {
+        const auto it = mViews.find(std::type_index(typeid(T)));
+        return (it != std::end(mViews))
+            ? static_cast<T*>(it->second.get())
+            : nullptr;
+    }
 
     void run();
 
@@ -43,8 +81,8 @@ private:
 
     UPtr<UserInterface>          mUserInterface;
 
-    UPtr<nbl::Level>             mLevel;
-    UPtr<nbl::LevelRenderer>     mLevelRenderer;
+    std::unordered_map<std::type_index, UPtr<nbl::View>> mViews;
+    nbl::View*                                           mActiveView;
 
     UPtr<nbl::HairModelSystem>   mHairModelSystem;
     // UPtr<nbl::HairRenderer>      mHairRenderer;
@@ -53,6 +91,7 @@ private:
     UPtr<nbl::HybridHairRenderer> mHybrid;
 
     UPtr<nbl::Interface>         mInterface;
+    UPtr<nbl::FadeEffect>        mFadeEffect;
     UPtr<TitleScreen>            mTitleScreen;
 };
 

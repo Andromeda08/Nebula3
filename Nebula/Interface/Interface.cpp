@@ -20,10 +20,27 @@ namespace nbl
             .file = Configuration::getFontFilePath("ExodusDemo-Striped.otf"),
             .name = "Exodus",
         });
-        auto text = makeUnique<TextElement>("FORSAKEN", glm::vec3(1.0f), mFontLibrary->getFont("Exodus", 128));
-        text->mPosition = mSize.getPosition(Location::Center, text.get());
+        mFontLibrary->registerSource({
+            .file = Configuration::getFontFilePath("PPFraktionMono-Regular.otf"),
+            .name = "Fraktion",
+        });
+        mFontLibrary->registerSource({
+            .file = Configuration::getFontFilePath("KHInterference-Regular.otf"),
+            .name = "Interference",
+        });
 
-        mElements.push_back(std::move(text));
+        {
+            auto text = makeUnique<TextElement>("SOME THING", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 96));
+            text->mPosition = mSize.getPosition(Location::Center, text.get()) + glm::vec2(0.0f, -48.0f);
+            mElements.push_back(std::move(text));
+        }
+        {
+            auto text = makeUnique<TextElement>("Press any key.", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 24));
+            text->mPosition = mSize.getPosition(Location::Center, text.get()) + glm::vec2(0.0f, 48.0f);
+            text->mColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+
+            mElements.push_back(std::move(text));
+        }
 
         uint32_t              vtxBase = 0;
         std::vector<UIVertex> vertices;
@@ -108,12 +125,12 @@ namespace nbl
                 .setCullMode(vk::CullModeFlagBits::eNone)
                 .addAttachmentState(RHI::PipelineUtils::makeColorBlendAttachmentState()
                     .setBlendEnable(true)
-                        .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
-                        .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                        .setColorBlendOp(vk::BlendOp::eAdd)
-                        .setSrcAlphaBlendFactor(vk::BlendFactor::eSrcAlpha)
-                        // .setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                        .setAlphaBlendOp(vk::BlendOp::eAdd)))
+                    .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
+                    .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
+                    .setColorBlendOp(vk::BlendOp::eAdd)
+                    .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
+                    .setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
+                    .setAlphaBlendOp(vk::BlendOp::eAdd)))
             .addShader({ Configuration::getShaderFilePath("UI.vert.spv"), vk::ShaderStageFlagBits::eVertex })
             .addShader({ Configuration::getShaderFilePath("UI.frag.spv"), vk::ShaderStageFlagBits::eFragment })
             .addColorAttachmentFormat(mResult[0]->getProperties().format)

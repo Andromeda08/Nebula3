@@ -4,8 +4,10 @@ layout(location = 0) in vec2 inPos;
 layout(location = 1) in vec2 inUV;
 
 layout(push_constant) uniform PushConstants {
-    mat4 proj;
-    vec4 color;
+    mat4  proj;
+    vec4  color;
+    int   textureIndex;
+    int   isText;
 };
 
 layout(location = 0) out vec2 vUV;
