@@ -52,9 +52,9 @@
 #include <type_traits>
 #include <limits>
 
-#if !defined(CY_NO_INTRIN_H) && !defined(CY_NO_EMMINTRIN_H) && !defined(CY_NO_IMMINTRIN_H)
-# include <immintrin.h>
-#endif
+// #if !defined(CY_NO_INTRIN_H) && !defined(CY_NO_EMMINTRIN_H) && !defined(CY_NO_IMMINTRIN_H)
+// # include <immintrin.h>
+// #endif
 
 //-------------------------------------------------------------------------------
 namespace cy {
