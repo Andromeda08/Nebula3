@@ -7,7 +7,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 // ============================================
-#define nbl_RT
+// #define nbl_RT
 // #define nbl_AMBIENT_OCCLUSION
 // ============================================
 
