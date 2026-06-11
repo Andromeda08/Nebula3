@@ -46,11 +46,12 @@ namespace nbl
 
         ~HairView() override = default;
 
-        void onEvent(const SDL_Event& event) override;
+        void onEvent(const SDL_Event& event) override
+        {
+        }
 
         void onUpdate(float dt, RHI::CommandList* pCommandList, const RHI::FrameData& frameData) override
         {
-
         }
 
         void onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) override

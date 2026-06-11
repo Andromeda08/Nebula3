@@ -72,7 +72,7 @@ private:
     UPtr<UserInterface>          mUserInterface;
 
     std::unordered_map<std::type_index, UPtr<nbl::View>> mViews;
-    nbl::View*                                           mActiveView;
+    nbl::View*                                           mActiveView = nullptr;
 };
 
 extern App* gApplication;

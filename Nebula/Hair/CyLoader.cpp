@@ -124,7 +124,7 @@ namespace nbl
                 HairStrandlet strandlet = {
                     .strandId    = strand.id,
                     .vertexCount = strandletVertexCount,
-                    .vertices    = strand.vertices.subspan((j * gHairMaxStrandletSize), strandletVertexCount),
+                    .vertices    = strand.vertices.subspan(firstStrandletVertex, strandletVertexCount),
                 };
                 geom.strandlets.push_back(strandlet);
             }
