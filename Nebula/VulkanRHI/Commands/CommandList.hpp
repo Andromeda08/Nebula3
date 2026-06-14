@@ -2,8 +2,10 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Device.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
+#include "VulkanRHI/Detail/ImageTraits.hpp"
 
 namespace RHI
 {
@@ -43,6 +45,52 @@ namespace RHI
         bool               singleTimeSubmit = false;
     };
 
+    struct SyncState
+    {
+        vk::AccessFlags2        accessFlags = vk::AccessFlagBits2::eNone;
+        vk::PipelineStageFlags2 stageFlags  = vk::PipelineStageFlagBits2::eNone;
+        vk::ImageLayout         layout      = vk::ImageLayout::eUndefined;
+    };
+
+    struct BufferMemoryBarrier
+    {
+        BufferUsage dstUsage    = BufferUsage::All;
+        Buffer*     pBuffer     = nullptr;
+    };
+
+    struct ImageSubresourceRange
+    {
+        uint32_t firstMip   = 0;
+        uint32_t mipLevels  = VK_REMAINING_MIP_LEVELS;
+        uint32_t firstLayer = 0;
+        uint32_t layerCount = VK_REMAINING_ARRAY_LAYERS;
+    };
+
+    struct ImageMemoryBarrier
+    {
+        ImageUsage            dstUsage         = ImageUsage::General;
+        Image*                pImage           = nullptr;
+        ImageSubresourceRange subresourceRange = {};
+    };
+
+    struct Barrier2
+    {
+        Barrier2& add(const BufferMemoryBarrier& bufferMemoryBarrier)
+        {
+            buffers.push_back(bufferMemoryBarrier);
+            return *this;
+        }
+
+        Barrier2& add(const ImageMemoryBarrier& imageMemoryBarrier)
+        {
+            images.push_back(imageMemoryBarrier);
+            return *this;
+        }
+
+        std::vector<BufferMemoryBarrier> buffers;
+        std::vector<ImageMemoryBarrier>  images;
+    };
+
     class CommandList
     {
     public:
@@ -53,6 +101,10 @@ namespace RHI
 
         // ❗(Lifetime) mCommandBuffer is freed by VulkanCommandPool::free();
         ~CommandList() = default;
+
+        void insertBarrier(const Barrier2& barrier)
+        {
+        }
 
         // Begin recording the CommandList
         void begin();
@@ -137,6 +189,8 @@ namespace RHI
 
     private:
         vk::CommandBuffer   mCommandBuffer;
+
+        std::unordered_map<int32_t, std::vector<SyncState>> mState;
 
         PipelineBase*       mBoundPipeline = nullptr;
 

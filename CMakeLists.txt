@@ -122,6 +122,11 @@ set(V2_FILES
     Nebula/Views/HairView.hpp
     Nebula/Views/UITestView.hpp
     Nebula/Core/View.cpp
+    Nebula/Views/Fractals/FractalView.hpp
+    Nebula/Views/Fractals/FractalView.cpp
+    Nebula/Level/Render/BloomPass.hpp
+    Nebula/Level/Render/BloomPass.cpp
+    Nebula/VulkanRHI/Commands/Sync2.hpp
 )
 
 add_executable(Nebula3
