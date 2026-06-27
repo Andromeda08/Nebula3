@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "TrackedState.hpp"
+#include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Device.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
@@ -45,52 +47,6 @@ namespace RHI
         bool               singleTimeSubmit = false;
     };
 
-    struct SyncState
-    {
-        vk::AccessFlags2        accessFlags = vk::AccessFlagBits2::eNone;
-        vk::PipelineStageFlags2 stageFlags  = vk::PipelineStageFlagBits2::eNone;
-        vk::ImageLayout         layout      = vk::ImageLayout::eUndefined;
-    };
-
-    struct BufferMemoryBarrier
-    {
-        BufferUsage dstUsage    = BufferUsage::All;
-        Buffer*     pBuffer     = nullptr;
-    };
-
-    struct ImageSubresourceRange
-    {
-        uint32_t firstMip   = 0;
-        uint32_t mipLevels  = VK_REMAINING_MIP_LEVELS;
-        uint32_t firstLayer = 0;
-        uint32_t layerCount = VK_REMAINING_ARRAY_LAYERS;
-    };
-
-    struct ImageMemoryBarrier
-    {
-        ImageUsage            dstUsage         = ImageUsage::General;
-        Image*                pImage           = nullptr;
-        ImageSubresourceRange subresourceRange = {};
-    };
-
-    struct Barrier2
-    {
-        Barrier2& add(const BufferMemoryBarrier& bufferMemoryBarrier)
-        {
-            buffers.push_back(bufferMemoryBarrier);
-            return *this;
-        }
-
-        Barrier2& add(const ImageMemoryBarrier& imageMemoryBarrier)
-        {
-            images.push_back(imageMemoryBarrier);
-            return *this;
-        }
-
-        std::vector<BufferMemoryBarrier> buffers;
-        std::vector<ImageMemoryBarrier>  images;
-    };
-
     class CommandList
     {
     public:
@@ -104,6 +60,34 @@ namespace RHI
 
         void insertBarrier(const Barrier2& barrier)
         {
+            std::vector<vk::ImageMemoryBarrier2> imageBarriers;
+            for (const auto& b : barrier.imageBarriers)
+            {
+                auto handle = b.pImage->getImage();
+                if (!mImageState.contains(handle))
+                {
+                    const auto& p = b.pImage->getProperties();
+                    mImageState.insert_or_assign(handle, TrackedImageState(Range(0, p.levelCount - 1)));
+                }
+                imageBarriers.append_range(mImageState.at(handle).generateBarriers(b.pImage, b.dstState, b.range));
+            }
+
+            std::vector<vk::BufferMemoryBarrier2> bufferBarriers;
+            for (const auto& b : barrier.bufferBarriers)
+            {
+                auto handle = b.pBuffer->getHandle();
+                if (!mBufferState.contains(handle))
+                {
+                    mBufferState.insert_or_assign(handle, TrackedBufferState());
+                }
+                bufferBarriers.push_back(mBufferState.at(handle).getBarrier(b.pBuffer, b.dstState));
+            }
+
+            const auto dependencyInfo = vk::DependencyInfo()
+                .setImageMemoryBarriers(imageBarriers)
+                .setBufferMemoryBarriers(bufferBarriers);
+
+            mCommandBuffer.pipelineBarrier2(dependencyInfo);
         }
 
         // Begin recording the CommandList
@@ -190,7 +174,8 @@ namespace RHI
     private:
         vk::CommandBuffer   mCommandBuffer;
 
-        std::unordered_map<int32_t, std::vector<SyncState>> mState;
+        std::map<vk::Image,  TrackedImageState>  mImageState;
+        std::map<vk::Buffer, TrackedBufferState> mBufferState;
 
         PipelineBase*       mBoundPipeline = nullptr;
 

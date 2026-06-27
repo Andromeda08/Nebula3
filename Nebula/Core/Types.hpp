@@ -81,10 +81,21 @@ struct Range
         return start <= other.start && other.end <= end;
     }
 
+    // Check whether a range is included within the current one. (endpoint exclusive)
+    [[nodiscard]] bool containsStrict(const Range& other) const noexcept
+    {
+        return start < other.start && other.end < end;
+    }
+
     // Check whether a value is contained within the current range. (endpoint inclusive)
     [[nodiscard]] bool includes(const int32_t value) const noexcept
     {
         return start <= value && value <= end;
+    }
+
+    [[nodiscard]] bool adjacentTo(const Range& other) const noexcept
+    {
+        return end + 1 == other.start || other.end + 1 == start;
     }
 
     // Get the length of the Range.
@@ -96,5 +107,10 @@ struct Range
     [[nodiscard]] auto toString() const noexcept -> std::string
     {
         return std::format("[{}, {}]", start, end);
+    }
+
+    [[nodiscard]] bool operator==(const Range& other) const
+    {
+        return other.start == start && other.end == end;
     }
 };
