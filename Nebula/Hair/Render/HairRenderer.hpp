@@ -78,7 +78,6 @@ namespace nbl
         vk::Rect2D                              mScissor;
         vk::Viewport                            mViewport;
         SPtr<RHI::Pipeline>                     mPipeline;
-        PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
         PerFrameArray<SPtr<RHI::Image>>         mRenderTarget;
         PerFrameArray<SPtr<RHI::Image>>         mDepthBuffer;
     };

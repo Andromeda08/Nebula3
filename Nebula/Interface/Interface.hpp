@@ -188,7 +188,7 @@ namespace nbl
     public:
         explicit Interface(const InterfaceParams& params);
 
-        void render(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData);
+        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData);
 
         [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t frame)
         {

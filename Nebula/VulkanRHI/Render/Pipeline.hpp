@@ -43,8 +43,8 @@ namespace RHI
          */
         Rendering& addAttachment(
             const SPtr<Image>&                   pImage,
-            const vk::AttachmentLoadOp           loadOp     = vk::AttachmentLoadOp::eClear,
-            const vk::AttachmentStoreOp          storeOp    = vk::AttachmentStoreOp::eStore,
+            vk::AttachmentLoadOp                 loadOp     = vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp                storeOp    = vk::AttachmentStoreOp::eStore,
             const std::optional<vk::ClearValue>& clearValue = std::nullopt,
             const SPtr<Image>&                   pResolve   = nullptr
         );

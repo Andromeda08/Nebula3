@@ -34,39 +34,44 @@ namespace nbl
 
         pCommandList->setViewportScissor(mViewport, mScissor);
 
-        mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-        {
-            const auto& info = mHairModels->mHairInfos[mHairIndex];
-            const auto pushConstants = PushConstants
+        RHI::Rendering()
+            .setRenderArea(mScissor)
+            .addAttachment(mRenderTarget[frameData.currentFrame])
+            .addAttachment(mDepthBuffer[frameData.currentFrame])
+            .setLabel(fmt::format("Hair_Classic_RenderPass"))
+            .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
             {
-                .model                   = model,
-                .diffuse                 = mDiffuse,
-                .specular                = mSpecular,
-                .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
-                .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
-                .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
-                .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
-                .cameraBufferAddress     = cameraBuffer,
-                .firstVertex             = info.firstVertex,
-                .vertexCount             = info.vertexCount,
-                .firstStrand             = info.firstStrand,
-                .strandCount             = info.strandCount,
-                .renderMode              = std::to_underlying(mRenderingMode),
-                .useCustomColors         = mUseCustomColor ? 1 : 0,
-                .specularFactor          = mSpecularFactor,
-                ._pad0                   = 0,
-            };
+                const auto& info = mHairModels->mHairInfos[mHairIndex];
+                const auto pushConstants = PushConstants
+                {
+                    .model                   = model,
+                    .diffuse                 = mDiffuse,
+                    .specular                = mSpecular,
+                    .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
+                    .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
+                    .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
+                    .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
+                    .cameraBufferAddress     = cameraBuffer,
+                    .firstVertex             = info.firstVertex,
+                    .vertexCount             = info.vertexCount,
+                    .firstStrand             = info.firstStrand,
+                    .strandCount             = info.strandCount,
+                    .renderMode              = std::to_underlying(mRenderingMode),
+                    .useCustomColors         = mUseCustomColor ? 1 : 0,
+                    .specularFactor          = mSpecularFactor,
+                    ._pad0                   = 0,
+                };
 
-            mPipeline->bind(cmd);
-            mPipeline->pushConstants(cmd, &pushConstants);
+                mPipeline->bind(cmd);
+                mPipeline->pushConstants(cmd, &pushConstants);
 
-            auto taskGroupSizeX = mHairModels->getHairGeometry(static_cast<size_t>(mHairIndex)).taskGroupSizeX;
-            if (mUseCustomWgSize)
-            {
-                taskGroupSizeX = static_cast<uint32_t>(mCustomTaskWgSize);
-            }
-            cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
-        });
+                auto taskGroupSizeX = mHairModels->getHairGeometry(static_cast<size_t>(mHairIndex)).taskGroupSizeX;
+                if (mUseCustomWgSize)
+                {
+                    taskGroupSizeX = static_cast<uint32_t>(mCustomTaskWgSize);
+                }
+                cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
+            });
 
         pCommandList->endLabel();
     }

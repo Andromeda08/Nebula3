@@ -46,40 +46,43 @@ namespace RHI
         // Check if the specified frame has been completed using the corresponding Fence.
         [[nodiscard]] bool isFrameComplete(uint64_t frame) const;
 
+        [[nodiscard]] SPtr<Buffer>     createBuffer    (const RHIBufferCreateInfo&     createInfo) const;
+        [[nodiscard]] SPtr<Image>      createImage     (const RHIImageCreateInfo&      createInfo) const;
+        [[nodiscard]] SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
+
+        [[nodiscard]] UPtr<GraphicsPipeline2> createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const;
+
+        void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
+
         [[nodiscard]] SPtr<Instance> getInstance()      const { return mInstance; }
         [[nodiscard]] SPtr<Device>   getDevice()        const { return mDevice; }
         [[nodiscard]] CommandQueue*  getGraphicsQueue() const { return mGraphicsQueue.get(); }
         [[nodiscard]] Swapchain*     getSwapchain()     const { return mSwapchain.get(); }
 
-        [[nodiscard]] SPtr<Buffer>     createBuffer    (const RHIBufferCreateInfo&     createInfo) const;
-        [[nodiscard]] SPtr<Image>      createImage     (const RHIImageCreateInfo&      createInfo) const;
-        [[nodiscard]] SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
-
-        UPtr<GraphicsPipeline2>  createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const;
-
-        UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
-        UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
-        UPtr<RaytracingPipeline> createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const;
-
-        UPtr<RenderPass> createRenderPass(const RenderPassCreateInfo& createInfo) const;
-
-        void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
-
-        [[nodiscard]] const RHIFeatures& getFeatures() const
+        [[nodiscard]] static const RHIFeatures& getFeatures()
         {
              return gFeatures;
         }
 
+        [[deprecated("Use createGraphicsPipeline2")]]
+        [[nodiscard]] UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
+
+        [[deprecated("Use createComputePipeline2")]]
+        [[nodiscard]] UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
+
+        [[deprecated("Use createRaytracingPipeline2")]]
+        [[nodiscard]] UPtr<RaytracingPipeline> createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const;
+
     private:
-        SPtr<IWindow>       mWindow;
+        SPtr<IWindow>               mWindow;
 
-        SPtr<Instance>      mInstance;
-        UPtr<DebugContext>  mDebugContext;
-        SPtr<Device>        mDevice;
-        UPtr<Swapchain>     mSwapchain;
-        UPtr<CommandQueue>  mGraphicsQueue;
-        UPtr<FrameSync>     mFrameSync;
+        SPtr<Instance>              mInstance;
+        UPtr<DebugContext>          mDebugContext;
+        SPtr<Device>                mDevice;
+        UPtr<Swapchain>             mSwapchain;
+        UPtr<CommandQueue>          mGraphicsQueue;
+        UPtr<FrameSync>             mFrameSync;
 
-        std::vector<PendingDelete> mDeletionQueue;
+        std::vector<PendingDelete>  mDeletionQueue;
     };
 }

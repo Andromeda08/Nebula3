@@ -22,10 +22,11 @@ namespace RHI
     }
 
     Image::Image(const ImageCreateInfo& createInfo)
-    : mDevice(createInfo.device)
+    : Resource(mDevice)
     , mProperties(detail::makeImageProperties(createInfo))
-    , mDebugName(createInfo.debugName)
     {
+        setLabel(createInfo.debugName);
+
         /**
          * Create Image
          */
@@ -45,26 +46,24 @@ namespace RHI
         {
             imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eCubeCompatible);
         }
-
         if (createInfo.aliased)
         {
             imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eAlias);
         }
 
-        const auto* pImageInfo = reinterpret_cast<VkImageCreateInfo*>(&imageCreateInfo);
-        auto* pImage = reinterpret_cast<VkImage*>(&mImage);
-
         if (!createInfo.aliased)
         {
-            VmaAllocationCreateInfo allocationInfo {};
-            allocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
-            vmaCreateImage(mDevice->getAllocator(), pImageInfo, &allocationInfo, pImage, &mAllocation, &mAllocationInfo);
-            mHasMemory = true;
+            const ImageMemoryAllocationInfo allocInfo = {
+                .pHandle   = &mImage,
+                .imageInfo = imageCreateInfo,
+            };
+            const auto allocation = mDevice->allocateImage(allocInfo);
+            setAllocation(allocation);
         }
 
         mDevice->nameObject<vk::Image>({
-            .debugName = mDebugName,
-            .handle = mImage,
+            .debugName = mLabel,
+            .handle    = mImage,
         });
 
         /**
@@ -79,7 +78,7 @@ namespace RHI
         mImageView = mDevice->getHandle().createImageView(viewCreateInfo);
 
         mDevice->nameObject<vk::ImageView>({
-            .debugName = std::format("{} View", mDebugName),
+            .debugName = std::format("{} View", mLabel),
             .handle    = mImageView,
         });
 
@@ -96,7 +95,7 @@ namespace RHI
                 mMipViews[i] = mDevice->getHandle().createImageView(mipViewInfo);
 
                 mDevice->nameObject<vk::ImageView>({
-                    .debugName = std::format("{} View [mip={}]", mDebugName, i),
+                    .debugName = std::format("{} View [mip={}]", mLabel, i),
                     .handle    = mMipViews[i],
                 });
             }
@@ -138,7 +137,7 @@ namespace RHI
             mSampler = mDevice->getHandle().createSampler(samplerCreateInfo);
 
             mDevice->nameObject<vk::Sampler>({
-                .debugName = std::format("{} Sampler", mDebugName),
+                .debugName = std::format("{} Sampler", mLabel),
                 .handle = mSampler,
             });
         }
@@ -153,10 +152,10 @@ namespace RHI
 
         mDevice->getHandle().destroyImageView(mImageView);
 
-        vmaDestroyImage(mDevice->getAllocator(), mImage, mAllocation);
+        mAllocation->free();
     }
 
-    const vk::ImageView& Image::getMipView(size_t i) const noexcept
+    const vk::ImageView& Image::getMipView(const size_t i) const noexcept
     {
         return mMipViews[i];
     }
@@ -168,6 +167,7 @@ namespace RHI
 
         /* Transition base mip level to TransferSrc */
         {
+
             const auto barrier_Undef_TDst = vk::ImageMemoryBarrier2()
                 .setImage(mImage)
                 .setSubresourceRange({ mProperties.aspectFlags, 0, 1, 0, layerCount })

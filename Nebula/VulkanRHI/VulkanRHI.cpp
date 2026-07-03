@@ -195,16 +195,6 @@ namespace RHI
         return RaytracingPipeline::create(createInfo);
     }
 
-    UPtr<RenderPass> VulkanRHI::createRenderPass(const RenderPassCreateInfo& createInfo) const
-    {
-        auto privateCreateInfo = RenderPassCreateInfo(createInfo);
-        if (createInfo.renderArea.extent.width == 0 && createInfo.renderArea.extent.height == 0)
-        {
-            privateCreateInfo.renderArea = mSwapchain->getProperties().area;
-        }
-        return RenderPass::create(privateCreateInfo);
-    }
-
     void VulkanRHI::immediate_uploadToBuffer(const Buffer* pDst, const void* pData, const uint64_t size, const uint64_t srcOffset, const uint64_t dstOffset) const noexcept
     {
         const auto staging = createBuffer({

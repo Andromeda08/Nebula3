@@ -104,12 +104,6 @@ namespace nbl
                     .createSampler = true,
                     .debugName     = fmt::format("UI_Result_Resolved_{}", i),
                 });
-
-                mRenderPass[i] = mRHI->createRenderPass({
-                    .renderArea       = mSize.getRenderArea(),
-                    .colorAttachments = { makeResolvedAttachment(mResult[i], mResolvedResult[i]) },
-                    .label            = fmt::format("UI_RenderPass_{}", i),
-                });
             }
         }
 
@@ -139,7 +133,7 @@ namespace nbl
         mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
     }
 
-    void Interface::render(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
+    void Interface::render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
         const auto i = frameData.currentFrame;
 
@@ -150,31 +144,36 @@ namespace nbl
             .addBarrier(mResolvedResult[i]->getBarrier(RHI::ImageUsage::ColorAttachment))
             .insert(pCommandList);
 
-        mRenderPass[i]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-            const auto [w, h, d] = mResult[i]->getProperties().getExtent3D();
-            const auto scissor   = vk::Rect2D {{ 0, 0 }, {w, h} };
-            const auto viewport  = vk::Viewport { 0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, 1.0f };
-            pCommandList->setViewportScissor(viewport, scissor);
+        RHI::Rendering()
+            .addAttachment(mResult[i], vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, std::nullopt, mResolvedResult[i])
+            .setRenderArea(mSize.getRenderArea())
+            .setLabel(fmt::format("UI_RenderPass_{}", i))
+            .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
+                const auto [w, h, d] = mResult[i]->getProperties().getExtent3D();
+                const auto scissor   = vk::Rect2D {{ 0, 0 }, {w, h} };
+                const auto viewport  = vk::Viewport { 0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, 1.0f };
+                pCommandList->setViewportScissor(viewport, scissor);
 
-            PushConstant pushConstant;
-            pushConstant.proj = mSize.projection;
+                PushConstant pushConstant;
+                pushConstant.proj = mSize.projection;
 
-            mPipeline->bind(cmd);
-            mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
+                mPipeline->bind(cmd);
+                mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
 
-            constexpr vk::DeviceSize offset = 0;
-            cmd->getHandle().bindVertexBuffers(0, 1, &mVertexBuffer->getHandle(), &offset);
-            cmd->getHandle().bindIndexBuffer(mIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
+                constexpr vk::DeviceSize offset = 0;
+                cmd->getHandle().bindVertexBuffers(0, 1, &mVertexBuffer->getHandle(), &offset);
+                cmd->getHandle().bindIndexBuffer(mIndexBuffer->getHandle(), 0, vk::IndexType::eUint32);
 
-            for (auto j = 0; j < mElements.size(); j++)
-            {
-                pushConstant.isText = 1;
-                pushConstant.textureIndex = static_cast<int32_t>(mElements[j]->getTextureIndex());
-                pushConstant.color = glm::vec4(1.0f);
-                mPipeline->pushConstants(cmd, &pushConstant);
-                pCommandList->getHandle().drawIndexed(mGeometryInfo[j].indexCount, 1, mGeometryInfo[j].firstIndex, 0, 0);
-            }
-        });
+                for (auto j = 0; j < mElements.size(); j++)
+                {
+                    pushConstant.isText = 1;
+                    pushConstant.textureIndex = static_cast<int32_t>(mElements[j]->getTextureIndex());
+                    pushConstant.color = glm::vec4(1.0f);
+                    mPipeline->pushConstants(cmd, &pushConstant);
+                    pCommandList->getHandle().drawIndexed(mGeometryInfo[j].indexCount, 1, mGeometryInfo[j].firstIndex, 0, 0);
+                }
+            });
+
         pCommandList->endLabel();
     }
 }

@@ -48,11 +48,7 @@ namespace nbl
             createPipeline();
         }
 
-        void render(
-            const RHI::CommandList* pCommandList,
-            const RHI::FrameData&   frameData,
-            const uint32_t          hairIndex,
-            const uint64_t          cameraBuffer)
+        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint32_t hairIndex, const uint64_t cameraBuffer)
         {
             pCommandList->beginLabel("Hair_Classic");
 
@@ -64,33 +60,38 @@ namespace nbl
                 .addBarrier(mDebugColorsBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::StorageRead))
                 .insert(pCommandList);
 
-            mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-            {
-                const auto& info = mHairModels->mHairInfos[hairIndex];
-                const auto pushConstants = PushConstants
+            RHI::Rendering()
+                .setRenderArea(mScissor)
+                .addAttachment(mRenderTarget[frameData.currentFrame])
+                .addAttachment(mDepthBuffer[frameData.currentFrame])
+                .setLabel(fmt::format("Hair_Classic_RenderPass"))
+                .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
                 {
-                    .model                   = model,
-                    .diffuse                 = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f),
-                    .specular                = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f),
-                    .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
-                    // .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
-                    .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
-                    .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
-                    .cameraBufferAddress     = cameraBuffer,
-                    .firstVertex             = info.firstVertex,
-                    .vertexCount             = info.vertexCount,
-                    .firstStrand             = info.firstStrand,
-                    .strandCount             = info.strandCount,
-                    .renderMode              = std::to_underlying(mRenderingMode),
-                    ._pad0                   = 0,
-                };
+                    const auto& info = mHairModels->mHairInfos[hairIndex];
+                    const auto pushConstants = PushConstants
+                    {
+                        .model                   = model,
+                        .diffuse                 = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f),
+                        .specular                = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f),
+                        .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
+                        // .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
+                        .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
+                        .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
+                        .cameraBufferAddress     = cameraBuffer,
+                        .firstVertex             = info.firstVertex,
+                        .vertexCount             = info.vertexCount,
+                        .firstStrand             = info.firstStrand,
+                        .strandCount             = info.strandCount,
+                        .renderMode              = std::to_underlying(mRenderingMode),
+                        ._pad0                   = 0,
+                    };
 
-                mPipeline->bind(cmd);
-                mPipeline->pushConstants(cmd, &pushConstants);
+                    mPipeline->bind(cmd);
+                    mPipeline->pushConstants(cmd, &pushConstants);
 
-                const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
-                cmd->getHandle().drawMeshTasksEXT(1, 1, 1);
-            });
+                    const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
+                    cmd->getHandle().drawMeshTasksEXT(1, 1, 1);
+                });
 
             pCommandList->endLabel();
         }
@@ -133,16 +134,6 @@ namespace nbl
                 0.0f, 1.0f
             };
 
-            for (size_t i = 0; i < mRenderPass.size(); i++)
-            {
-                mRenderPass[i] = mRHI->createRenderPass({
-                    .renderArea       = mScissor,
-                    .colorAttachments = { makeAttachment(mRenderTarget[i]) },
-                    .depthAttachment  = makeAttachment(mDepthBuffer[i]),
-                    .label            = fmt::format("Hair_Classic_RenderPass_", i),
-                });
-            }
-
             const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
                 .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment)
                 .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
@@ -166,13 +157,12 @@ namespace nbl
 
         HairRenderingMode                       mRenderingMode = HairRenderingMode::Default;
 
-        std::array<glm::vec4, 1024>             mDebugColors;
+        std::array<glm::vec4, 1024>             mDebugColors {};
         SPtr<RHI::Buffer>                       mDebugColorsBuffer;
 
         vk::Rect2D                              mScissor;
         vk::Viewport                            mViewport;
         SPtr<RHI::Pipeline>                     mPipeline;
-        PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
         PerFrameArray<SPtr<RHI::Image>>         mRenderTarget;
         PerFrameArray<SPtr<RHI::Image>>         mDepthBuffer;
     };

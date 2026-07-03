@@ -4,6 +4,7 @@
 
 #include "Device.hpp"
 #include "VulkanCore.hpp"
+#include "Commands/TrackedState.hpp"
 #include "Core/Configuration.hpp"
 #include "Core/Macro.hpp"
 #include "Detail/ImageTraits.hpp"
@@ -35,66 +36,50 @@ namespace RHI
         SPtr<Device> device;
     };
 
-    class Image
+    struct SwapchainBackedImage
+    {
+
+    };
+
+    struct AllocationBackedImage
+    {
+        bool               hasMemory      = false;
+        VmaAllocation      allocation     = {};
+        VmaAllocationInfo  allocationInfo = {};
+    };
+
+    using ImageUnderlyingResource = std::variant<std::monostate, AllocationBackedImage, SwapchainBackedImage>;
+
+    class Image : public Resource
     {
     public:
         nbl_DISABLE_COPY(Image);
         nbl_CTOR_SHARED(Image);
 
-        ~Image();
+        ~Image() override;
 
-        const vk::ImageView& getMipView(size_t i) const noexcept;
-
-        /**
-         * Create an ImageMemoryBarrier to the dstState.
-         * @param dstUsage
-         * @param update Update the internally tracked state
-         */
-        vk::ImageMemoryBarrier2 getBarrier(const ImageUsage& dstUsage, const bool update = true) noexcept
-        {
-            const auto dstState = getImageState(dstUsage);
-            const auto barrier = makeImageMemoryBarrier(mState, dstState)
-                .setImage(mImage)
-                .setSubresourceRange(mProperties.getSubresourceRange());
-
-            if (update)
-            {
-                mState = dstState;
-            }
-
-            return barrier;
-        }
+        [[nodiscard]] const vk::ImageView& getMipView(size_t i) const noexcept;
 
         void generateMipmaps(const CommandList* commandList, vk::Filter filter = vk::Filter::eNearest);
 
-        void updateState(const ImageState& imageState)
-        {
-            mState = imageState;
-        }
+        [[nodiscard]] TrackedImageState& getState() { return mState; }
 
-        void useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo);
+        [[nodiscard]] const vk::Image&        getImage()      const { return mImage; }
+        [[nodiscard]] const vk::ImageView&    getImageView()  const { return mImageView; }
+        [[nodiscard]] const ImageProperties&  getProperties() const { return mProperties; }
 
-        const vk::Image&        getImage()      const { return mImage; }
-        const vk::ImageView&    getImageView()  const { return mImageView; }
-        const vk::Sampler&      getSampler()    const { return mSampler; }
-        const ImageProperties&  getProperties() const { return mProperties; }
-        ImageState              getState()      const { return mState; }
+        [[deprecated("Per-image samplers are deprecated")]]
+        [[nodiscard]] const vk::Sampler&      getSampler()    const { return mSampler; }
 
     private:
-        vk::Image               mImage;
-        vk::ImageView           mImageView;
-        vk::Sampler             mSampler;
-        ImageState              mState;
+        vk::Image                   mImage;
+        vk::ImageView               mImageView;
+        std::vector<vk::ImageView>  mMipViews;
 
-        std::vector<vk::ImageView> mMipViews;
+        // TODO: Remove these
+        vk::Sampler                 mSampler;
 
-        bool                    mHasMemory      = false;
-        VmaAllocation           mAllocation     = {};
-        VmaAllocationInfo       mAllocationInfo = {};
-
-        SPtr<Device>            mDevice;
-
-        const ImageProperties   mProperties;
-        const std::string       mDebugName;
+        TrackedImageState           mState;
+        const ImageProperties       mProperties;
     };
 }

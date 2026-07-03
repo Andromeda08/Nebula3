@@ -155,23 +155,28 @@ namespace RHI
     class TrackedImageState
     {
     public:
-        explicit TrackedImageState(const Range& mipRange)
-        : mMipRange(mipRange)
+        explicit TrackedImageState(
+            const vk::Image& image,
+            const ImageProperties& imageProperties,
+            const vk::ImageLayout initialLayout = vk::ImageLayout::eUndefined)
+        : mImage(image)
+        , mImageProperties(imageProperties)
+        , mMipRange(Range(0, imageProperties.levelCount))
         {
             mState.push_back({
                 .access   = vk::AccessFlagBits2::eNone,
                 .stage    = vk::PipelineStageFlagBits2::eNone,
-                .layout   = vk::ImageLayout::eUndefined,
-                .mipRange = mipRange,
+                .layout   = initialLayout,
+                .mipRange = mMipRange,
             });
         }
 
-        [[nodiscard]] std::vector<vk::ImageMemoryBarrier2> generateBarriers(const Image* pImage, const ImageUsage usage, const Range& range)
+        [[nodiscard]] std::vector<vk::ImageMemoryBarrier2> generateBarriers(const ImageUsage usage, const Range& range)
         {
-            return generateBarriers(pImage, getImageState(usage), range);
+            return generateBarriers(getImageState(usage), range);
         }
 
-        [[nodiscard]] std::vector<vk::ImageMemoryBarrier2> generateBarriers(const Image* pImage, const ImageState& dst, const Range& range)
+        [[nodiscard]] std::vector<vk::ImageMemoryBarrier2> generateBarriers(const ImageState& dst, const Range& range)
         {
             std::vector<vk::ImageMemoryBarrier2> result;
 
@@ -187,8 +192,8 @@ namespace RHI
                 const auto end   = std::min(tracked.mipRange.end, range.end);
 
                 auto barrier = makeImageMemoryBarrier({ tracked.layout, tracked.access, tracked.stage }, dst)
-                    .setImage(pImage->getImage())
-                    .setSubresourceRange(pImage->getProperties().getSubresourceRange()
+                    .setImage(mImage)
+                    .setSubresourceRange(mImageProperties.getSubresourceRange()
                         .setBaseMipLevel(start)
                         .setLevelCount(end - start + 1));
 
@@ -313,6 +318,8 @@ namespace RHI
         }
 
     private:
+        const vk::Image&                      mImage;
+        const ImageProperties&                mImageProperties;
         Range                                 mMipRange;
         std::vector<TrackedImageStateDetails> mState;
     };

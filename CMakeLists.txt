@@ -127,6 +127,7 @@ set(V2_FILES
     Nebula/Level/Render/BloomPass.hpp
     Nebula/Level/Render/BloomPass.cpp
     Nebula/VulkanRHI/Commands/TrackedState.hpp
+    Nebula/RHIGen2/Image.hpp
 )
 
 add_executable(Nebula3
@@ -134,12 +135,13 @@ add_executable(Nebula3
     External/mikktspace/mikktspace.c
     External/mikktspace/mikktspace.h
 
+    Nebula/main.cpp
+
     Nebula/Impl/pch.hpp
     Nebula/Core/Configuration.hpp
     Nebula/Core/AppSpecification.hpp
     Nebula/Core/Types.hpp
     Nebula/Core/App.hpp
-    Nebula/main.cpp
     Nebula/Core/Configuration.cpp
     Nebula/Core/Macro.hpp
     Nebula/Core/App.cpp
