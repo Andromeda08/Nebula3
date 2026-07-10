@@ -39,6 +39,7 @@ struct GPUInstanceData
     int         geometryIndex;
     int         materialIndex;
     int         objectId;
+    int         emitterIndex;
 };
 
 // [InstanceBuffer] Buffer reference

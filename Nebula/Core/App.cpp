@@ -4,6 +4,7 @@
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "Views/HairView.hpp"
 #include "Views/LevelView.hpp"
+#include "Views/PathTracerView.hpp"
 #include "Views/UITestView.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "Window/SplashWindow.hpp"
@@ -40,12 +41,13 @@ App::App()
 
     mUserInterface->addComponent<nbl::ViewSelectUI>(mViews, &mActiveView);
 
-    addView<nbl::LevelView>();
-    if constexpr (!RHI::Platform::isApple)
-    {
-        addView<nbl::HairView>();
-    }
-    addView<nbl::UITestView>();
+    // addView<nbl::LevelView>();
+    // if constexpr (!RHI::Platform::isApple)
+    // {
+    //     addView<nbl::HairView>();
+    // }
+    // addView<nbl::UITestView>();
+    addView<nbl::PathTracerView>();
 
     mWindow->reveal();
 }
@@ -157,7 +159,7 @@ void App::run()
                 .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment));
             barrier.insert(commandList);
         }
-        mUserInterface->draw(commandList, frameData);
+        mUserInterface->draw(commandList, frameData, [&](){ mActiveView->onDrawUI(); });
         /* Acquired Swapchain Image | PresentSrc */ {
             const auto barrier = RHI::Barrier()
                 .addBarrier(mVulkanRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::PresentSrc));

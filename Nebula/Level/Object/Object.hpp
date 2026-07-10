@@ -27,6 +27,8 @@ namespace nbl
         bool        isFirstUpdate   = true;
         Handle      hInstance       = {};
 
+        int32_t     emitterIndex    = -1;
+
         [[nodiscard]] glm::mat4 getModel() const
         {
             const glm::mat4 local = transform.getModel();

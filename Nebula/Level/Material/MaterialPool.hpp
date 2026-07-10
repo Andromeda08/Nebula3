@@ -15,6 +15,11 @@ struct GPUMaterialData
     float     roughnessFactor;
     int32_t   isEmissive;
     uint32_t  rtHitGroup;
+
+    uint32_t  bsdfIndex;
+    glm::vec4 diffuse_Albedo;
+    float     dielectric_IntIoR;
+    float     dielectric_ExtIoR;
 };
 
 struct MaterialData
@@ -33,6 +38,12 @@ struct MaterialData
     // Ray Tracing
     uint32_t        rtHitGroup              = 0;
 
+    // Path Tracer Params
+    uint32_t        bsdfIndex               = 0;
+    glm::vec4       diffuse_albedo          = glm::vec4(1.0f);
+    float           dielectric_IntIoR       = 1.5046f;
+    float           dielectric_ExtIoR       = 1.000277f;
+
     [[nodiscard]] GPUMaterialData toGPU() const noexcept
     {
         return {
@@ -44,6 +55,10 @@ struct MaterialData
             .roughnessFactor            = pRoughnessFactor,
             .isEmissive                 = pIsEmissive ? 1 : 0,
             .rtHitGroup                 = rtHitGroup,
+            .bsdfIndex                  = bsdfIndex,
+            .diffuse_Albedo             = diffuse_albedo,
+            .dielectric_IntIoR          = dielectric_IntIoR,
+            .dielectric_ExtIoR          = dielectric_ExtIoR,
         };
     }
 };

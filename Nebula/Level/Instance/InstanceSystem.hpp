@@ -17,6 +17,7 @@ namespace nbl
         int32_t     geometryIndex;
         int32_t     materialIndex;
         int32_t     objectId;
+        int32_t     emitterIndex;
     };
 
     struct InstanceData
@@ -35,6 +36,7 @@ namespace nbl
         int32_t     geometryIndex;
         int32_t     materialIndex;
         int32_t     objectId;
+        int32_t     emitterIndex = -1;
 
         [[nodiscard]] GPUInstanceData toGPU() const
         {
@@ -48,6 +50,7 @@ namespace nbl
                 .geometryIndex  = geometryIndex,
                 .materialIndex  = materialIndex,
                 .objectId       = objectId,
+                .emitterIndex   = emitterIndex,
             };
         }
     };

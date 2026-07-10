@@ -18,6 +18,11 @@ struct GPUMaterialData
     float   roughnessFactor;
     int     isEmissive;
     uint    rtHitGroup;
+
+    uint    bsdfIndex;
+    vec4    diffuse_Albedo;
+    float   dielectric_IntIoR;
+    float   dielectric_ExtIoR;
 };
 
 // [MaterialBuffer] Buffer Reference
