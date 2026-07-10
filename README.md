@@ -4,7 +4,7 @@ A cross-platform rendering engine built with Vulkan.
 <p align="center">
   <img src="./Resources/pt.png" width="75%" />
 </p>
-<p align="center">Ray Tracing Pipeline MIS Path Tracer with Mirrors and Dielectrics</p>
+<p align="center">Ray Tracing Pipeline MIS Path Tracer</p>
 
 <p align="center">
   <img src="./Resources/hair_preview.png" width="75%" />
@@ -43,6 +43,7 @@ A cross-platform rendering engine built with Vulkan.
 - Rendering techniques
   - Ray tracing pipeline-based MIS path tracer with support for any BSDF. 
     - Current BSDFs: Diffuse, Mirror, Dielectric
+    - Mesh Emitters
   - Deferred shading
   - Screen-space and raytraced ambient occlusion
   - Raytraced shadows
