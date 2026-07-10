@@ -52,6 +52,8 @@ namespace RHI
 
         [[nodiscard]] UPtr<GraphicsPipeline2> createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const;
 
+        [[nodiscard]] UPtr<RayTracingPipeline2> createRayTracingPipeline2(RayTracingPS ps, const PipelineCommon& common) const;
+
         void immediate_uploadToBuffer(const Buffer* pDst, const void* pData, uint64_t size, uint64_t srcOffset = 0, uint64_t dstOffset = 0) const noexcept;
 
         [[nodiscard]] SPtr<Instance> getInstance()      const { return mInstance; }

@@ -135,22 +135,6 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
         .debugName     = "UI_Result",
     });
 
-    mRenderPass = mRHI->createRenderPass({
-        .renderArea = {{0, 0}, {static_cast<uint32_t>(mScreen.size.x), static_cast<uint32_t>(mScreen.size.y)}},
-        .colorAttachments = {
-            RHI::Attachment {
-                .image          = mResult->getImage(),
-                .attachmentInfo = vk::RenderingAttachmentInfo()
-                    .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
-                    .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-                    .setImageView(mResult->getImageView())
-                    .setLoadOp(vk::AttachmentLoadOp::eLoad)
-                    .setStoreOp(vk::AttachmentStoreOp::eStore)
-            }
-        },
-        .label = "UI_RenderPass",
-    });
-
     const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
         .addDescriptorSetLayout(mTextureManager->getDescriptor()->getLayout())
         .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstant) })
@@ -176,53 +160,48 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
     mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
 }
 
-void TitleScreen::render(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
+void TitleScreen::render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
 {
     pCommandList->beginLabel("UI Test");
-    mRenderPass->setColorAttachment(0, RHI::Attachment {
-        .image          = mRHI->getSwapchain()->getImage(frameData.acquiredIndex),
-        .attachmentInfo = vk::RenderingAttachmentInfo()
-            .setClearValue(vk::ClearValue().setColor({0.0f, 0.0f, 0.0f, 1.0f}))
-            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setImageView(mRHI->getSwapchain()->getImageView(frameData.acquiredIndex))
-            .setLoadOp(vk::AttachmentLoadOp::eLoad)
-            .setStoreOp(vk::AttachmentStoreOp::eStore)
-    });
 
     RHI::Barrier()
         .addBarrier(mRHI->getSwapchain()->getBarrier(frameData.acquiredIndex, RHI::ImageUsage::ColorAttachment))
         .insert(pCommandList);
 
-    mRenderPass->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
-        const auto [w, h, d] = mResult->getProperties().getExtent3D();
-        const auto scissor   = vk::Rect2D {{ 0, 0 }, {w, h} };
-        const auto viewport  = vk::Viewport { 0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, 1.0f };
-        pCommandList->setViewportScissor(viewport, scissor);
+    const auto [w, h, d] = mResult->getProperties().getExtent3D();
+    const auto scissor   = vk::Rect2D {{ 0, 0 }, {w, h} };
+    const auto viewport  = vk::Viewport { 0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, 1.0f };
+    pCommandList->setViewportScissor(viewport, scissor);
 
-        PushConstant pushConstant;
-        pushConstant.proj = mScreen.proj;
-
-        mPipeline->bind(cmd);
-        mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
-
-        constexpr vk::DeviceSize offset = 0;
-        cmd->getHandle().bindVertexBuffers(0, 1, &mVertices->getHandle(), &offset);
-        cmd->getHandle().bindIndexBuffer(mIndices->getHandle(), 0, vk::IndexType::eUint32);
-        // for (auto i = 0; i < mQuads.size(); i++)
-        // {
-        //     pushConstant.color = mQuads[i].backgroundColor;
-        //     mPipeline->pushConstants(cmd, &pushConstant);
-        //     pCommandList->getHandle().drawIndexed(6, 1, i * 6, 0, 0);
-        // }
-
-        pushConstant.isText       = 1;
-        for (auto i = 0; i < mText.size(); i++)
+    RHI::Rendering()
+        .setRenderArea(scissor)
+        .addAttachment(mRHI->getSwapchain()->getImageRHI(frameData.acquiredIndex), vk::AttachmentLoadOp::eLoad)
+        .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
         {
-            pushConstant.textureIndex = static_cast<int32_t>(mText[i].pFont->getTextureIndex());
-            pushConstant.color = mText[i].color;
-            mPipeline->pushConstants(cmd, &pushConstant);
-            pCommandList->getHandle().drawIndexed(mText[i].indexCount, 1, mText[i].indexOffset, 0, 0);
-        }
-    });
+            PushConstant pushConstant;
+            pushConstant.proj = mScreen.proj;
+
+            mPipeline->bind(cmd);
+            mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
+
+            constexpr vk::DeviceSize offset = 0;
+            cmd->getHandle().bindVertexBuffers(0, 1, &mVertices->getHandle(), &offset);
+            cmd->getHandle().bindIndexBuffer(mIndices->getHandle(), 0, vk::IndexType::eUint32);
+            // for (auto i = 0; i < mQuads.size(); i++)
+            // {
+            //     pushConstant.color = mQuads[i].backgroundColor;
+            //     mPipeline->pushConstants(cmd, &pushConstant);
+            //     pCommandList->getHandle().drawIndexed(6, 1, i * 6, 0, 0);
+            // }
+
+            pushConstant.isText       = 1;
+            for (auto i = 0; i < mText.size(); i++)
+            {
+                pushConstant.textureIndex = static_cast<int32_t>(mText[i].pFont->getTextureIndex());
+                pushConstant.color = mText[i].color;
+                mPipeline->pushConstants(cmd, &pushConstant);
+                pCommandList->getHandle().drawIndexed(mText[i].indexCount, 1, mText[i].indexOffset, 0, 0);
+            }
+        });
     pCommandList->endLabel();
 }

@@ -1,5 +1,6 @@
 #include "Image.hpp"
 
+#include "Swapchain.hpp"
 #include "Commands/CommandList.hpp"
 
 namespace RHI
@@ -22,8 +23,9 @@ namespace RHI
     }
 
     Image::Image(const ImageCreateInfo& createInfo)
-    : Resource(mDevice)
+    : Resource(createInfo.device)
     , mProperties(detail::makeImageProperties(createInfo))
+    , mState(mImage, mProperties)
     {
         setLabel(createInfo.debugName);
 
@@ -32,7 +34,7 @@ namespace RHI
          */
         auto imageCreateInfo = vk::ImageCreateInfo()
             .setFormat(mProperties.format)
-            .setExtent({ mProperties.extent.width, mProperties.extent.height, 1 })
+            .setExtent({mProperties.extent.width, mProperties.extent.height, 1})
             .setSamples(mProperties.sampleCount)
             .setUsage(createInfo.usageFlags)
             .setTiling(vk::ImageTiling::eOptimal)
@@ -46,24 +48,17 @@ namespace RHI
         {
             imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eCubeCompatible);
         }
-        if (createInfo.aliased)
-        {
-            imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eAlias);
-        }
 
-        if (!createInfo.aliased)
-        {
-            const ImageMemoryAllocationInfo allocInfo = {
-                .pHandle   = &mImage,
-                .imageInfo = imageCreateInfo,
-            };
-            const auto allocation = mDevice->allocateImage(allocInfo);
-            setAllocation(allocation);
-        }
+        const ImageMemoryAllocationInfo allocInfo = {
+            .pHandle = &mImage,
+            .imageInfo = imageCreateInfo,
+        };
+        const auto allocation = mDevice->allocateImage(allocInfo);
+        setAllocation(allocation);
 
         mDevice->nameObject<vk::Image>({
             .debugName = mLabel,
-            .handle    = mImage,
+            .handle = mImage,
         });
 
         /**
@@ -72,14 +67,17 @@ namespace RHI
         const auto viewCreateInfo = vk::ImageViewCreateInfo()
             .setFormat(mProperties.format)
             .setImage(mImage)
-            .setSubresourceRange({ mProperties.aspectFlags, 0, 1, 0, static_cast<uint32_t>(createInfo.cubeMap ? 6 : 1) })
+            .setSubresourceRange({
+                mProperties.aspectFlags, 0, 1, 0,
+                static_cast<uint32_t>(createInfo.cubeMap ? 6 : 1)
+            })
             .setViewType(createInfo.cubeMap ? vk::ImageViewType::eCube : vk::ImageViewType::e2D);
 
         mImageView = mDevice->getHandle().createImageView(viewCreateInfo);
 
         mDevice->nameObject<vk::ImageView>({
             .debugName = std::format("{} View", mLabel),
-            .handle    = mImageView,
+            .handle = mImageView,
         });
 
         if (createInfo.mipmapping)
@@ -90,13 +88,13 @@ namespace RHI
                 const auto mipViewInfo = vk::ImageViewCreateInfo()
                     .setFormat(mProperties.format)
                     .setImage(mImage)
-                    .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, 1 })
+                    .setSubresourceRange({mProperties.aspectFlags, i, 1, 0, 1})
                     .setViewType(createInfo.cubeMap ? vk::ImageViewType::eCube : vk::ImageViewType::e2D);
                 mMipViews[i] = mDevice->getHandle().createImageView(mipViewInfo);
 
                 mDevice->nameObject<vk::ImageView>({
                     .debugName = std::format("{} View [mip={}]", mLabel, i),
-                    .handle    = mMipViews[i],
+                    .handle = mMipViews[i],
                 });
             }
         }
@@ -104,7 +102,6 @@ namespace RHI
         /**
          * Create Sampler
          */
-        //if (createInfo.createSampler)
         {
             auto samplerCreateInfo = vk::SamplerCreateInfo();
 
@@ -143,6 +140,27 @@ namespace RHI
         }
     }
 
+    Image::Image(Swapchain* pSwapchain, const uint32_t index, const SPtr<Device>& device)
+    : Resource(device)
+    , mUnderlyingResource(SwapchainBackedImage(device, pSwapchain, index))
+    , mProperties({
+        .format = pSwapchain->getProperties().format,
+        .extent = pSwapchain->getProperties().extent,
+        .aspectFlags = vk::ImageAspectFlagBits::eColor,
+        .levelCount = 1,
+        .layerCount = 1,
+        .sampleCount = vk::SampleCountFlagBits::e1,
+        .usageFlags = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst,
+    })
+    , mState(mImage, mProperties)
+    {
+        setLabel(fmt::format("SwapchainImage[{}]", index));
+
+        mImage     = pSwapchain->getImage(index);
+        mImageView = pSwapchain->getImageView(index);
+        mMipViews.push_back(mImageView);
+    }
+
     Image::~Image()
     {
         if (mSampler)
@@ -150,9 +168,11 @@ namespace RHI
             mDevice->getHandle().destroySampler(mSampler);
         }
 
-        mDevice->getHandle().destroyImageView(mImageView);
-
-        mAllocation->free();
+        if (std::holds_alternative<AllocationBackedImage>(mUnderlyingResource))
+        {
+            mDevice->getHandle().destroyImageView(mImageView);
+            mAllocation->free();
+        }
     }
 
     const vk::ImageView& Image::getMipView(const size_t i) const noexcept
@@ -167,18 +187,8 @@ namespace RHI
 
         /* Transition base mip level to TransferSrc */
         {
-
-            const auto barrier_Undef_TDst = vk::ImageMemoryBarrier2()
-                .setImage(mImage)
-                .setSubresourceRange({ mProperties.aspectFlags, 0, 1, 0, layerCount })
-                .setOldLayout(mState.layout)
-                .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
-                .setSrcAccessMask(mState.accessMask)
-                .setDstAccessMask(vk::AccessFlagBits2::eTransferRead)
-                .setSrcStageMask(mState.stageMask)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
-            const auto dependencyInfo = vk::DependencyInfo().setImageMemoryBarriers(barrier_Undef_TDst);
-            commandBuffer.pipelineBarrier2(dependencyInfo);
+            const auto barrier = mState.generateBarriers(ImageUsage::BlitSrc, 0);
+            commandBuffer.pipelineBarrier2(vk::DependencyInfo().setImageMemoryBarriers(barrier));
         }
 
         // Blit mip levels i-1 to i
@@ -187,16 +197,8 @@ namespace RHI
         for (uint32_t i = 1; i < mProperties.levelCount; i++)
         {
             // current mip level to transfer dst
-            const auto barrier_Undef_TDst = vk::ImageMemoryBarrier2()
-                .setImage(mImage)
-                .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, layerCount })
-                .setOldLayout(vk::ImageLayout::eUndefined)
-                .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setSrcAccessMask(vk::AccessFlagBits2::eNone)
-                .setDstAccessMask(vk::AccessFlagBits2::eTransferWrite)
-                .setSrcStageMask(vk::PipelineStageFlagBits2::eNone)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
-            const auto dependencyInfo_Pre = vk::DependencyInfo().setImageMemoryBarriers(barrier_Undef_TDst);
+            const auto barrierBlitDst = mState.generateBarriers(ImageUsage::BlitDst, i);
+            commandBuffer.pipelineBarrier2(vk::DependencyInfo().setImageMemoryBarriers(barrierBlitDst));
 
             // Blit
             const auto imageBlit = vk::ImageBlit2()
@@ -219,48 +221,20 @@ namespace RHI
                 .setFilter(filter)
                 .setRegions(imageBlit);
 
-            // current mip level to transfer src
-            const auto barrier_TDst_TSrc = vk::ImageMemoryBarrier2()
-                .setImage(mImage)
-                .setSubresourceRange({ mProperties.aspectFlags, i, 1, 0, layerCount })
-                .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-                .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
-                .setSrcAccessMask(vk::AccessFlagBits2::eTransferWrite)
-                .setDstAccessMask(vk::AccessFlagBits2::eTransferRead)
-                .setSrcStageMask(vk::PipelineStageFlagBits2::eBlit)
-                .setDstStageMask(vk::PipelineStageFlagBits2::eBlit);
-            const auto dependencyInfo_Post = vk::DependencyInfo().setImageMemoryBarriers(barrier_TDst_TSrc);
-
-            commandBuffer.pipelineBarrier2(dependencyInfo_Pre);
             commandBuffer.blitImage2(blitImageInfo);
-            commandBuffer.pipelineBarrier2(dependencyInfo_Post);
+
+            // current mip level to transfer src
+            const auto barrierBlitSrc = mState.generateBarriers(ImageUsage::BlitSrc, i);
+            commandBuffer.pipelineBarrier2(vk::DependencyInfo().setImageMemoryBarriers(barrierBlitSrc));
         }
 
         // Transition all mip levels to General layout
-        const auto barrier_TSrc_General = vk::ImageMemoryBarrier2()
-            .setImage(mImage)
-            .setSubresourceRange({ mProperties.aspectFlags, 0, mProperties.levelCount, 0, layerCount })
-            .setOldLayout(vk::ImageLayout::eTransferSrcOptimal)
-            .setNewLayout(vk::ImageLayout::eGeneral)
-            .setSrcAccessMask(vk::AccessFlagBits2::eTransferRead)
-            .setDstAccessMask(vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite)
-            .setSrcStageMask(vk::PipelineStageFlagBits2::eBlit)
-            .setDstStageMask(vk::PipelineStageFlagBits2::eAllGraphics);
-        const auto dependencyInfo_End = vk::DependencyInfo().setImageMemoryBarriers(barrier_TSrc_General);
-        commandBuffer.pipelineBarrier2(dependencyInfo_End);
-
-        mState.accessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
-        mState.stageMask  = vk::PipelineStageFlagBits2::eAllGraphics;
-        mState.layout     = vk::ImageLayout::eGeneral;
+        const auto finalBarrier = mState.generateBarriers(ImageUsage::ShaderReadOnly, Range(0, mProperties.levelCount - 1));
+        commandBuffer.pipelineBarrier2(vk::DependencyInfo().setImageMemoryBarriers(finalBarrier));
     }
 
-    void Image::useAllocation(VmaAllocation allocation, const VmaAllocationInfo& allocationInfo)
+    TrackedImageState& Image::getTrackedState()
     {
-        if (!mHasMemory)
-        {
-            mAllocation = allocation;
-            mAllocationInfo = allocationInfo;
-            vmaBindImageMemory(mDevice->getAllocator(), mAllocation, mImage);
-        }
+        return mState;
     }
 }

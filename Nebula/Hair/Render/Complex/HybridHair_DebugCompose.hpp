@@ -19,7 +19,7 @@ namespace nbl
         }
 
         void execute(
-            const RHI::CommandList* pCommandList,
+            RHI::CommandList*       pCommandList,
             const RHI::FrameData&   frameData,
             const SPtr<RHI::Image>& meshOutput,
             const SPtr<RHI::Image>& computeOutput
@@ -40,13 +40,17 @@ namespace nbl
 
             pCommandList->setViewportScissor(mViewport, mScissor);
 
-            mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-            {
-                mPipeline->bind(cmd);
-                mPipeline->pushConstants(cmd, &mShared->config.debugAlphaBlend);
-                mPipeline->bindDescriptorSet(cmd, mDescriptor->getSet(frameData.currentFrame));
-                cmd->getHandle().draw(3, 1, 0, 0);
-            });
+            RHI::Rendering()
+                .setRenderArea(mScissor)
+                .addAttachment(mOutput[frameData.currentFrame])
+                .setLabel(fmt::format("Hair_Classic_RenderPass"))
+                .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
+                {
+                    mPipeline->bind(cmd);
+                    mPipeline->pushConstants(cmd, &mShared->config.debugAlphaBlend);
+                    mPipeline->bindDescriptorSet(cmd, mDescriptor->getSet(frameData.currentFrame));
+                    cmd->getHandle().draw(3, 1, 0, 0);
+                });
 
             pCommandList->endLabel();
         }
@@ -85,15 +89,6 @@ namespace nbl
                 0.0f, 1.0f
             };
 
-            for (size_t i = 0; i < mRenderPass.size(); i++)
-            {
-                mRenderPass[i] = mRHI->createRenderPass({
-                    .renderArea       = mScissor,
-                    .colorAttachments = { makeAttachment(mOutput[i]) },
-                    .label            = fmt::format("HybridHair_DebugCompose_RenderPass_{}", i),
-                });
-            }
-
             const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
                 .setPushConstantRange<float>(vk::ShaderStageFlagBits::eFragment)
                 .addDescriptorSetLayout(mDescriptor->getLayout())
@@ -120,7 +115,6 @@ namespace nbl
         vk::Viewport                            mViewport;
 
         SPtr<RHI::Descriptor>                   mDescriptor;
-        PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
         SPtr<RHI::Pipeline>                     mPipeline;
     };
 }

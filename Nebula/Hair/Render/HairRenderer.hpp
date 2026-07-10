@@ -43,7 +43,7 @@ namespace nbl
     public:
         HairRenderer(const SPtr<RHI::VulkanRHI>& rhi, HairModelSystem* pHairModels);
 
-        void render(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, uint32_t hairIndex, uint64_t cameraBuffer);
+        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, uint32_t hairIndex, uint64_t cameraBuffer);
 
         const SPtr<RHI::Image>& getResult(const uint32_t frameIndex) const
         {

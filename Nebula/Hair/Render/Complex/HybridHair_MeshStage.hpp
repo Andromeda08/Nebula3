@@ -51,7 +51,7 @@ namespace nbl
             createPipeline();
         }
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress) const
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress) const
         {
             pCommandList->beginLabel("MeshStage");
 
@@ -81,45 +81,49 @@ namespace nbl
 
                 pCommandList->setViewportScissor(mViewport, mScissor);
 
-                mRenderPass[frameData.currentFrame]->execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-                {
-                    const glm::mat4 model = Transform().setRotation(glm::vec3(-90.0f, 0.0f, -45.0f)).getModel();
-                    const auto& info = mShared->hairModels->getHairInfo(mShared->config.hairIndex);
-
-                    const auto pushConstants = PushConstants
+                RHI::Rendering()
+                    .setRenderArea(mScissor)
+                    .addAttachment(mRenderTarget[frameData.currentFrame])
+                    .addAttachment(mDepthBuffer[frameData.currentFrame])
+                    .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
                     {
-                        .model                      = model,
-                        .diffuse                    = glm::vec4(mShared->config.diffuse, 1.0f),
-                        .specular                   = glm::vec4(mShared->config.specular, 1.0f),
-                        .vertexBuffer               = mShared->hairModels->getVertexAddress(),
-                        .attributesBuffer           = mShared->hairModels->getAttributesAddress(),
-                        .strandDescriptionBuffer    = mShared->hairModels->getStrandDescriptionsAddress(),
-                        .cameraBuffer               = cameraBufferAddress,
-                        .trianglesBuffer            = trianglesBuffer->getAddress(),
-                        .colorsBuffer               = mShared->colorsBuffer->getAddress(),
-                        .firstVertex                = info.firstVertex,
-                        .vertexCount                = info.vertexCount,
-                        .firstStrand                = info.firstStrand,
-                        .strandCount                = info.strandCount,
-                        .smallTriangleCounterBuffer = counterBuffer->getAddress(),
-                        .maxSmallTriangles          = info.vertexCount * 2,
-                        .smallTriangleThreshold     = mShared->config.smallTriangleThreshold,
-                        .width                      = mViewport.width,
-                        .height                     = mViewport.height,
-                        .specularFactor             = mShared->config.specularFactor,
-                        .useCustomColor             = mShared->config.overrideColors ? 1 : 0,
-                    };
+                        const glm::mat4 model = Transform().setRotation(glm::vec3(-90.0f, 0.0f, -45.0f)).getModel();
+                        const auto& info = mShared->hairModels->getHairInfo(mShared->config.hairIndex);
 
-                    mPipeline->bind(cmd);
-                    mPipeline->pushConstants(cmd, &pushConstants);
+                        const auto pushConstants = PushConstants
+                        {
+                            .model                      = model,
+                            .diffuse                    = glm::vec4(mShared->config.diffuse, 1.0f),
+                            .specular                   = glm::vec4(mShared->config.specular, 1.0f),
+                            .vertexBuffer               = mShared->hairModels->getVertexAddress(),
+                            .attributesBuffer           = mShared->hairModels->getAttributesAddress(),
+                            .strandDescriptionBuffer    = mShared->hairModels->getStrandDescriptionsAddress(),
+                            .cameraBuffer               = cameraBufferAddress,
+                            .trianglesBuffer            = trianglesBuffer->getAddress(),
+                            .colorsBuffer               = mShared->colorsBuffer->getAddress(),
+                            .firstVertex                = info.firstVertex,
+                            .vertexCount                = info.vertexCount,
+                            .firstStrand                = info.firstStrand,
+                            .strandCount                = info.strandCount,
+                            .smallTriangleCounterBuffer = counterBuffer->getAddress(),
+                            .maxSmallTriangles          = info.vertexCount * 2,
+                            .smallTriangleThreshold     = mShared->config.smallTriangleThreshold,
+                            .width                      = mViewport.width,
+                            .height                     = mViewport.height,
+                            .specularFactor             = mShared->config.specularFactor,
+                            .useCustomColor             = mShared->config.overrideColors ? 1 : 0,
+                        };
 
-                    auto taskGroupSizeX = mShared->hairModels->getHairGeometry(static_cast<size_t>(mShared->config.hairIndex)).taskGroupSizeX;
-                    if (mShared->config.useCustomWgSize)
-                    {
-                        taskGroupSizeX = mShared->config.customTaskWgSize;
-                    }
-                    cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
-                });
+                        mPipeline->bind(cmd);
+                        mPipeline->pushConstants(cmd, &pushConstants);
+
+                        auto taskGroupSizeX = mShared->hairModels->getHairGeometry(static_cast<size_t>(mShared->config.hairIndex)).taskGroupSizeX;
+                        if (mShared->config.useCustomWgSize)
+                        {
+                            taskGroupSizeX = mShared->config.customTaskWgSize;
+                        }
+                        cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
+                    });
 
                 pCommandList->endLabel();
             }
@@ -151,16 +155,6 @@ namespace nbl
                 0.0f, 1.0f
             };
 
-            for (size_t i = 0; i < mRenderPass.size(); i++)
-            {
-                mRenderPass[i] = mRHI->createRenderPass({
-                    .renderArea       = mScissor,
-                    .colorAttachments = { makeAttachment(mRenderTarget[i]) },
-                    .depthAttachment  = makeAttachment(mDepthBuffer[i]),
-                    .label            = fmt::format("HybridHair_MeshStage_RenderPass_", i),
-                });
-            }
-
             const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
                 .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment)
                 .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
@@ -186,7 +180,6 @@ namespace nbl
         vk::Viewport                            mViewport;
 
         SPtr<RHI::Pipeline>                     mPipeline;
-        PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
         PerFrameArray<SPtr<RHI::Image>>         mRenderTarget;
         PerFrameArray<SPtr<RHI::Image>>         mDepthBuffer;
     };

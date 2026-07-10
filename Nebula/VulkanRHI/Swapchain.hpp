@@ -70,6 +70,11 @@ namespace RHI
             return barrier;
         }
 
+        [[nodiscard]] const SPtr<Image>& getImageRHI(const size_t i)
+        {
+            return mWrappedImages[i];
+        }
+
         vk::Image getImage(size_t i) const;
 
         vk::ImageView getImageView(size_t i) const;
@@ -103,6 +108,7 @@ namespace RHI
         PerFrameArray<vk::Image>        mImages;
         PerFrameArray<vk::ImageView>    mImageViews;
         PerFrameArray<ImageState>       mImageStates;
+        PerFrameArray<SPtr<Image>>      mWrappedImages;
 
         SPtr<IWindow>                   mWindow;
         SPtr<Instance>                  mInstance;

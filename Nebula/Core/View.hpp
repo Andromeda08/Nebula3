@@ -41,6 +41,8 @@ namespace nbl
 
         virtual void onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) = 0;
 
+        virtual void onDrawUI() {}
+
         [[nodiscard]] const std::string& getName() const noexcept
         {
             return mName;

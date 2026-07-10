@@ -17,7 +17,7 @@ namespace nbl
     }
 
     void HairRenderer::render(
-        const RHI::CommandList* pCommandList,
+        RHI::CommandList*       pCommandList,
         const RHI::FrameData&   frameData,
         const uint32_t          _hairIndex,
         const uint64_t          cameraBuffer)
@@ -107,16 +107,6 @@ namespace nbl
             static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
             0.0f, 1.0f
         };
-
-        for (size_t i = 0; i < mRenderPass.size(); i++)
-        {
-            mRenderPass[i] = mRHI->createRenderPass({
-                .renderArea       = mScissor,
-                .colorAttachments = { makeAttachment(mRenderTarget[i]) },
-                .depthAttachment  = makeAttachment(mDepthBuffer[i]),
-                .label            = fmt::format("Hair_RenderPass_", i),
-            });
-        }
 
         const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
             .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment)

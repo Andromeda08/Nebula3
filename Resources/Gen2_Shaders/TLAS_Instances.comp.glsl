@@ -52,7 +52,7 @@ void main()
     tlasInstances.data[idx].transform[11] = model[3].z;
 
     tlasInstances.data[idx].instanceCustomIndex_Mask = (0xFF << 24) | (idx & 0x00FFFFFF);
-    tlasInstances.data[idx].sbtRecordOffset_Flags    = (0x01 << 24);
+    tlasInstances.data[idx].sbtRecordOffset_Flags    = (0x00 << 24);
 
     tlasInstances.data[idx].blasReference = instance.blas;
 }

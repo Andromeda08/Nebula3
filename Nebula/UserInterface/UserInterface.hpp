@@ -28,7 +28,7 @@ public:
 
     void processEvents(const SDL_Event& event) noexcept;
 
-    void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
+    void draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const std::function<void()>& uiDraws) const;
 
     static bool wantCaptureInput() noexcept;
 

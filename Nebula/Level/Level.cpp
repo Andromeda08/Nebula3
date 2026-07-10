@@ -1,14 +1,19 @@
 #include "Level.hpp"
 
+#include <unordered_map>
+#include <glm/gtx/hash.hpp>
+
 #include "Core/Random.hpp"
+#include "TextureManager.hpp"
 #include "GLTF/GLTFLoader.hpp"
 #include "Level/Camera/FlyingCamera.hpp"
 #include "Level/Camera/OrbitCamera.hpp"
 #include "Math/DeltaTime.hpp"
 #include "Object/ObjectEditorUI.hpp"
 #include "Object/RotatingObject.hpp"
-#include "TextureManager.hpp"
 #include "UserInterface/UserInterface.hpp"
+#include "Voxel/TerrainGenerator.hpp"
+#include "Voxel/Features/FoliageGenerator.hpp"
 
 namespace nbl
 {
@@ -23,8 +28,8 @@ namespace nbl
         mLightSystem = makeUnique<LightSystem>(rhi);
         mUserInterface->addComponent<LightSystemUI>(mLightSystem.get());
 
-        mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 4096);
-        mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 65536);
+        mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 65536);
+        mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 4194304);
 
         if (mRHI->getFeatures().rayTracing)
         {
@@ -57,18 +62,64 @@ namespace nbl
             // loader.load();
         }
 
-        /* Emissive cubes */ {
-            const int32_t cubeIdx = mGeometrySystem->addGeometry(Cube::createGeometry());
+        const int32_t cubeIdx = mGeometrySystem->addGeometry(Cube::createGeometry());
 
+        /* Voxel Terrain */
+        auto terrainGenerator = vxl::TerrainGenerator({ 128, 24, 128, true });
+        // terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
+        //     .patchCount             = 12,
+        //     .patchRadius            = 12,
+        //     .radiusVariance         = 3,
+        //     .density                = 0.65f,
+        //     .patchDensityVariance   = true,
+        //     .instanceRandomOffset   = true,
+        //     .instanceRandomScale    = true,
+        // });
+        terrainGenerator.generate();
+
+        std::unordered_map<glm::vec3, Handle> voxelMaterial;
+
+        for (const auto& [i, voxel] : nbl::enumerate(terrainGenerator.getResult()))
+        {
+            const bool isEmissive = Random::unit() < 0.25f;
+            if (!voxelMaterial.contains(voxel.color))
+            {
+                const auto hMat = mMaterialSystem->acquire({
+                    .solidColor  = glm::vec4(voxel.color, 1.0f),
+                });
+                voxelMaterial.insert_or_assign(voxel.color, hMat);
+            }
+
+            auto hMat = voxelMaterial.at(voxel.color);
+
+            if (isEmissive)
+            {
+                hMat = mMaterialSystem->acquire({
+                    .solidColor  = glm::vec4(glm::xyz(Random::getColor()), 1.0f),
+                    .pIsEmissive = true,
+                });
+            }
+
+            auto transform = Transform()
+                .setTranslate(voxel.position)
+                .setScale(isEmissive ? glm::vec3(1.05f) : voxel.scale);
+            addObject<Object>(cubeIdx, transform, hMat, fmt::format("Voxel-#{}", i));
+        }
+
+        return;
+
+        /* Emissive cubes */ {
             for (int32_t i = 0; i < 512; i++)
             {
                 const auto hMat = mMaterialSystem->acquire({
                     .solidColor  = glm::vec4(glm::xyz(Random::getColor()), 1.0f),
                     .pIsEmissive = true,
                 });
+
                 auto transform = Transform()
-                    .setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
-                    .setScale(glm::vec3(2.0f));
+                    .setTranslate(terrainGenerator.getResult().at(Random::get<size_t>(0, terrainGenerator.getResult().size() - 1)).position + glm::vec3(0.0f, 2.0f, 0.0f));
+                    //.setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
+                    //.setScale(glm::vec3(2.0f));
                 addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube-#{}", i));
             }
         }
@@ -76,7 +127,6 @@ namespace nbl
         return;
 
         /* Example Geometries, Objects and Materials */ {
-            const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());
             const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
 
             std::array<uint32_t, 6> textures;

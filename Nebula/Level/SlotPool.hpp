@@ -97,7 +97,7 @@ public:
         {
             if (mCpuData.size() >= mCapacity)
             {
-                exitWithError("Pool capacity exceeded!");
+                exitWithError("[{}] Pool capacity exceeded!", mName);
             }
             slot = static_cast<uint32_t>(mCpuData.size());
             mCpuData.emplace_back();

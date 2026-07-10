@@ -2,12 +2,9 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "TrackedState.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Device.hpp"
-#include "VulkanRHI/VulkanCore.hpp"
-#include "VulkanRHI/Detail/ImageTraits.hpp"
 
 namespace RHI
 {
@@ -36,8 +33,8 @@ namespace RHI
 
     struct BufferImageCopyInfo
     {
-        Buffer*  pSrcBuffer;
-        Image*   pDstImage;
+        Buffer*  pSrcBuffer   = nullptr;
+        Image*   pDstImage    = nullptr;
         uint64_t bufferOffset = 0;
     };
 
@@ -57,38 +54,6 @@ namespace RHI
 
         // ❗(Lifetime) mCommandBuffer is freed by VulkanCommandPool::free();
         ~CommandList() = default;
-
-        void insertBarrier(const Barrier2& barrier)
-        {
-            std::vector<vk::ImageMemoryBarrier2> imageBarriers;
-            for (const auto& b : barrier.imageBarriers)
-            {
-                auto handle = b.pImage->getImage();
-                if (!mImageState.contains(handle))
-                {
-                    const auto& p = b.pImage->getProperties();
-                    mImageState.insert_or_assign(handle, TrackedImageState(Range(0, p.levelCount - 1)));
-                }
-                imageBarriers.append_range(mImageState.at(handle).generateBarriers(b.pImage, b.dstState, b.range));
-            }
-
-            std::vector<vk::BufferMemoryBarrier2> bufferBarriers;
-            for (const auto& b : barrier.bufferBarriers)
-            {
-                auto handle = b.pBuffer->getHandle();
-                if (!mBufferState.contains(handle))
-                {
-                    mBufferState.insert_or_assign(handle, TrackedBufferState());
-                }
-                bufferBarriers.push_back(mBufferState.at(handle).getBarrier(b.pBuffer, b.dstState));
-            }
-
-            const auto dependencyInfo = vk::DependencyInfo()
-                .setImageMemoryBarriers(imageBarriers)
-                .setBufferMemoryBarriers(bufferBarriers);
-
-            mCommandBuffer.pipelineBarrier2(dependencyInfo);
-        }
 
         // Begin recording the CommandList
         void begin();
@@ -173,9 +138,6 @@ namespace RHI
 
     private:
         vk::CommandBuffer   mCommandBuffer;
-
-        std::map<vk::Image,  TrackedImageState>  mImageState;
-        std::map<vk::Buffer, TrackedBufferState> mBufferState;
 
         PipelineBase*       mBoundPipeline = nullptr;
 

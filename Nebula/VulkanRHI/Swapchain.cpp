@@ -36,6 +36,11 @@ namespace RHI
 
         acquireImages();
         makeScissorViewport();
+
+        for (uint32_t i = 0; i < static_cast<uint32_t>(mImageCount); i++)
+        {
+            mWrappedImages[i] = makeShared<Image>(this, i, mDevice);
+        }
     }
 
     Swapchain::~Swapchain()

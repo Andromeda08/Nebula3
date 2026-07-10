@@ -134,11 +134,11 @@ namespace RHI
             nbl_StageCase("mesh",   eMeshEXT)
             nbl_StageCase("task",   eTaskEXT)
             nbl_StageCase("rgen",   eRaygenKHR)
-            nbl_StageCase("rchit",  eClosestHitKHR)
-            nbl_StageCase("rmiss",  eMissKHR)
+            nbl_StageCase("chit",  eClosestHitKHR)
+            nbl_StageCase("miss",  eMissKHR)
             nbl_StageCase("rahit",  eAnyHitKHR)
             nbl_StageCase("rint",   eIntersectionKHR)
-            nbl_StageCase("rcall",  eCallableKHR)
+            nbl_StageCase("call",  eCallableKHR)
         }
         #undef nbl_StageCase
         #pragma endregion

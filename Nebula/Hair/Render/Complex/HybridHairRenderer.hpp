@@ -27,7 +27,7 @@ namespace nbl
             mDebugComposeStage = makeUnique<HybridHair_DebugCompose>(mRHI, mShared.get());
         }
 
-        void execute(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress)
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress)
         {
             if (mMeshPrimitiveQueryValid[frameData.currentFrame])
             {

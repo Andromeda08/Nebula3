@@ -177,6 +177,11 @@ namespace RHI
         return makeUnique<GraphicsPipeline2>(std::move(ps), common, mDevice);
     }
 
+    UPtr<RayTracingPipeline2> VulkanRHI::createRayTracingPipeline2(RayTracingPS ps, const PipelineCommon& common) const
+    {
+        return makeUnique<RayTracingPipeline2>(std::move(ps), common, mDevice);
+    }
+
     UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
     {
         createInfo.setDevice(mDevice);

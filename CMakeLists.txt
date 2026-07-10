@@ -122,12 +122,16 @@ set(V2_FILES
     Nebula/Views/HairView.hpp
     Nebula/Views/UITestView.hpp
     Nebula/Core/View.cpp
-    Nebula/Views/Fractals/FractalView.hpp
-    Nebula/Views/Fractals/FractalView.cpp
     Nebula/Level/Render/BloomPass.hpp
     Nebula/Level/Render/BloomPass.cpp
-    Nebula/VulkanRHI/Commands/TrackedState.hpp
-    Nebula/RHIGen2/Image.hpp
+    Nebula/Level/Voxel/VoxelData.hpp
+    Nebula/Level/Voxel/IFeatureGenerator.hpp
+    Nebula/Level/Voxel/TerrainGenerator.cpp
+    Nebula/Level/Voxel/TerrainGenerator.hpp
+    Nebula/Level/Voxel/Features/FoliageGenerator.cpp
+    Nebula/Level/Voxel/Features/FoliageGenerator.hpp
+    Nebula/Views/PathTracerView.hpp
+    Nebula/Views/PathTracerView.cpp
 )
 
 add_executable(Nebula3

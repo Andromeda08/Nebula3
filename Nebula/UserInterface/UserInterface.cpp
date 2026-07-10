@@ -25,10 +25,11 @@ void UserInterface::processEvents(const SDL_Event& event) noexcept
     ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
-void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
+void UserInterface::draw(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const std::function<void()>& uiDraws) const
 {
     mRenderer->render(pCommandList, frameData, [&]()
     {
+        uiDraws();
         for (const auto& component : mComponents)
         {
             component->draw();

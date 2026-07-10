@@ -47,6 +47,8 @@ namespace RHI
         ColorAttachment,
         DepthAttachment,
         Clear,
+        BlitSrc,
+        BlitDst,
         General,
         ShaderReadOnly,
         StorageImage,
@@ -100,6 +102,20 @@ namespace RHI
                     .layout     = hasUnifiedLayouts ? L::eGeneral : L::eTransferDstOptimal,
                     .accessMask = A::eTransferWrite,
                     .stageMask = S::eClear,
+                };
+            }
+            case BlitSrc: {
+                return {
+                    .layout     = hasUnifiedLayouts ? L::eGeneral : L::eTransferSrcOptimal,
+                    .accessMask = A::eTransferRead,
+                    .stageMask  = S::eBlit,
+                };
+            }
+            case BlitDst: {
+                return {
+                    .layout     = hasUnifiedLayouts ? L::eGeneral : L::eTransferDstOptimal,
+                    .accessMask = A::eTransferWrite,
+                    .stageMask  = S::eBlit,
                 };
             }
             case General: {

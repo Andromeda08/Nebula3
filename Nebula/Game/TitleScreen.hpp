@@ -118,7 +118,7 @@ class TitleScreen
 public:
     explicit TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi, TextureManager* pTextureManager);
 
-    void render(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData);
+    void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 
 private:
     UIScreen                    mScreen;
@@ -135,7 +135,6 @@ private:
     SPtr<RHI::VulkanRHI>        mRHI;
     TextureManager*             mTextureManager;
 
-    SPtr<RHI::RenderPass>       mRenderPass;
     SPtr<RHI::Pipeline>         mPipeline;
     SPtr<RHI::Image>            mResult;
 };
