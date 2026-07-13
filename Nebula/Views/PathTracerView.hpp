@@ -2,6 +2,8 @@
 
 #include "Core/View.hpp"
 #include "Level/Level.hpp"
+#include "Level/Light/AreaEmitter.hpp"
+#include "Level/Light/DiscretePDF.hpp"
 #include "Level/Object/ObjectEditorUI.hpp"
 #include "Level/Render/LevelRenderer.hpp"
 #include "Level/Render/Templates.hpp"
@@ -9,117 +11,6 @@
 
 namespace nbl
 {
-    class [[nodiscard]] DiscretePDF
-    {
-    public:
-        explicit DiscretePDF(const size_t nItems = 0)
-        {
-            reserve(nItems);
-            clear();
-        }
-
-        void reserve(const size_t nItems)
-        {
-            mCDF.reserve(nItems + 1);
-        }
-
-        void clear()
-        {
-            mCDF.clear();
-            mCDF.push_back(0.0f);
-            mIsNormalized = false;
-        }
-
-        void append(const float pdfValue)
-        {
-            mCDF.push_back(mCDF[mCDF.size() - 1] + pdfValue);
-        }
-
-        size_t size() const
-        {
-            return mCDF.size() - 1;
-        }
-
-        float operator[](const size_t entry) const
-        {
-            return mCDF[entry + 1] - mCDF[entry];
-        }
-
-        bool isNormalized() const
-        {
-            return mIsNormalized;
-        }
-
-        float getSum() const
-        {
-            return mSum;
-        }
-
-        float getNormalization() const
-        {
-            return mNormalization;
-        }
-
-        float normalize()
-        {
-            mSum = mCDF[mCDF.size() - 1];
-
-            if (mSum > 0.0f)
-            {
-                mNormalization = 1.0f / mSum;
-                for (size_t i = 1; i < mCDF.size(); ++i)
-                {
-                    mCDF[i] *= mNormalization;
-                }
-                mCDF[mCDF.size() - 1] = 1.0f;
-                mIsNormalized = true;
-            }
-            else
-            {
-                mNormalization = 0.0f;
-            }
-            return mSum;
-        }
-
-        size_t sample(const float sampleValue) const
-        {
-            const auto entry = std::ranges::lower_bound(mCDF, sampleValue);
-            const auto index = static_cast<size_t>(std::max(static_cast<std::ptrdiff_t>(0), entry - mCDF.begin() - 1));
-            return std::min(index, mCDF.size() - 2);
-        }
-
-        size_t sample(const float sampleValue, float& pdf) const
-        {
-            size_t index = sample(sampleValue);
-            pdf = operator[](index);
-            return index;
-        }
-
-        const std::vector<float>& getValues() const { return mCDF; }
-
-    private:
-        std::vector<float>  mCDF;
-        float               mSum           = 0.0f;
-        float               mNormalization = 0.0f;
-        bool                mIsNormalized  = false;
-    };
-
-    struct GPUDiscretePDF
-    {
-        float              sum;
-        std::vector<float> cdf;
-    };
-
-    struct AreaEmitter
-    {
-        uint32_t  instanceIndex;
-        int32_t   geometryIndex;
-        uint32_t  cdfOffset;
-        uint32_t  triCount;
-        float     totalWeight;
-        glm::vec3 radiance;
-    };
-
     struct PTObjectParams
     {
         int32_t                    geometryIndex = -1;
@@ -171,6 +62,7 @@ namespace nbl
     struct PathTracerPushConstants
     {
         uint64_t camera;        // Camera BDA
+        uint64_t prevCamera;    // Camera BDA
         uint64_t instances;     // Instance BDA
         uint64_t emitters;      // Emitters BDA
         uint64_t emitterPdfs;   // Emitter Discrete PDF BDA
@@ -185,6 +77,8 @@ namespace nbl
         int32_t  bDynamicRR;    // Use dynamic rr continuation probability based on throughput?
         float    rrCont;        // RR continuation probability if !bDynamicRR
         uint32_t emitterCount;  // N emitters
+        float    jitterX;
+        float    jitterY;
     };
 
     class PathTracerView : public View
@@ -201,10 +95,29 @@ namespace nbl
                     { 0, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
                     { 1, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
                     { 2, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    { 3, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    { 4, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    { 5, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    { 6, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    { 7, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    // { 8, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
+                    // { 9, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eRaygenKHR },
                 },
                 .setCount  = RHI::gFramesInFlight,
-                .debugName = "AntiAliasing_Descriptor",
+                .debugName = "PT_Descriptor",
             });
+
+            for (uint32_t i = 0; i < RHI::gFramesInFlight; i++)
+            {
+                mNormals[i]         = makeRenderTarget(mRHI.get(), fmt::format("PT_Normals_{}",    i));
+                mDiffuseAlbedo[i]   = makeRenderTarget(mRHI.get(), fmt::format("PT_DiffAlbedo_{}", i));
+                mSpecularAlbedo[i]  = makeRenderTarget(mRHI.get(), fmt::format("PT_SpecAlbedo_{}", i));
+                mRoughness[i]       = makeRenderTarget(mRHI.get(), fmt::format("PT_Roughness_{}",  i), vk::Format::eR16Sfloat);
+                mDepth[i]           = makeRenderTarget(mRHI.get(), fmt::format("PT_LinDepth_{}",   i), vk::Format::eR32Sfloat);
+                mMotionVectors[i]   = makeRenderTarget(mRHI.get(), fmt::format("PT_MVec_{}",       i), vk::Format::eR32G32Sfloat);
+                mRROutput[i]        = makeRenderTarget(mRHI.get(), fmt::format("PT_DLSS_RR_{}",    i));
+                mSpecularHitDist[i] = makeRenderTarget(mRHI.get(), fmt::format("PT_SpecHitDist_{}",i), vk::Format::eR32Sfloat);
+            }
 
             for (size_t i = 0; i < RHI::gFramesInFlight; i++)
             {
@@ -216,8 +129,15 @@ namespace nbl
             {
                 const auto descriptorWrite = RHI::DescriptorWrite()
                     .writeStorageImage(0, vk::ImageLayout::eGeneral, mCurrentOutput[i])
-                    .writeStorageImage(1, vk::ImageLayout::eGeneral, mAccumulatedOutput[i == 0 ? 0 : 1])
-                    .writeStorageImage(2, vk::ImageLayout::eGeneral, mAccumulatedOutput[i == 0 ? 1 : 0]);
+                    // .writeStorageImage(1, vk::ImageLayout::eGeneral, mAccumulatedOutput[i == 0 ? 0 : 1])
+                    // .writeStorageImage(2, vk::ImageLayout::eGeneral, mAccumulatedOutput[i == 0 ? 1 : 0])
+                    .writeStorageImage(1, vk::ImageLayout::eGeneral, mNormals[i])
+                    .writeStorageImage(2, vk::ImageLayout::eGeneral, mDiffuseAlbedo[i])
+                    .writeStorageImage(3, vk::ImageLayout::eGeneral, mSpecularAlbedo[i])
+                    .writeStorageImage(4, vk::ImageLayout::eGeneral, mRoughness[i])
+                    .writeStorageImage(5, vk::ImageLayout::eGeneral, mDepth[i])
+                    .writeStorageImage(6, vk::ImageLayout::eGeneral, mMotionVectors[i])
+                    .writeStorageImage(7, vk::ImageLayout::eGeneral, mSpecularHitDist[i]);
                 mDescriptor->write(i, descriptorWrite);
             }
 
@@ -261,6 +181,41 @@ namespace nbl
         void onDrawUI() override;
 
     private:
+        static NVSDK_NGX_Resource_VK wrapImage(const SPtr<RHI::Image>& img, const bool readWrite)
+        {
+            const auto& p = img->getProperties();
+            VkImageSubresourceRange range{};
+            range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            range.baseMipLevel   = 0;
+            range.levelCount     = 1;
+            range.baseArrayLayer = 0;
+            range.layerCount     = 1;
+
+            return NVSDK_NGX_Create_ImageView_Resource_VK(
+                static_cast<VkImageView>(img->getImageView()),
+                static_cast<VkImage>(img->getImage()),
+                range,
+                static_cast<VkFormat>(p.format),
+                p.extent.width,
+                p.extent.height,
+                readWrite);
+        }
+
+        static float halton(uint32_t index, uint32_t base)
+        {
+            float f = 1.0f, r = 0.0f;
+            while (index > 0)
+            {
+                f /= static_cast<float>(base);
+                r += f * static_cast<float>(index % base);
+                index /= base;
+            }
+            return r;
+        }
+
+        float mJitterX = 0.0f;
+        float mJitterY = 0.0f;
+
         int32_t   mSPP               = 1;
         int32_t   mMaxBounces        = 4;
         bool      mDynamicRR         = false;
@@ -283,5 +238,16 @@ namespace nbl
         UPtr<PTScene>                   mScene;
         SPtr<RHI::Descriptor>           mDescriptor;
         UPtr<RHI::RayTracingPipeline2>  mPipeline;
+
+        // G-Buffer output
+        PerFrameArray<SPtr<RHI::Image>> mNormals;           // RGBA16, World-space
+        PerFrameArray<SPtr<RHI::Image>> mDiffuseAlbedo;     // RGBA16
+        PerFrameArray<SPtr<RHI::Image>> mSpecularAlbedo;    // RGBA16
+        PerFrameArray<SPtr<RHI::Image>> mRoughness;         // R16
+        PerFrameArray<SPtr<RHI::Image>> mDepth;             // R32
+        PerFrameArray<SPtr<RHI::Image>> mMotionVectors;     // RG16
+        PerFrameArray<SPtr<RHI::Image>> mSpecularHitDist;   // R32
+
+        PerFrameArray<SPtr<RHI::Image>> mRROutput;          // RGBA16
     };
 }

@@ -18,6 +18,7 @@ namespace RHI
         }
         mExtensions.append_range(Platform::getInstanceExtensions());
         mExtensions.append_range(createInfo.pWindow->getVulkanInstanceExtensions());
+        mExtensions.push_back(vk::KHRExternalMemoryCapabilitiesExtensionName);
 
         const auto layerSupport = evaluateSupport(vk::enumerateInstanceLayerProperties(), mLayers);
         exitOnAssert(layerSupport, "Not all requested Instance layers are supported.");

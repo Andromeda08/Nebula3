@@ -41,13 +41,13 @@ App::App()
 
     mUserInterface->addComponent<nbl::ViewSelectUI>(mViews, &mActiveView);
 
-    // addView<nbl::LevelView>();
+    // addView<nbl::PathTracerView>();
+    addView<nbl::LevelView>();
     // if constexpr (!RHI::Platform::isApple)
     // {
     //     addView<nbl::HairView>();
     // }
     // addView<nbl::UITestView>();
-    addView<nbl::PathTracerView>();
 
     mWindow->reveal();
 }

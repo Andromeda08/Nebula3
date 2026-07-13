@@ -19,7 +19,7 @@ namespace nbl
 
         const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
         mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
-        mCameraSystem->addCamera<OrbitCamera>(true);
+        // mCameraSystem->addCamera<OrbitCamera>(true);
 
         mGeometrySystem = makeUnique<GeometrySystem>(mRHI);
         mLightSystem    = makeUnique<LightSystem>(mRHI);
@@ -80,11 +80,12 @@ namespace nbl
         {
             const auto hMat = mMaterialSystem->acquire({
                 .solidColor = glm::vec4(1.0f),
-                .bsdfIndex  = Random::get<uint32_t>(1, 2),
+                .bsdfIndex  = 1, // Random::get<uint32_t>(1, 2),
             });
 
             auto transform = Transform()
-                .setTranslate(glm::vec3(Random::get(-128, 128), Random::get(-32.0f, 32.0f), Random::get(-128, 128)));
+                .setTranslate(glm::vec3(Random::get(-128, 128), Random::get(-32.0f, 32.0f), Random::get(-128, 128)))
+                .setScale(glm::vec3(2.0f));
 
             addObject({
                 .geometryIndex = Random::get<int32_t>() % 2 == 0 ? sphereIdx : cubeIdx,
@@ -157,27 +158,7 @@ namespace nbl
 
             if (!mDiscretePDFs.contains(obj->geometryIndex))
             {
-                DiscretePDF discretePdf;
-                discretePdf.clear();
-                discretePdf.reserve(geometry->getTriangleCount());
-
-                for (size_t i = 0; i < geometry->getIndexCount(); i += 3)
-                {
-                    // TODO: Functions getTriangle and getTriangleArea for Geometry.
-                    const size_t    i0 = geometry->getIndices().at(i + 0);
-                    const size_t    i1 = geometry->getIndices().at(i + 1);
-                    const size_t    i2 = geometry->getIndices().at(i + 2);
-                    const glm::vec3 v0 = geometry->getVertices().at(i0).position;
-                    const glm::vec3 v1 = geometry->getVertices().at(i1).position;
-                    const glm::vec3 v2 = geometry->getVertices().at(i2).position;
-
-                    const float area = 0.5f * glm::length(glm::cross(v1 - v0, v2 - v0));
-                    discretePdf.append(area);
-                }
-
-                discretePdf.normalize();
-
-                mDiscretePDFs[obj->geometryIndex] = std::move(discretePdf);
+                mDiscretePDFs[obj->geometryIndex] = DiscretePDF(mGeometrySystem->getGeometry(obj->geometryIndex));
             }
 
             const AreaEmitter emitterInfo = {
@@ -349,6 +330,10 @@ namespace nbl
 
         mTotalFrames++;
         mPrevView = cameraView;
+
+        const uint32_t phase = static_cast<uint32_t>(mTotalFrames % 8) + 1;
+        mJitterX = halton(phase, 2) - 0.5f;
+        mJitterY = halton(phase, 3) - 0.5f;
     }
 
     void PathTracerView::onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
@@ -357,6 +342,7 @@ namespace nbl
 
         PathTracerPushConstants pushConstants = {
             .camera         = mScene->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+            .prevCamera     = mScene->mCameraSystem->getPreviousBuffer(frameData.currentFrame)->getAddress(),
             .instances      = mScene->mInstanceSystem->getBuffer()->getAddress(),
             .emitters       = mScene->mEmittersBuffer->getAddress(),
             .emitterPdfs    = mScene->mDiscretePDFsBuffer->getAddress(),
@@ -370,18 +356,27 @@ namespace nbl
             .spp            = static_cast<uint32_t>(mSPP),
             .bDynamicRR     = mDynamicRR ? 1 : 0,
             .rrCont         = mRRCont,
-            .emitterCount   = static_cast<uint32_t>(mScene->mEmitters.size())
+            .emitterCount   = static_cast<uint32_t>(mScene->mEmitters.size()),
+            .jitterX        = mJitterX,
+            .jitterY        = mJitterY,
         };
 
-        const bool isMaxSamples = mMaximumSamples != 0 && (mAccumulatedFrames >= mMaximumSamples);
-        if (!isMaxSamples)
-        {
+        // const bool isMaxSamples = mMaximumSamples != 0 && (mAccumulatedFrames >= mMaximumSamples);
+        // if (!isMaxSamples)
+        // {
             RHI::Barrier()
                 .addBarrier(mCurrentOutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
                 .addBarrier(mAccumulatedOutput[0]->getBarrier(RHI::ImageUsage::StorageImage))
                 .addBarrier(mAccumulatedOutput[1]->getBarrier(RHI::ImageUsage::StorageImage))
                 .addBarrier(mScene->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
                 .addBarrier(mScene->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse))
+                .addBarrier(mNormals[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mDiffuseAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mSpecularAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mRoughness[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mDepth[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mMotionVectors[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+                .addBarrier(mSpecularHitDist[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
                 .insert(pCommandList);
 
             pCommandList->bindPipeline(mPipeline.get());
@@ -393,18 +388,81 @@ namespace nbl
 
             const auto [w, h] = mCurrentOutput[frameData.currentFrame]->getProperties().extent;
             pCommandList->traceRays(w, h, 1);
-        }
+        // }
 
-        const uint32_t writeAccum = (frameData.currentFrame == 0) ? 1 : 0;
+        // const uint32_t writeAccum = (frameData.currentFrame == 0) ? 1 : 0;
+        // RHI::Barrier()
+        //     .addBarrier(mAccumulatedOutput[writeAccum]->getBarrier(RHI::ImageUsage::StorageImage))
+        //     .insert(pCommandList);
+        // mTonemapPass->execute(mAccumulatedOutput[writeAccum], pCommandList, frameData);
+        // // mFXAAPass->execute(pCommandList, frameData);
 
         RHI::Barrier()
-            .addBarrier(mAccumulatedOutput[writeAccum]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mCurrentOutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mNormals[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mDiffuseAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mSpecularAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mRoughness[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mDepth[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mMotionVectors[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mSpecularHitDist[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
+            .addBarrier(mRROutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
             .insert(pCommandList);
 
-        mTonemapPass->execute(mAccumulatedOutput[writeAccum], pCommandList, frameData);
-        // mFXAAPass->execute(pCommandList, frameData);
+        auto resColor       = wrapImage(mCurrentOutput[frameData.currentFrame], false);
+        auto resNormal      = wrapImage(mNormals[frameData.currentFrame], false);
+        auto resDiffAlb     = wrapImage(mDiffuseAlbedo[frameData.currentFrame], false);
+        auto resSpecAlb     = wrapImage(mSpecularAlbedo[frameData.currentFrame], false);
+        auto resRough       = wrapImage(mRoughness[frameData.currentFrame], false);
+        auto resDepth       = wrapImage(mDepth[frameData.currentFrame], false);
+        auto resMotion      = wrapImage(mMotionVectors[frameData.currentFrame], false);
+        auto resSpecHitDist = wrapImage(mSpecularHitDist[frameData.currentFrame], false);
+        auto resOutput      = wrapImage(mRROutput[frameData.currentFrame], true);
 
-        pCommandList->blitToSwapchain(mTonemapPass->getResult(frameData.currentFrame).get(), mRHI->getSwapchain(), frameData.acquiredIndex);
+        const auto& cam = mScene->mCameraSystem->getActiveCamera()->getGpuCameraData();
+        const glm::mat4 view = cam.view;
+        const glm::mat4 proj = cam.proj;
+
+        NVSDK_NGX_VK_DLSSD_Eval_Params eval {};
+
+        eval.pInColor               = &resColor;
+        eval.pInOutput              = &resOutput;
+        eval.pInDepth               = &resDepth;
+        eval.pInMotionVectors       = &resMotion;
+        eval.pInNormals             = &resNormal;
+        eval.pInRoughness           = &resRough;
+        eval.pInDiffuseAlbedo       = &resDiffAlb;
+        eval.pInSpecularAlbedo      = &resSpecAlb;
+        eval.pInSpecularHitDistance = &resSpecHitDist;
+
+        eval.InJitterOffsetX   = -mJitterX;
+        eval.InJitterOffsetY   = -mJitterY;
+        eval.InRenderSubrectDimensions = { mRROutput[0]->getProperties().extent.width, mRROutput[0]->getProperties().extent.height };
+        eval.InMVScaleX        = 1.0f;
+        eval.InMVScaleY        = 1.0f;
+
+        static bool firstFrame = true;
+        eval.InReset = firstFrame ? 1 : 0;
+        firstFrame = false;
+
+        eval.pInWorldToViewMatrix = const_cast<float*>(glm::value_ptr(view));
+        eval.pInViewToClipMatrix  = const_cast<float*>(glm::value_ptr(proj));
+
+        const auto r = NGX_VULKAN_EVALUATE_DLSSD_EXT(
+            static_cast<VkCommandBuffer>(pCommandList->getHandle()),
+            mRHI->getDLSSdFeature(),
+            mRHI->getNGXParams(),
+            &eval);
+
+        if (NVSDK_NGX_FAILED(r))
+        {
+            spdlog::error("DLSS-RR eval failed: 0x{:x}", static_cast<uint32_t>(r));
+        }
+
+        mTonemapPass->execute(mRROutput[frameData.currentFrame], pCommandList, frameData);
+        mFXAAPass->execute(pCommandList, frameData);
+
+        pCommandList->blitToSwapchain(mFXAAPass->getResult(frameData.currentFrame).get(), mRHI->getSwapchain(), frameData.acquiredIndex);
 
         pCommandList->endLabel();
     }

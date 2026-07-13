@@ -50,10 +50,10 @@ namespace BSDF
         float           pdfValue;
     };
 
-    Record sample(GPUMaterialData material, uint seed, float3 wi)
+    Record sample(GPUMaterialData material, uint seed, float3 wi, float3 albedo)
     {
         FnCall call;
-        call.albedo = material.solidColor.rgb;
+        call.albedo = albedo; // material.solidColor.rgb;
         call.mode   = MODE_SAMPLE;
         call.seed   = seed;
         call.wi     = wi;
@@ -64,10 +64,10 @@ namespace BSDF
         return call.sampleValue;
     }
 
-    float3 eval(GPUMaterialData material, uint seed, Params params)
+    float3 eval(GPUMaterialData material, uint seed, Params params, float3 albedo)
     {
         FnCall call;
-        call.albedo = material.solidColor.rgb;
+        call.albedo = albedo; // material.solidColor.rgb;
         call.mode   = MODE_EVAL;
         call.seed   = seed;
         call.wi     = params.wi;

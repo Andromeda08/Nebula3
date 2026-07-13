@@ -66,6 +66,15 @@ namespace nbl
         return mBoundingBox;
     }
 
+    float Geometry::getTriangleArea(const size_t triIndex) const
+    {
+        const size_t     base = triIndex * 3;
+        const glm::vec3& v0   = mVertices[mIndices[base + 0]].position;
+        const glm::vec3& v1   = mVertices[mIndices[base + 1]].position;
+        const glm::vec3& v2   = mVertices[mIndices[base + 2]].position;
+        return 0.5f * glm::length(glm::cross(v1 - v0, v2 - v0));
+    }
+
     const std::vector<Vertex>& Geometry::getVertices() const noexcept
     {
         return mVertices;

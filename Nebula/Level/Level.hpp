@@ -7,6 +7,8 @@
 #include "Level/Camera/CameraSystem.hpp"
 #include "Level/Light/LightSystem.hpp"
 #include "Level/Object/Object.hpp"
+#include "Light/AreaEmitter.hpp"
+#include "Light/DiscretePDF.hpp"
 #include "Material/MaterialPool.hpp"
 #include "Object/SelectObjectFeature.hpp"
 #include "Raytracing/BLASSystem.hpp"
@@ -18,6 +20,19 @@ class TextureManager;
 
 namespace nbl
 {
+    struct ObjectParams
+    {
+        int32_t                     geometryIndex   = -1;
+        Transform                   transform       = {};
+        Handle                      hMaterial       = {};
+        std::optional<std::string > name            = std::nullopt;
+        Object*                     pParent         = nullptr;
+
+        // Path Tracer Emitters
+        bool                        isEmitter       = false;
+        std::optional<glm::vec3>    radiance        = std::nullopt;
+    };
+
     class Level
     {
     public:
@@ -29,65 +44,65 @@ namespace nbl
 
         void drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
-        uint64_t getCameraBuffer(const uint32_t frame) const
-        {
-            return mCameraSystem->getBuffer(frame)->getAddress();
-        }
+        uint64_t getCameraBuffer(const uint32_t frame) const;
 
         template <class T = Object>
         requires std::derived_from<T, Object>
-        T* addObject(
-            const int32_t       geometryIndex,
-            const Transform&    transform,
-            const Handle&       hMaterial,
-            const std::string&  name,
-            Object*             pParent = nullptr)
+        T* addObject(const ObjectParams& objParams)
         {
             mObjects.push_back(makeUnique<T>());
             auto* obj = static_cast<T*>(mObjects.back().get());
 
             // Setup Object
             obj->id              = static_cast<int32_t>(mObjects.size()) - 1;
-            obj->name            = name.empty() ? fmt::format("Object #{}", mObjects.size()) : name;
-            obj->pParent         = pParent;
-            obj->geometryIndex   = geometryIndex;
-            obj->transform       = transform;
-            obj->hMaterial       = hMaterial;
+            obj->name            = objParams.name.value_or(fmt::format("Object #{}", mObjects.size()));
+            obj->pParent         = objParams.pParent;
+            obj->geometryIndex   = objParams.geometryIndex;
+            obj->transform       = objParams.transform;
+            obj->hMaterial       = objParams.hMaterial;
             obj->blasAddress     = 0;
             obj->isInstanceDirty = true;
             obj->hInstance       = mInstanceSystem->acquire({});
 
+            if (objParams.isEmitter)
+            {
+                const auto* geometry = mGeometrySystem->getGeometry(obj->geometryIndex);
+
+                if (!mDiscretePDFs.contains(obj->geometryIndex))
+                {
+                    mDiscretePDFs[obj->geometryIndex] = DiscretePDF(mGeometrySystem->getGeometry(obj->geometryIndex));
+                }
+
+                const AreaEmitter emitterInfo = {
+                    .instanceIndex = mInstanceSystem->getGpuIndex(obj->hInstance),
+                    .geometryIndex = obj->geometryIndex,
+                    .cdfOffset     = std::numeric_limits<uint32_t>::max(),
+                    .triCount      = geometry->getTriangleCount(),
+                    .totalWeight   = mDiscretePDFs[obj->geometryIndex].getSum(),
+                    .radiance      = objParams.radiance.value_or(mMaterialSystem->get(obj->hMaterial)->solidColor) * 15.0f,
+                };
+
+                mEmitters.push_back(emitterInfo);
+
+                obj->emitterIndex = mEmitters.size() - 1;
+            }
+
             return obj;
         }
 
-        [[nodiscard]] const std::vector<UPtr<Object>>& getObjects() const noexcept
-        {
-            return mObjects;
-        }
+        [[nodiscard]] const std::vector<UPtr<Object>>& getObjects() const noexcept;
 
-        [[nodiscard]] Object* getSelectedObject() const noexcept
-        {
-            if (mSelectObjectFeature)
-            {
-                const auto idx = *mSelectObjectFeature->getSelectedObjectIdx();
-                if (idx == -1)
-                {
-                    return nullptr;
-                }
-                return mObjects[idx].get();
-            }
-            return nullptr;
-        }
+        [[nodiscard]] Object* getSelectedObject() const noexcept;
 
-        [[nodiscard]] const SPtr<RHI::Buffer>& getInstanceIndirectionBuffer(const uint32_t frameIndex)
-        {
-            return mInstanceIndirectionMapBuffer[frameIndex];
-        }
+        [[nodiscard]] const SPtr<RHI::Buffer>& getInstanceIndirectionBuffer(const uint32_t frameIndex);
 
     private:
+        void initEmitterData();
+
         void buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData);
 
         friend class LevelRenderer;
+        friend class LevelPathTracer;
         friend class GBufferPass;
         friend class LightingPass;
         friend class BoundingBoxDebugPass;
@@ -120,5 +135,12 @@ namespace nbl
 
         // Objects
         std::vector<UPtr<Object>>           mObjects;
+
+        // Geometry Index -> DiscretePDF
+        std::unordered_map<int32_t, DiscretePDF> mDiscretePDFs;
+
+        std::vector<AreaEmitter>  mEmitters;
+        SPtr<RHI::Buffer>         mEmittersBuffer;
+        SPtr<RHI::Buffer>         mDiscretePDFsBuffer;
     };
 }

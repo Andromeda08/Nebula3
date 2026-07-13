@@ -59,10 +59,62 @@ namespace nbl
                 .pMaterialSystem = mMaterialSystem.get(),
             });
 
-            // loader.load();
+            loader.load();
         }
 
-        const int32_t cubeIdx = mGeometrySystem->addGeometry(Cube::createGeometry());
+        const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());
+        const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
+
+        addObject({
+            .geometryIndex = cubeIdx,
+            .transform     = Transform().setTranslate({96.0f, 48.0f, 0.0f}).setRotation({ 45.0f, 90.0f, 0.0f }).setScale({ 64.0f, 0.1f, 36.0f }),
+            // TODO: Add support for null materials
+            .hMaterial     = mMaterialSystem->acquire({}),
+            .isEmitter     = true,
+            .radiance      = glm::vec3(50.0f),
+        });
+
+        for (int32_t i = 0; i < 512; i++)
+        {
+            const auto radiance = glm::xyz(Random::getColor());
+            const auto hMat = mMaterialSystem->acquire({
+                .solidColor  = glm::vec4(radiance, 1.0f),
+            });
+
+            auto transform = Transform()
+                .setTranslate(Random::getVector<glm::vec3>(-32.0f, 32.0f))
+                .setScale(glm::vec3(1.0f));
+
+            // addObject({
+            //     .geometryIndex = cubeIdx,
+            //     .transform     = transform,
+            //     .hMaterial     = hMat,
+            //     .isEmitter     = true,
+            //     .radiance      = radiance * 50.0f,
+            // });
+        }
+
+        for (int32_t i = 0; i < 512; i++)
+        {
+            const auto hMat = mMaterialSystem->acquire({
+                .solidColor = glm::vec4(1.0f),
+                .bsdfIndex  = 1, // Random::get<uint32_t>(1, 2),
+            });
+
+            auto transform = Transform()
+                .setTranslate(glm::vec3(Random::get(-32, 32), Random::get(-32.0f, 32.0f), Random::get(-32, 32)))
+                .setScale(glm::vec3(2.0f));
+
+            addObject({
+                .geometryIndex = Random::get<int32_t>() % 2 == 0 ? sphereIdx : cubeIdx,
+                .transform     = transform,
+                .hMaterial     = hMat,
+            });
+        }
+
+        initEmitterData();
+
+        return;
 
         /* Voxel Terrain */
         auto terrainGenerator = vxl::TerrainGenerator({ 128, 24, 128, true });
@@ -103,7 +155,12 @@ namespace nbl
             auto transform = Transform()
                 .setTranslate(voxel.position)
                 .setScale(isEmissive ? glm::vec3(1.05f) : voxel.scale);
-            addObject<Object>(cubeIdx, transform, hMat, fmt::format("Voxel-#{}", i));
+            addObject<Object>({
+                .geometryIndex = cubeIdx,
+                .transform = transform,
+                .hMaterial = hMat,
+                .name = fmt::format("Voxel-#{}", i),
+            });
         }
 
         return;
@@ -120,15 +177,18 @@ namespace nbl
                     .setTranslate(terrainGenerator.getResult().at(Random::get<size_t>(0, terrainGenerator.getResult().size() - 1)).position + glm::vec3(0.0f, 2.0f, 0.0f));
                     //.setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
                     //.setScale(glm::vec3(2.0f));
-                addObject<Object>(cubeIdx, transform, hMat, fmt::format("Cube-#{}", i));
+                addObject<Object>({
+                    .geometryIndex = cubeIdx,
+                    .transform = transform,
+                    .hMaterial = hMat,
+                    .name = fmt::format("Cube-#{}", i),
+                });
             }
         }
 
         return;
 
         /* Example Geometries, Objects and Materials */ {
-            const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
-
             std::array<uint32_t, 6> textures;
             textures[0] = mTextureManager->loadTexture("cat_1.png");
             textures[1] = mTextureManager->loadTexture("cat_2.jpg");
@@ -154,7 +214,12 @@ namespace nbl
                     .setScale(glm::vec3(base));
                 if (i % 2 == 0)
                 {
-                    addObject<RotatingObject>(cubeIdx, transform, catMaterials[Random::get(0, 5)], fmt::format("Cube-Obj#{}", i));
+                    addObject<RotatingObject>({
+                        .geometryIndex = cubeIdx,
+                        .transform     = transform,
+                        .hMaterial     = catMaterials[Random::get(0, 5)],
+                        .name          = fmt::format("Cube-Obj#{}", i),
+                    });
                 }
                 else
                 {
@@ -162,7 +227,12 @@ namespace nbl
                         .solidColor  = Random::getColor(),
                         .pIsEmissive = true,
                     });
-                    addObject<Object>(sphereIdx, transform, hMat, fmt::format("Sphere-Obj#{}", i));
+                    addObject<Object>({
+                        .geometryIndex = sphereIdx,
+                        .transform     = transform,
+                        .hMaterial     = hMat,
+                        .name          = fmt::format("Sphere-Obj#{}", i),
+                    });
                 }
             }
 
@@ -173,7 +243,12 @@ namespace nbl
                 auto transform = Transform()
                     .setTranslate(glm::vec3(0.0f, -20.0f, 0.0f))
                     .setScale(glm::vec3(256.0f, 0.001f, 256.0f));
-                addObject<Object>(cubeIdx, transform, hMat, "Plane");
+                addObject<Object>({
+                    .geometryIndex = cubeIdx,
+                    .transform     = transform,
+                    .hMaterial     = hMat,
+                    .name          = "Plane",
+                });
             }
 
             /* Random Pillars */ {
@@ -187,7 +262,13 @@ namespace nbl
                         .setTranslate(glm::vec3(Random::get(-120.0f, 120.0f), -5.0f, Random::get(-120.0f, 120.0f)))
                         .setRotation(glm::vec3(Random::get(-45.0f, 45.0f), Random::get(0.0f, 360.0f), Random::get(-45.0f, 45.0f)))
                         .setScale(glm::vec3(b, 50.0f, b));
-                    addObject<Object>(cubeIdx, transform, hMat, fmt::format("Pillar-#{}", i));
+
+                    addObject<Object>({
+                        .geometryIndex = cubeIdx,
+                        .transform = transform,
+                        .hMaterial = hMat,
+                        .name = fmt::format("Pillar-#{}", i),
+                    });
                 }
             }
         }
@@ -263,6 +344,103 @@ namespace nbl
         {
             commandList->getHandle().drawIndexedIndirect(mDrawCommandsBuffer[frameData.currentFrame]->getHandle(), 0, mDrawCount, sizeof(vk::DrawIndexedIndirectCommand));
         }
+    }
+
+    uint64_t Level::getCameraBuffer(const uint32_t frame) const
+    {
+        return mCameraSystem->getBuffer(frame)->getAddress();
+    }
+
+    const std::vector<UPtr<Object>>& Level::getObjects() const noexcept
+    {
+        return mObjects;
+    }
+
+    Object* Level::getSelectedObject() const noexcept
+    {
+        if (mSelectObjectFeature)
+        {
+            const auto idx = *mSelectObjectFeature->getSelectedObjectIdx();
+            if (idx == -1)
+            {
+                return nullptr;
+            }
+            return mObjects[idx].get();
+        }
+        return nullptr;
+    }
+
+    const SPtr<RHI::Buffer>& Level::getInstanceIndirectionBuffer(const uint32_t frameIndex)
+    {
+        return mInstanceIndirectionMapBuffer[frameIndex];
+    }
+
+    void Level::initEmitterData()
+    {
+        // TODO: For now this is used to initialize emitters before first render, update to be interactive later.
+
+        std::unordered_map<int32_t, uint32_t> geomToCdfOffset;
+        uint64_t discretePdfsSize = 0;
+        uint32_t elem = 0;
+        for (const auto& [geomIndex, dPdf] : mDiscretePDFs)
+        {
+            geomToCdfOffset.emplace(geomIndex, elem);
+            const auto n = dPdf.getValues().size();
+            discretePdfsSize += n * sizeof(float);
+            elem += static_cast<uint32_t>(n);
+        }
+
+        for (auto& e : mEmitters)
+        {
+            e.cdfOffset = geomToCdfOffset.at(e.geometryIndex);
+        }
+
+        const uint64_t emittersSize = sizeof(AreaEmitter) * mEmitters.size();
+
+        const auto uploadBuffer = mRHI->createBuffer({
+            .size  = emittersSize + discretePdfsSize,
+            .type  = RHI::BufferType::Staging,
+            .label = "Level_UploadEmitters",
+        });
+        uploadBuffer->setData(mEmitters.data(), emittersSize, 0);
+
+        uint64_t offset = emittersSize;
+        for (const auto& dPdf : mDiscretePDFs | std::views::values)
+        {
+            const auto& v = dPdf.getValues();
+            const uint64_t size = v.size() * sizeof(float);
+            uploadBuffer->setData(v.data(), size, offset);
+            offset += size;
+        }
+
+        mEmittersBuffer = mRHI->createBuffer({
+            .size  = emittersSize,
+            .type  = RHI::BufferType::Storage,
+            .label = "Level_Emitters",
+        });
+        mDiscretePDFsBuffer = mRHI->createBuffer({
+            .size  = discretePdfsSize,
+            .type  = RHI::BufferType::Storage,
+            .label = "Level_EmitterDPdfs",
+        });
+
+        mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void
+        {
+            const auto copyEmitters = vk::BufferCopy2 { 0, 0, emittersSize };
+            const auto copyBuffer0  = vk::CopyBufferInfo2()
+                .setSrcBuffer(uploadBuffer->getHandle())
+                .setDstBuffer(mEmittersBuffer->getHandle())
+                .setRegions(copyEmitters);
+
+            const auto copyPdfs    = vk::BufferCopy2 { emittersSize, 0, discretePdfsSize };
+            const auto copyBuffer1 = vk::CopyBufferInfo2()
+                .setSrcBuffer(uploadBuffer->getHandle())
+                .setDstBuffer(mDiscretePDFsBuffer->getHandle())
+                .setRegions(copyPdfs);
+
+            pCommandList->getHandle().copyBuffer2(copyBuffer0);
+            pCommandList->getHandle().copyBuffer2(copyBuffer1);
+        });
     }
 
     void Level::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)

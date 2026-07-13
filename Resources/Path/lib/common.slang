@@ -45,11 +45,26 @@ struct PathPayload
     float prevBsdfPdf;
     bool  prevSpecular;
     bool  isTerminated;
+
+    float pathLength;
+
+    float3 gNormal;
+    float3 gDiffuse;
+    float3 gSpecular;
+    float  gRoughness;
+    float  gDepth;
+    float3 gWorldPos;
+    int    gInstanceId;
+    bool   gWritten;
+    float  gSpecHitDist;
+
+    bool   primaryHitSpecular;
 };
 
 struct PathTracerPushConstants
 {
     GPUCameraData*      camera;        // Camera BDA
+    GPUCameraData*      prevCamera;    // Camera BDA
     GPUInstanceData*    instances;     // Instance BDA
     AreaEmitter*        emitters;      // Emitters BDA
     float*              emitterPdfs;   // Emitter Discrete PDF BDA
@@ -64,6 +79,8 @@ struct PathTracerPushConstants
     int                 bDynamicRR;    // Use dynamic rr continuation probability based on throughput?
     float               rrCont;        // RR continuation probability if !bDynamicRR
     uint                emitterCount;  // N emitters
+    float               jitterX;
+    float               jitterY;
 };
 
 float getLuminance(float3 c)

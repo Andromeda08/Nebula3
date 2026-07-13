@@ -13,24 +13,24 @@ namespace nbl
      * Geometry Class
      * Owns vertex and index data and stores the original bounding box.
      */
-    class Geometry
+    class [[nodiscard]] Geometry
     {
     public:
         Geometry(std::vector<Vertex>&& vertices, std::vector<uint32_t>&& indices, std::string name);
 
-        [[nodiscard]] const BoundingBox& getBoundingBox() const noexcept;
+        const BoundingBox& getBoundingBox() const noexcept;
 
-        [[nodiscard]] const std::vector<Vertex>& getVertices() const noexcept;
+        float getTriangleArea(size_t triIndex) const;
 
-        [[nodiscard]] uint32_t getVertexCount() const noexcept;
+        const std::vector<Vertex>& getVertices() const noexcept;
+        uint32_t getVertexCount() const noexcept;
 
-        [[nodiscard]] const std::vector<uint32_t>& getIndices() const noexcept;
+        const std::vector<uint32_t>& getIndices() const noexcept;
+        uint32_t getIndexCount() const noexcept;
 
-        [[nodiscard]] uint32_t getIndexCount() const noexcept;
+        uint32_t getTriangleCount() const noexcept;
 
-        [[nodiscard]] uint32_t getTriangleCount() const noexcept;
-
-        [[nodiscard]] const std::string& getName() const noexcept;
+        const std::string& getName() const noexcept;
 
         void generateTangents();
 

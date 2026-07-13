@@ -132,6 +132,11 @@ set(V2_FILES
     Nebula/Level/Voxel/Features/FoliageGenerator.hpp
     Nebula/Views/PathTracerView.hpp
     Nebula/Views/PathTracerView.cpp
+    Nebula/Level/Light/DiscretePDF.hpp
+    Nebula/Level/Light/DiscretePDF.cpp
+    Nebula/Level/Light/AreaEmitter.hpp
+    Nebula/Level/LevelPathTracer.hpp
+    Nebula/Level/LevelPathTracer.cpp
 )
 
 add_executable(Nebula3
@@ -275,6 +280,7 @@ target_include_directories(Nebula3 PUBLIC
     External/spdlog/include
     External/xxhash
     ${Vulkan_INCLUDE_DIRS}
+    External/DLSS/include
 )
 
 target_link_libraries(Nebula3 PUBLIC
@@ -307,3 +313,13 @@ target_precompile_headers(Nebula3 PUBLIC
     Nebula/Impl/pch.hpp
 )
 set_source_files_properties(External/mikktspace/mikktspace.c PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+
+add_library(DLSS::NGX STATIC IMPORTED GLOBAL)
+
+set_target_properties(DLSS::NGX PROPERTIES
+    IMPORTED_LOCATION             ${PROJECT_SOURCE_DIR}/External/DLSS/lib/Windows_x86_64/x64/nvsdk_ngx_d.lib
+    IMPORTED_LOCATION_DEBUG       ${PROJECT_SOURCE_DIR}/External/DLSS/lib/Windows_x86_64/x64/nvsdk_ngx_d_dbg.lib
+    INTERFACE_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/External/DLSS/include
+)
+
+target_link_libraries(Nebula3 PRIVATE DLSS::NGX)

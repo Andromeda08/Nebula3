@@ -1,5 +1,6 @@
 #include "Device.hpp"
 
+#include <nvsdk_ngx_vk.h>
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "Core/Ranges.hpp"
@@ -35,6 +36,15 @@ namespace RHI
             .addExtension(vk::NVXImageViewHandleExtensionName, FeatureOption::Optional)
             // Mesh shader
             .addExtension<MeshShaderEXT>(FeatureOption::Optional);
+
+        uint32_t     ngxVoid0 = 0, ngxDeviceCount = 0;
+        const char** ngxVoid1 = 0, **ngxDevExts     = nullptr;
+        NVSDK_NGX_VULKAN_RequiredExtensions(&ngxVoid0, &ngxVoid1, &ngxDeviceCount, &ngxDevExts);
+        for (uint32_t i = 0; i < ngxDeviceCount; i++)
+        {
+            spdlog::info("NGX -> {}", ngxDevExts[i]);
+            mExtensions.addExtension(ngxDevExts[i], FeatureOption::Required);
+        }
 
         selectPhysicalDevice();
 

@@ -53,6 +53,8 @@ namespace RHI
         // ==========================
         mFrameSync = std::make_unique<FrameSync>(mDevice);
 
+        initDLSS();
+
         const auto& swapchainProperties = mSwapchain->getProperties();
         spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}, {}x{}]",
             mDevice->getDeviceName(), "N/A", config.enableDebugFeatures ? "Yes" : "No",

@@ -208,12 +208,12 @@ void TextureManager::createDescriptor()
                 .setBinding(0)
                 .setDescriptorCount(sMaxTextureCount)
                 .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                .setStageFlags(vk::ShaderStageFlagBits::eFragment),
+                .setStageFlags(vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eClosestHitKHR),
             vk::DescriptorSetLayoutBinding()
                 .setBinding(1)
                 .setDescriptorCount(1)
                 .setDescriptorType(vk::DescriptorType::eStorageImage)
-                .setStageFlags(vk::ShaderStageFlagBits::eFragment),
+                .setStageFlags(vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eClosestHitKHR),
         },
         .setCount = RHI::gFramesInFlight,
         .debugName = "TextureDescriptor",

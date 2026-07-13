@@ -2,6 +2,7 @@
 
 #include "Core/View.hpp"
 #include "Level/Level.hpp"
+#include "Level/LevelPathTracer.hpp"
 #include "Level/Render/LevelRenderer.hpp"
 
 namespace nbl
@@ -15,6 +16,7 @@ namespace nbl
             mName = "LevelView";
             mLevel = makeUnique<Level>(mRHI, mUserInterface, mTextureManager);
             mLevelRenderer = makeUnique<LevelRenderer>(mRHI, mTextureManager, mLevel.get());
+            mLevelPathTracer = makeUnique<LevelPathTracer>(mRHI, mTextureManager, mLevel.get());
         }
 
         ~LevelView() override = default;
@@ -31,11 +33,13 @@ namespace nbl
 
         void onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) override
         {
-            mLevelRenderer->render(frameData, pCommandList);
+            // mLevelRenderer->render(frameData, pCommandList);
+            mLevelPathTracer->render(frameData, pCommandList);
         }
 
     private:
-        UPtr<Level>         mLevel;
-        UPtr<LevelRenderer> mLevelRenderer;
+        UPtr<Level>           mLevel;
+        UPtr<LevelRenderer>   mLevelRenderer;
+        UPtr<LevelPathTracer> mLevelPathTracer;
     };
 }

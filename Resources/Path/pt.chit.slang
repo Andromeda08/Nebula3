@@ -7,6 +7,8 @@
 #include "lib/sampling.slang"
 #include "lib/triangle.slang"
 
+[[vk::binding(0, 2)]] Sampler2D uTextures[1024];
+
 float3 offsetRay(float3 p, float3 n)
 {
     const float origin     = 1.0 / 32.0;
@@ -78,14 +80,39 @@ void main(
         path.radiance += path.throughput * Le * wBSDF;
     }
 
+    float3 albedo = material.solidColor.rgb;
+    if (material.textureIndex >= 0)
+    {
+        albedo = uTextures[NonUniformResourceIndex(material.textureIndex)].SampleLevel(hit.uv, 0.0).rgb;
+    }
+
     // BSDF Sampling
-    BSDF::Record bRec = BSDF::sample(material, path.seed, wi);
+    BSDF::Record bRec = BSDF::sample(material, path.seed, wi, albedo);
     path.seed = bRec.seed;
 
     if (all(bRec.value == 0.0))
     {
         path.isTerminated = true;
         return;
+    }
+
+    if (path.depth == 0)
+    {
+        float3 viewPos = mul(pc.camera.view, float4(hit.pos, 1.0)).xyz;
+
+        path.gNormal            = hit.N;
+        path.gWorldPos          = hit.pos;
+        path.gInstanceId        = int(instanceId);
+        path.gDepth             = -viewPos.z;
+        path.gDiffuse           = bRec.isDiscrete ? float3(0.0) : albedo;
+        path.gSpecular          = bRec.isDiscrete ? float3(1.0) : float3(0.04);
+        path.gRoughness         = bRec.isDiscrete ? 0.0 : 1.0;
+        path.primaryHitSpecular = bRec.isDiscrete;
+        path.gWritten           = true;
+    }
+    else if (path.depth == 1 && path.primaryHitSpecular)
+    {
+        path.gSpecHitDist = RayTCurrent();
     }
 
     // NEE
@@ -102,7 +129,7 @@ void main(
                 BSDF::Params bParams;
                 bParams.wi = wi;
                 bParams.wo = woLocal;
-                float3 f = BSDF::eval(material, path.seed, bParams);
+                float3 f = BSDF::eval(material, path.seed, bParams, albedo);
 
                 if (any(f > 0.0))
                 {
@@ -128,6 +155,7 @@ void main(
     // Update path
     path.throughput  *= bRec.value;
     path.depth       += 1;
+    path.pathLength  += RayTCurrent();
     path.ray.origin   = offsetRay(hit.pos, hit.geoN * sign);
     path.ray.dir      = woWorld;
     path.prevBsdfPdf  = bRec.isDiscrete ? 0.0 : bRec.pdf;
