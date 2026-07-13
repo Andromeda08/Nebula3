@@ -1,14 +1,10 @@
 #include "PathTracerView.hpp"
 
-#include <imgui.h>
 #include <glm/gtx/hash.hpp>
 
 #include "Core/Random.hpp"
 #include "Level/Camera/FlyingCamera.hpp"
-#include "Level/Camera/OrbitCamera.hpp"
 #include "Level/Voxel/TerrainGenerator.hpp"
-
-
 
 namespace nbl
 {
@@ -19,7 +15,6 @@ namespace nbl
 
         const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
         mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
-        // mCameraSystem->addCamera<OrbitCamera>(true);
 
         mGeometrySystem = makeUnique<GeometrySystem>(mRHI);
         mLightSystem    = makeUnique<LightSystem>(mRHI);
@@ -29,6 +24,8 @@ namespace nbl
         mTlasSystem     = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
 
         mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
+
+        #pragma region "Generate Test Scene"
 
         const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());
         const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
@@ -134,6 +131,8 @@ namespace nbl
                 .solidColor = { 0.027f, 0.0f, 0.376f, 1.0f },
             }),
         });
+
+        #pragma endregion
 
         initEmitterData();
     }
@@ -294,6 +293,82 @@ namespace nbl
         });
     }
 
+    PathTracerView::PathTracerView(nbl_ViewCtorParams): nbl_ViewBaseCtor
+    {
+        const bool hasDLSS = mRHI->getDLSS()->isAvailable();
+        const bool hasRT   = mRHI->getFeatures().rayTracing;
+        if (!hasDLSS || !hasRT)
+        {
+            exitWithError("Failed to create PathTracerView: Feature requirements were not met\n\t- Ray Tracing: {}\n\t- DLSS Ray Reconstruction: {}",
+                hasRT ? "Yes" : "No", hasDLSS ? "Yes" : "No");
+        }
+
+        using enum vk::ShaderStageFlagBits;
+
+        mName  = "PathTracerView";
+        mScene = makeUnique<PTScene>(mRHI, mTextureManager);
+
+        mDescriptor = mRHI->createDescriptor({
+            .bindings  = {
+                { 0, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 1, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 2, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 3, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 4, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 5, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 6, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+                { 7, vk::DescriptorType::eStorageImage, 1, eRaygenKHR },
+            },
+            .setCount  = RHI::gFramesInFlight,
+            .debugName = "PT_Descriptor",
+        });
+
+        for (uint32_t i = 0; i < RHI::gFramesInFlight; i++)
+        {
+            mCurrentOutput[i]   = makeRenderTarget(mRHI.get(), fmt::format("PT_1spp_   {}",    i), vk::Format::eR32G32B32A32Sfloat);
+            mNormals[i]         = makeRenderTarget(mRHI.get(), fmt::format("PT_Normals_{}",    i));
+            mDiffuseAlbedo[i]   = makeRenderTarget(mRHI.get(), fmt::format("PT_DiffAlbedo_{}", i));
+            mSpecularAlbedo[i]  = makeRenderTarget(mRHI.get(), fmt::format("PT_SpecAlbedo_{}", i));
+            mRoughness[i]       = makeRenderTarget(mRHI.get(), fmt::format("PT_Roughness_{}",  i), vk::Format::eR16Sfloat);
+            mDepth[i]           = makeRenderTarget(mRHI.get(), fmt::format("PT_LinDepth_{}",   i), vk::Format::eR32Sfloat);
+            mMotionVectors[i]   = makeRenderTarget(mRHI.get(), fmt::format("PT_MVec_{}",       i), vk::Format::eR32G32Sfloat);
+            mRROutput[i]        = makeRenderTarget(mRHI.get(), fmt::format("PT_DLSS_RR_{}",    i));
+            mSpecularHitDist[i] = makeRenderTarget(mRHI.get(), fmt::format("PT_SpecHitDist_{}",i), vk::Format::eR32Sfloat);
+
+            const auto descriptorWrite = RHI::DescriptorWrite()
+                .writeStorageImage(0, vk::ImageLayout::eGeneral, mCurrentOutput[i])
+                .writeStorageImage(1, vk::ImageLayout::eGeneral, mNormals[i])
+                .writeStorageImage(2, vk::ImageLayout::eGeneral, mDiffuseAlbedo[i])
+                .writeStorageImage(3, vk::ImageLayout::eGeneral, mSpecularAlbedo[i])
+                .writeStorageImage(4, vk::ImageLayout::eGeneral, mRoughness[i])
+                .writeStorageImage(5, vk::ImageLayout::eGeneral, mDepth[i])
+                .writeStorageImage(6, vk::ImageLayout::eGeneral, mMotionVectors[i])
+                .writeStorageImage(7, vk::ImageLayout::eGeneral, mSpecularHitDist[i]);
+            mDescriptor->write(i, descriptorWrite);
+        }
+
+        const auto ps     = RHI::RayTracingPS().setMaxDepth(1);
+        const auto common = RHI::PipelineCommon()
+            .setLabel("PathTracer")
+            .addShader("pt.rgen.spv")
+            .addShader("pt.miss.spv")
+            .addShader("pt.chit.spv")
+            .addShader("diffuse.call.spv")
+            .addShader("mirror.call.spv")
+            .addShader("dielectric.call.spv")
+            .addDescriptorLayout(0, mDescriptor.get())
+            .addDescriptorLayout(1, mScene->mTlasSystem->getDescriptor().get())
+            .setPushConstant<PathTracerPushConstants>(eRaygenKHR | eClosestHitKHR | eMissKHR | eCallableKHR);
+        mPipeline = mRHI->createRayTracingPipeline2(ps, common);
+
+        mTonemapPass = makeUnique<TonemapPass>(Tonemap_Params {
+            .outputFormat = vk::Format::eR32G32B32A32Sfloat,
+            .rhi          = mRHI,
+        });
+
+        mUserInterface->addComponent<ObjectEditorUI>(mScene->mObjects, mScene->mSelectObjectFeature->getSelectedObjectIdx());
+    }
+
     void PathTracerView::onEvent(const SDL_Event& event)
     {
         mScene->onEvent(event);
@@ -303,33 +378,7 @@ namespace nbl
     {
         mScene->onUpdate(dt, frameData, pCommandList);
 
-        const auto cameraView = mScene->mCameraSystem->getActiveCamera()->getGpuCameraData().view;
-
-        bool viewChanged = false;
-        for (int32_t i = 0; i < 4 && !viewChanged; ++i)
-        {
-            if (glm::any(glm::epsilonNotEqual(cameraView[i], mPrevView[i], 1e-6f)))
-            {
-                viewChanged = true;
-            }
-        }
-
-        if (viewChanged)
-        {
-            mAccumStartTime    = std::chrono::high_resolution_clock::now();
-            mAccumulatedFrames = 0;
-        }
-        else
-        {
-            if (mMaximumSamples != 0 && (mAccumulatedFrames >= mMaximumSamples))
-            {
-                mAccumEndTime = std::chrono::high_resolution_clock::now();
-            }
-            mAccumulatedFrames += 1;
-        }
-
         mTotalFrames++;
-        mPrevView = cameraView;
 
         const uint32_t phase = static_cast<uint32_t>(mTotalFrames % 8) + 1;
         mJitterX = halton(phase, 2) - 0.5f;
@@ -340,7 +389,7 @@ namespace nbl
     {
         pCommandList->beginLabel("PathTracerView::onRender()");
 
-        PathTracerPushConstants pushConstants = {
+        const PathTracerPushConstants pushConstants = {
             .camera         = mScene->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
             .prevCamera     = mScene->mCameraSystem->getPreviousBuffer(frameData.currentFrame)->getAddress(),
             .instances      = mScene->mInstanceSystem->getBuffer()->getAddress(),
@@ -350,53 +399,54 @@ namespace nbl
             .indices        = mScene->mGeometrySystem->getBuffers().getIndexBuffer()->getAddress(),
             .materials      = mScene->mMaterialSystem->getBuffer()->getAddress(),
             .geometryInfos  = mScene->mGeometrySystem->getBuffers().getInfoBuffer()->getAddress(),
-            .accumulated    = mAccumulatedFrames,
+            .accumulated    = mTotalFrames, // Not needed for the DLSS Version
             .totalFrames    = mTotalFrames,
-            .maxBounces     = static_cast<uint32_t>(mMaxBounces),
-            .spp            = static_cast<uint32_t>(mSPP),
-            .bDynamicRR     = mDynamicRR ? 1 : 0,
-            .rrCont         = mRRCont,
+            .maxBounces     = 4,
+            .spp            = 1,
+            .bDynamicRR     = 0,
+            .rrCont         = 0.7f,
             .emitterCount   = static_cast<uint32_t>(mScene->mEmitters.size()),
             .jitterX        = mJitterX,
             .jitterY        = mJitterY,
         };
 
-        // const bool isMaxSamples = mMaximumSamples != 0 && (mAccumulatedFrames >= mMaximumSamples);
-        // if (!isMaxSamples)
-        // {
-            RHI::Barrier()
-                .addBarrier(mCurrentOutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mAccumulatedOutput[0]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mAccumulatedOutput[1]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mScene->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
-                .addBarrier(mScene->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse))
-                .addBarrier(mNormals[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mDiffuseAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mSpecularAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mRoughness[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mDepth[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mMotionVectors[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .addBarrier(mSpecularHitDist[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
-                .insert(pCommandList);
+        RHI::Barrier()
+            .addBarrier(mCurrentOutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mScene->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
+            .addBarrier(mScene->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse))
+            .addBarrier(mNormals[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mDiffuseAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mSpecularAlbedo[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mRoughness[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mDepth[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mMotionVectors[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .addBarrier(mSpecularHitDist[frameData.currentFrame]->getBarrier(RHI::ImageUsage::StorageImage))
+            .insert(pCommandList);
 
-            pCommandList->bindPipeline(mPipeline.get());
-            pCommandList->bindDescriptorSets({
-                mDescriptor->getSet(frameData.currentFrame),
-                mScene->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame),
-            });
-            pCommandList->pushConstants(&pushConstants);
+        pCommandList->bindPipeline(mPipeline.get());
+        pCommandList->bindDescriptorSets({
+            mDescriptor->getSet(frameData.currentFrame),
+            mScene->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame),
+        });
+        pCommandList->pushConstants(&pushConstants);
 
-            const auto [w, h] = mCurrentOutput[frameData.currentFrame]->getProperties().extent;
-            pCommandList->traceRays(w, h, 1);
-        // }
+        const auto [w, h] = mCurrentOutput[frameData.currentFrame]->getProperties().extent;
+        pCommandList->traceRays(w, h, 1);
 
-        // const uint32_t writeAccum = (frameData.currentFrame == 0) ? 1 : 0;
-        // RHI::Barrier()
-        //     .addBarrier(mAccumulatedOutput[writeAccum]->getBarrier(RHI::ImageUsage::StorageImage))
-        //     .insert(pCommandList);
-        // mTonemapPass->execute(mAccumulatedOutput[writeAccum], pCommandList, frameData);
-        // // mFXAAPass->execute(pCommandList, frameData);
+        execute_DLSSDenoiser(pCommandList, frameData);
+        mTonemapPass->execute(mRROutput[frameData.currentFrame], pCommandList, frameData);
 
+        pCommandList->blitToSwapchain(mTonemapPass->getResult(frameData.currentFrame).get(), mRHI->getSwapchain(), frameData.acquiredIndex);
+
+        pCommandList->endLabel();
+    }
+
+    void PathTracerView::onDrawUI()
+    {
+    }
+
+    void PathTracerView::execute_DLSSDenoiser(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
+    {
         RHI::Barrier()
             .addBarrier(mCurrentOutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
             .addBarrier(mNormals[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
@@ -409,15 +459,16 @@ namespace nbl
             .addBarrier(mRROutput[frameData.currentFrame]->getBarrier(RHI::ImageUsage::General))
             .insert(pCommandList);
 
-        auto resColor       = wrapImage(mCurrentOutput[frameData.currentFrame], false);
-        auto resNormal      = wrapImage(mNormals[frameData.currentFrame], false);
-        auto resDiffAlb     = wrapImage(mDiffuseAlbedo[frameData.currentFrame], false);
-        auto resSpecAlb     = wrapImage(mSpecularAlbedo[frameData.currentFrame], false);
-        auto resRough       = wrapImage(mRoughness[frameData.currentFrame], false);
-        auto resDepth       = wrapImage(mDepth[frameData.currentFrame], false);
-        auto resMotion      = wrapImage(mMotionVectors[frameData.currentFrame], false);
-        auto resSpecHitDist = wrapImage(mSpecularHitDist[frameData.currentFrame], false);
-        auto resOutput      = wrapImage(mRROutput[frameData.currentFrame], true);
+        using RHI::Integration::DLSS;
+        auto resColor       = DLSS::wrapImage(mCurrentOutput[frameData.currentFrame], false);
+        auto resNormal      = DLSS::wrapImage(mNormals[frameData.currentFrame], false);
+        auto resDiffAlb     = DLSS::wrapImage(mDiffuseAlbedo[frameData.currentFrame], false);
+        auto resSpecAlb     = DLSS::wrapImage(mSpecularAlbedo[frameData.currentFrame], false);
+        auto resRough       = DLSS::wrapImage(mRoughness[frameData.currentFrame], false);
+        auto resDepth       = DLSS::wrapImage(mDepth[frameData.currentFrame], false);
+        auto resMotion      = DLSS::wrapImage(mMotionVectors[frameData.currentFrame], false);
+        auto resSpecHitDist = DLSS::wrapImage(mSpecularHitDist[frameData.currentFrame], false);
+        auto resOutput      = DLSS::wrapImage(mRROutput[frameData.currentFrame], true);
 
         const auto& cam = mScene->mCameraSystem->getActiveCamera()->getGpuCameraData();
         const glm::mat4 view = cam.view;
@@ -448,54 +499,18 @@ namespace nbl
         eval.pInWorldToViewMatrix = const_cast<float*>(glm::value_ptr(view));
         eval.pInViewToClipMatrix  = const_cast<float*>(glm::value_ptr(proj));
 
-        const auto r = NGX_VULKAN_EVALUATE_DLSSD_EXT(
-            static_cast<VkCommandBuffer>(pCommandList->getHandle()),
-            mRHI->getDLSSdFeature(),
-            mRHI->getNGXParams(),
-            &eval);
-
-        if (NVSDK_NGX_FAILED(r))
-        {
-            spdlog::error("DLSS-RR eval failed: 0x{:x}", static_cast<uint32_t>(r));
-        }
-
-        mTonemapPass->execute(mRROutput[frameData.currentFrame], pCommandList, frameData);
-        mFXAAPass->execute(pCommandList, frameData);
-
-        pCommandList->blitToSwapchain(mFXAAPass->getResult(frameData.currentFrame).get(), mRHI->getSwapchain(), frameData.acquiredIndex);
-
-        pCommandList->endLabel();
+        mRHI->getDLSS()->evalDLSSDenoiser(pCommandList, &eval);
     }
 
-    void PathTracerView::onDrawUI()
+    float PathTracerView::halton(uint32_t index, const uint32_t base)
     {
-        const bool reachedMax = mMaximumSamples != 0 && (mAccumulatedFrames >= mMaximumSamples);
-        const auto endpoint   = reachedMax ? mAccumEndTime : std::chrono::high_resolution_clock::now();
-        const std::chrono::duration<float> delta = endpoint - mAccumStartTime;
-        const float dt = delta.count();
-
-        ImGui::Begin("PathTracer");
-
-        ImGui::Text("Samples: %llu", std::min(mAccumulatedFrames, static_cast<uint64_t>(mMaximumSamples)));
-        ImGui::Text("Time: %fs", dt);
-
-        ImGui::SeparatorText("Params");
-
-        bool changed = false;
-
-        changed |= ImGui::DragInt("SPP", &mSPP, 1, 0, 64);
-        changed |= ImGui::DragInt("Max Bounces", &mMaxBounces, 1, 0, 32);
-        changed |= ImGui::DragInt("Max Samples", &mMaximumSamples, 32, 0, 131072);
-
-        changed |= ImGui::Checkbox("Dynamic RR", &mDynamicRR);
-        changed |= ImGui::DragFloat("RR Cont", &mRRCont, 0.01f, 0.0f, 1.0f);
-
-        ImGui::End();
-
-        if (changed)
+        float f = 1.0f, r = 0.0f;
+        while (index > 0)
         {
-            mPrevView = glm::mat4(1.0f);
-
+            f     /= static_cast<float>(base);
+            r     += f * static_cast<float>(index % base);
+            index /= base;
         }
+        return r;
     }
 }

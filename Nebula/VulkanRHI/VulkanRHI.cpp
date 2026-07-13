@@ -53,13 +53,14 @@ namespace RHI
         // ==========================
         mFrameSync = std::make_unique<FrameSync>(mDevice);
 
-        initDLSS();
+        mDLSS = makeUnique<Integration::DLSS>(mInstance, mDevice, mGraphicsQueue.get());
 
         const auto& swapchainProperties = mSwapchain->getProperties();
-        spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}, {}x{}]",
+        spdlog::debug("[RHI] Created VulkanRHI\n\t- Device: {}\n\t- Feature Level: {}\n\t- Debug Features: {}\n\t- Swapchain Details: [images={}, format={}, colorSpace={}, presentMode={}, {}x{}]\n\t- DLSS Denoising: {}",
             mDevice->getDeviceName(), "N/A", config.enableDebugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode),
-            swapchainProperties.extent.width, swapchainProperties.extent.height);
+            swapchainProperties.extent.width, swapchainProperties.extent.height,
+            mDLSS->isAvailable() ? "No" : "Yes");
     }
 
     FrameData VulkanRHI::beginFrame() const
@@ -200,6 +201,11 @@ namespace RHI
     {
         createInfo.setDevice(mDevice);
         return RaytracingPipeline::create(createInfo);
+    }
+
+    Integration::DLSS* VulkanRHI::getDLSS() const
+    {
+        return mDLSS.get();
     }
 
     void VulkanRHI::immediate_uploadToBuffer(const Buffer* pDst, const void* pData, const uint64_t size, const uint64_t srcOffset, const uint64_t dstOffset) const noexcept

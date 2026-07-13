@@ -59,20 +59,45 @@ namespace nbl
                 .pMaterialSystem = mMaterialSystem.get(),
             });
 
-            loader.load();
+            // loader.load();
         }
+
+        #pragma region "Generate Test Scene"
 
         const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());
         const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
 
-        addObject({
-            .geometryIndex = cubeIdx,
-            .transform     = Transform().setTranslate({96.0f, 48.0f, 0.0f}).setRotation({ 45.0f, 90.0f, 0.0f }).setScale({ 64.0f, 0.1f, 36.0f }),
-            // TODO: Add support for null materials
-            .hMaterial     = mMaterialSystem->acquire({}),
-            .isEmitter     = true,
-            .radiance      = glm::vec3(50.0f),
+        auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 128, true });
+        terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
+            .patchCount             = 12,
+            .patchRadius            = 12,
+            .radiusVariance         = 3,
+            .density                = 0.65f,
+            .patchDensityVariance   = true,
+            .instanceRandomOffset   = true,
+            .instanceRandomScale    = true,
         });
+        terrainGenerator.generate();
+
+        std::unordered_map<glm::vec3, Handle> voxelMaterial;
+
+        for (const auto& [i, voxel] : nbl::enumerate(terrainGenerator.getResult()))
+        {
+            if (!voxelMaterial.contains(voxel.color))
+            {
+                const auto hMat = mMaterialSystem->acquire({
+                    .solidColor  = glm::vec4(voxel.color, 1.0f),
+                });
+                voxelMaterial.insert_or_assign(voxel.color, hMat);
+            }
+
+            addObject({
+                .geometryIndex = cubeIdx,
+                .transform     = Transform().setTranslate(voxel.position).setScale(voxel.scale),
+                .hMaterial     = voxelMaterial.at(voxel.color),
+                .isEmitter     = false,
+            });
+        }
 
         for (int32_t i = 0; i < 512; i++)
         {
@@ -82,16 +107,16 @@ namespace nbl
             });
 
             auto transform = Transform()
-                .setTranslate(Random::getVector<glm::vec3>(-32.0f, 32.0f))
+                .setTranslate(terrainGenerator.getResult().at(Random::get<size_t>(0, terrainGenerator.getResult().size() - 1)).position + glm::vec3(0.0f, 2.0f, 0.0f))
                 .setScale(glm::vec3(1.0f));
 
-            // addObject({
-            //     .geometryIndex = cubeIdx,
-            //     .transform     = transform,
-            //     .hMaterial     = hMat,
-            //     .isEmitter     = true,
-            //     .radiance      = radiance * 50.0f,
-            // });
+            addObject({
+                .geometryIndex = cubeIdx,
+                .transform     = transform,
+                .hMaterial     = hMat,
+                .isEmitter     = true,
+                .radiance      = radiance * 50.0f,
+            });
         }
 
         for (int32_t i = 0; i < 512; i++)
@@ -102,7 +127,7 @@ namespace nbl
             });
 
             auto transform = Transform()
-                .setTranslate(glm::vec3(Random::get(-32, 32), Random::get(-32.0f, 32.0f), Random::get(-32, 32)))
+                .setTranslate(glm::vec3(Random::get(-128, 128), Random::get(-32.0f, 32.0f), Random::get(-128, 128)))
                 .setScale(glm::vec3(2.0f));
 
             addObject({
@@ -112,83 +137,8 @@ namespace nbl
             });
         }
 
-        initEmitterData();
-
-        return;
-
-        /* Voxel Terrain */
-        auto terrainGenerator = vxl::TerrainGenerator({ 128, 24, 128, true });
-        // terrainGenerator.addGenerator<vxl::FoliageGenerator>(vxl::FoliageGenerator::Control{
-        //     .patchCount             = 12,
-        //     .patchRadius            = 12,
-        //     .radiusVariance         = 3,
-        //     .density                = 0.65f,
-        //     .patchDensityVariance   = true,
-        //     .instanceRandomOffset   = true,
-        //     .instanceRandomScale    = true,
-        // });
-        terrainGenerator.generate();
-
-        std::unordered_map<glm::vec3, Handle> voxelMaterial;
-
-        for (const auto& [i, voxel] : nbl::enumerate(terrainGenerator.getResult()))
+        /* Example Geometries, Objects and Materials */
         {
-            const bool isEmissive = Random::unit() < 0.25f;
-            if (!voxelMaterial.contains(voxel.color))
-            {
-                const auto hMat = mMaterialSystem->acquire({
-                    .solidColor  = glm::vec4(voxel.color, 1.0f),
-                });
-                voxelMaterial.insert_or_assign(voxel.color, hMat);
-            }
-
-            auto hMat = voxelMaterial.at(voxel.color);
-
-            if (isEmissive)
-            {
-                hMat = mMaterialSystem->acquire({
-                    .solidColor  = glm::vec4(glm::xyz(Random::getColor()), 1.0f),
-                    .pIsEmissive = true,
-                });
-            }
-
-            auto transform = Transform()
-                .setTranslate(voxel.position)
-                .setScale(isEmissive ? glm::vec3(1.05f) : voxel.scale);
-            addObject<Object>({
-                .geometryIndex = cubeIdx,
-                .transform = transform,
-                .hMaterial = hMat,
-                .name = fmt::format("Voxel-#{}", i),
-            });
-        }
-
-        return;
-
-        /* Emissive cubes */ {
-            for (int32_t i = 0; i < 512; i++)
-            {
-                const auto hMat = mMaterialSystem->acquire({
-                    .solidColor  = glm::vec4(glm::xyz(Random::getColor()), 1.0f),
-                    .pIsEmissive = true,
-                });
-
-                auto transform = Transform()
-                    .setTranslate(terrainGenerator.getResult().at(Random::get<size_t>(0, terrainGenerator.getResult().size() - 1)).position + glm::vec3(0.0f, 2.0f, 0.0f));
-                    //.setTranslate(glm::vec3(Random::get(-64.0f, 64.0f), Random::get(-5.0f, 25.0f), Random::get(-64.0f, 64.0f)))
-                    //.setScale(glm::vec3(2.0f));
-                addObject<Object>({
-                    .geometryIndex = cubeIdx,
-                    .transform = transform,
-                    .hMaterial = hMat,
-                    .name = fmt::format("Cube-#{}", i),
-                });
-            }
-        }
-
-        return;
-
-        /* Example Geometries, Objects and Materials */ {
             std::array<uint32_t, 6> textures;
             textures[0] = mTextureManager->loadTexture("cat_1.png");
             textures[1] = mTextureManager->loadTexture("cat_2.jpg");
@@ -235,43 +185,9 @@ namespace nbl
                     });
                 }
             }
-
-            /* Ground */ {
-                const auto hMat = mMaterialSystem->acquire({
-                    .solidColor = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                });
-                auto transform = Transform()
-                    .setTranslate(glm::vec3(0.0f, -20.0f, 0.0f))
-                    .setScale(glm::vec3(256.0f, 0.001f, 256.0f));
-                addObject<Object>({
-                    .geometryIndex = cubeIdx,
-                    .transform     = transform,
-                    .hMaterial     = hMat,
-                    .name          = "Plane",
-                });
-            }
-
-            /* Random Pillars */ {
-                for (int32_t i = 0; i < 64; i++)
-                {
-                    const auto hMat = mMaterialSystem->acquire({
-                        .solidColor = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                    });
-                    const auto b = Random::get(2.5f, 7.5f);
-                    auto transform = Transform()
-                        .setTranslate(glm::vec3(Random::get(-120.0f, 120.0f), -5.0f, Random::get(-120.0f, 120.0f)))
-                        .setRotation(glm::vec3(Random::get(-45.0f, 45.0f), Random::get(0.0f, 360.0f), Random::get(-45.0f, 45.0f)))
-                        .setScale(glm::vec3(b, 50.0f, b));
-
-                    addObject<Object>({
-                        .geometryIndex = cubeIdx,
-                        .transform = transform,
-                        .hMaterial = hMat,
-                        .name = fmt::format("Pillar-#{}", i),
-                    });
-                }
-            }
         }
+
+        #pragma endregion
     }
 
     void Level::onEvent(const SDL_Event& event) noexcept
