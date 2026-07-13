@@ -44,6 +44,8 @@ A cross-platform rendering engine built with Vulkan.
   - Ray tracing pipeline-based MIS path tracer with support for any BSDF. 
     - Current BSDFs: Diffuse, Mirror, Dielectric
     - Mesh Emitters
+    - Temporal accumulation for stationary camera (a)
+    - DLSS Ray Reconstruction integration (b)
   - Deferred shading
   - Screen-space and raytraced ambient occlusion
   - Raytraced shadows
