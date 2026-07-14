@@ -62,7 +62,7 @@ namespace nbl
 
         mDescriptor = mRHI->createDescriptor({
             .bindings = {{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }},
-            .setCount = 2,
+            .setCount = RHI::gFramesInFlight,
             .debugName = "AntiAliasing_Descriptor",
         });
 

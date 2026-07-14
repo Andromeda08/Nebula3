@@ -33,6 +33,12 @@ namespace nbl
         std::optional<glm::vec3>    radiance        = std::nullopt;
     };
 
+    struct PendingReleaseLevel
+    {
+        SPtr<RHI::Buffer> buffer;
+        uint64_t          frameToRelease;
+    };
+
     class Level
     {
     public:
@@ -40,7 +46,7 @@ namespace nbl
 
         void onEvent(const SDL_Event& event) noexcept;
 
-        void onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept;
+        void onUpdate(float dt, const RHI::FrameData& frameData, RHI::CommandList* pCommandList) noexcept;
 
         void drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
@@ -103,6 +109,7 @@ namespace nbl
 
         friend class LevelRenderer;
         friend class LevelPathTracer;
+        friend class PrePass;
         friend class GBufferPass;
         friend class LightingPass;
         friend class BoundingBoxDebugPass;
@@ -122,6 +129,7 @@ namespace nbl
         UPtr<TLASSystem>                    mTlasSystem;
 
         // Interactive Features
+        UPtr<PrePass>                       mPrePass;
         UPtr<SelectObjectFeature>           mSelectObjectFeature;
 
         // Draw Commands, Culling Stats and Configuration
@@ -142,5 +150,7 @@ namespace nbl
         std::vector<AreaEmitter>  mEmitters;
         SPtr<RHI::Buffer>         mEmittersBuffer;
         SPtr<RHI::Buffer>         mDiscretePDFsBuffer;
+
+        std::vector<PendingRelease> mPendingReleases;
     };
 }

@@ -23,7 +23,7 @@ namespace nbl
         mBlasSystem     = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
         mTlasSystem     = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
 
-        mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
+        mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get(), nullptr);
 
         #pragma region "Generate Test Scene"
 

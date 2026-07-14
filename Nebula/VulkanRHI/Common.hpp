@@ -32,7 +32,7 @@ namespace RHI::Platform
 // ============================
 namespace RHI
 {
-    constexpr uint64_t gFramesInFlight = 2;
+    constexpr uint64_t gFramesInFlight = 3;
 }
 
 // RHI Common Types

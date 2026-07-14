@@ -137,6 +137,9 @@ set(V2_FILES
     Nebula/Level/Light/AreaEmitter.hpp
     Nebula/VulkanRHI/Integration/DLSS.hpp
     Nebula/VulkanRHI/Integration/DLSS.cpp
+    Nebula/Level/Render/PrePass.hpp
+    Nebula/Level/Render/PrePass.cpp
+    Nebula/Level/Object/SelectObjectFeature.cpp
 )
 
 add_executable(Nebula3

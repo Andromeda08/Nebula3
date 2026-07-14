@@ -35,18 +35,20 @@ namespace nbl
         {
             mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
             mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
-
-            mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get());
-            mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
         }
+
+        mPrePass = PrePass::create({
+            .pLevel = this,
+            .rhi    = mRHI,
+        });
+        mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get(), mPrePass.get());
+        mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
 
         mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
 
         /* Example Cameras */ {
             const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
-            mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
-
-            mCameraSystem->addCamera<OrbitCamera>(true);
+            mCameraSystem->addCamera<FlyingCamera>(true, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
         }
 
         /* GLTF Scene */ {
@@ -63,6 +65,17 @@ namespace nbl
         }
 
         #pragma region "Generate Test Scene"
+
+        const auto hInitLight = mLightSystem->acquire({
+            .vector       = glm::vec3(5.0f, 25.0f, 0.0f),
+            .color        = glm::vec3(1.0f),
+            .intensity    = 15000.0f,
+            .isEnabled    = true,
+            .castsShadows = true,
+            .radius       = 50.0f,
+            .type         = LightType::Point,
+            .name         = fmt::format("Light {}", mLightSystem->getSize()),
+        });
 
         const int32_t cubeIdx   = mGeometrySystem->addGeometry(Cube::createGeometry());
         const int32_t sphereIdx = mGeometrySystem->addGeometry(Sphere::createGeometry());
@@ -200,7 +213,7 @@ namespace nbl
         }
     }
 
-    void Level::onUpdate(const float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
+    void Level::onUpdate(const float dt, const RHI::FrameData& frameData, RHI::CommandList* pCommandList) noexcept
     {
         mCameraSystem->onUpdate(frameData);
 
@@ -252,6 +265,8 @@ namespace nbl
         {
             buildDrawCommands(pCommandList, frameData);
         }
+
+        mPrePass->execute(pCommandList, frameData);
     }
 
     void Level::drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
@@ -361,6 +376,18 @@ namespace nbl
 
     void Level::buildDrawCommands(const RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
+        for (auto it = mPendingReleases.begin(); it != mPendingReleases.end();)
+        {
+            if (mRHI->isFrameComplete(it->frameToRelease))
+            {
+                it = mPendingReleases.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
         std::unordered_map<int32_t, std::vector<Handle>> groups;
         for (const auto& obj : mObjects)
         {
@@ -422,20 +449,34 @@ namespace nbl
         }
 
         // Upload data to GPU
-        const auto drawSize                         = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
+        const auto drawSize = mDrawCount * sizeof(vk::DrawIndexedIndirectCommand);
+
+        if (mDrawCommandsBuffer[frameData.currentFrame])
+        {
+            mPendingReleases.push_back({ mDrawCommandsBuffer[frameData.currentFrame], frameData.lifetimeFrameCounter + RHI::gFramesInFlight });
+        }
         mDrawCommandsBuffer[frameData.currentFrame] = mRHI->createBuffer({
             .size  = drawSize,
             .type  = RHI::BufferType::Indirect,
             .label = fmt::format("Scene_Draw_Commands_{}", frameData.currentFrame),
         });
 
-        const auto mapSize                                    = instanceIndirectionMap.size() * sizeof(uint32_t);
+        const auto mapSize = instanceIndirectionMap.size() * sizeof(uint32_t);
+
+        if (mInstanceIndirectionMapBuffer[frameData.currentFrame])
+        {
+            mPendingReleases.push_back({ mInstanceIndirectionMapBuffer[frameData.currentFrame], frameData.lifetimeFrameCounter + RHI::gFramesInFlight });
+        }
         mInstanceIndirectionMapBuffer[frameData.currentFrame] = mRHI->createBuffer({
             .size  = mapSize,
             .type  = RHI::BufferType::Storage,
             .label = fmt::format("Scene_Instance_Map_{}", frameData.currentFrame),
         });
 
+        if (mBuildDrawCommandsStaging[frameData.currentFrame])
+        {
+            mPendingReleases.push_back({mBuildDrawCommandsStaging[frameData.currentFrame], frameData.lifetimeFrameCounter + RHI::gFramesInFlight });
+        }
         mBuildDrawCommandsStaging[frameData.currentFrame] = mRHI->createBuffer({
             .size  = drawSize + mapSize,
             .type  = RHI::BufferType::Staging,
