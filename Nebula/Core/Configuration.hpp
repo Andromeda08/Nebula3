@@ -54,6 +54,9 @@ public:
 
     static std::filesystem::path getShaderSourceFilePath(const std::string& shaderFile) noexcept;
 
+    static std::filesystem::path getShaderSourceDir() noexcept;
+    static std::filesystem::path getShaderDir() noexcept;
+
     static std::filesystem::path getTextureFilePath(const std::string& textureFile) noexcept;
 
     static std::filesystem::path getHairDir() noexcept;

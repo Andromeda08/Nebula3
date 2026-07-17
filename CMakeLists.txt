@@ -15,6 +15,8 @@ endif ()
 include(Tools/nrt/cmake/nrt.cmake)
 nrt_build()
 
+include(cmake/fetchSlang.cmake)
+
 add_subdirectory(External/fastgltf          EXCLUDE_FROM_ALL)
 add_subdirectory(External/glm               EXCLUDE_FROM_ALL)
 add_subdirectory(External/json              EXCLUDE_FROM_ALL)
@@ -140,6 +142,8 @@ set(V2_FILES
     Nebula/Level/Render/PrePass.hpp
     Nebula/Level/Render/PrePass.cpp
     Nebula/Level/Object/SelectObjectFeature.cpp
+    Nebula/ShaderBuild.hpp
+    Nebula/ShaderBuild.cpp
 )
 
 add_executable(Nebula3
@@ -296,6 +300,7 @@ target_link_libraries(Nebula3 PUBLIC
     spdlog::spdlog
     fastgltf::fastgltf
     meshoptimizer
+    slang::slang
 )
 
 if (APPLE)

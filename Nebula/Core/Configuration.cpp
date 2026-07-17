@@ -44,6 +44,18 @@ std::filesystem::path Configuration::getShaderSourceFilePath(const std::string& 
     return std::format("{}/{}/{}", config.baseDirPath, config.shadersDirName, shaderFile);
 }
 
+std::filesystem::path Configuration::getShaderSourceDir() noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}", config.baseDirPath, config.shadersDirName);
+}
+
+std::filesystem::path Configuration::getShaderDir() noexcept
+{
+    const auto& config = Configuration::getConfig();
+    return std::format("{}/{}", config.baseDirPath, config.shadersBinDirName);
+}
+
 std::filesystem::path Configuration::getTextureFilePath(const std::string& textureFile) noexcept
 {
     const auto& config = Configuration::getConfig();

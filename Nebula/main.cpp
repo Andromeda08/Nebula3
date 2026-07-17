@@ -2,6 +2,8 @@
 #include "Core/App.hpp"
 #include "Core/Configuration.hpp"
 
+#include "ShaderBuild.hpp"
+
 UPtr<App> lApplication;
 
 int main()
@@ -16,6 +18,9 @@ int main()
 
     // 1. Load Nebula configuration
     auto* config = Configuration::getInstance();
+
+    // 1.5. Compile shaders
+    std::ignore = nbl::ShaderBuild();
 
     // 2. Create Application instance and set global reference.
     lApplication = App::create();
