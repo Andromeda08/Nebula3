@@ -255,7 +255,7 @@ namespace nbl
         const auto textureLoadSeconds = textureLoadTime.getDeltaTime();
         spdlog::info("Loaded {} textures, decode time: {}s", tasks.size(), textureLoadSeconds);
 
-        // Create Materials
+        // Create Material.slang
         for (const auto& [materialIndex, material] : enumerate(asset.materials))
         {
             bool isEmissive = false;

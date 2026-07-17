@@ -6,7 +6,7 @@
 
 UPtr<App> lApplication;
 
-int main()
+int main(const int argc, const char** argv)
 {
     // 0. Initial logger config
     spdlog::set_pattern("[%^%l%$] %v");
@@ -21,6 +21,13 @@ int main()
 
     // 1.5. Compile shaders
     std::ignore = nbl::ShaderBuild();
+
+    for (int i = 0; i < argc; i++)
+    {
+        spdlog::info("{} -> {}", i, argv[i]);
+    }
+
+    return 0;
 
     // 2. Create Application instance and set global reference.
     lApplication = App::create();

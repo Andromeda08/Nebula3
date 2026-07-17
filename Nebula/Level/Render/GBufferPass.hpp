@@ -39,7 +39,7 @@ namespace nbl
 
         ~GBufferPass() = default;
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const SPtr<RHI::Image>& prePassDepthBuffer = nullptr) const noexcept;
 
         [[nodiscard]] const SPtr<RHI::Image>& getAlbedoBuffer() const noexcept;
 

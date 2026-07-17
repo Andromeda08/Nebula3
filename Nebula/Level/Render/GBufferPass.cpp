@@ -11,7 +11,7 @@ namespace nbl
         init();
     }
 
-    void GBufferPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void GBufferPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const SPtr<RHI::Image>& prePassDepthBuffer) const noexcept
     {
         pCommandList->beginLabel("GBufferPass::execute()");
 
@@ -24,7 +24,7 @@ namespace nbl
             .addBarrier(mAlbedoBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
             .addBarrier(mEmissiveBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
             .addBarrier(mParamsBuffer->getBarrier(RHI::ImageUsage::ColorAttachment))
-            .addBarrier(mDepthBuffer->getBarrier(RHI::ImageUsage::DepthAttachment))
+            .addBarrier((prePassDepthBuffer ? prePassDepthBuffer : mDepthBuffer)->getBarrier(RHI::ImageUsage::DepthAttachment))
             .addBarrier(level->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
             .addBarrier(level->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead))
             .addBarrier(level->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
@@ -40,7 +40,7 @@ namespace nbl
             .addAttachment(mAlbedoBuffer)
             .addAttachment(mEmissiveBuffer)
             .addAttachment(mParamsBuffer)
-            .addAttachment(mDepthBuffer)
+            .addAttachment(prePassDepthBuffer ? prePassDepthBuffer : mDepthBuffer)
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
                 const auto [w, h] = mWorldPosition->getProperties().extent;

@@ -11,6 +11,11 @@ namespace nbl
     , mTextureManager(pTextureManager)
     , mLevel(pLevel)
     {
+        mPrePass = PrePass::create({
+            .pLevel = mLevel,
+            .rhi = mRHI,
+        });
+
         mGBufferPass = GBufferPass::create({
             .pTextureManager = mTextureManager,
             .pLevel          = mLevel,
@@ -44,7 +49,8 @@ namespace nbl
 
     void LevelRenderer::render(const RHI::FrameData& frameData, RHI::CommandList* commandList) const
     {
-        mGBufferPass->execute(commandList, frameData);
+        mPrePass->execute(commandList, frameData);
+        mGBufferPass->execute(commandList, frameData, mPrePass->getDepthBuffer(frameData.currentFrame));
         mLightingPass->execute(commandList, frameData);
         mTonemapPass->execute(mLightingPass->getResult(frameData.currentFrame), commandList, frameData);
         mAntiAliasingPass->execute(commandList, frameData);

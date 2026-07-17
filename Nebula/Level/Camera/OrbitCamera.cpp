@@ -68,7 +68,7 @@ namespace nbl
             .farPlane       = 1024.0f,
         };
 
-        std::ranges::copy_n(std::begin(mFrustumPlanes), 6, std::begin(data.frustumPlanes));
+        // std::ranges::copy_n(std::begin(mFrustumPlanes), 6, std::begin(data.frustumPlanes));
         return data;
     }
 

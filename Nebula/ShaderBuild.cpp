@@ -94,6 +94,7 @@ namespace nbl
         if (!src.has_value())
         {
             spdlog::error("{}", src.error());
+            return;
         }
 
         const std::string sourceStr(src.value().begin(), src.value().end());
@@ -136,6 +137,7 @@ namespace nbl
                 if (SLANG_FAILED(result))
                 {
                     spdlog::error("Failed to compile shader: {}", source.c_str());
+                    return;
                 }
             }
 
@@ -147,6 +149,7 @@ namespace nbl
                 if (SLANG_FAILED(result))
                 {
                     spdlog::error("Failed to compile shader: {}", source.c_str());
+                    return;
                 }
             }
 

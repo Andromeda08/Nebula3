@@ -150,7 +150,7 @@ namespace nbl
             });
         }
 
-        /* Example Geometries, Objects and Materials */
+        /* Example Geometries, Objects and Material.slang */
         {
             std::array<uint32_t, 6> textures;
             textures[0] = mTextureManager->loadTexture("cat_1.png");

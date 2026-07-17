@@ -24,6 +24,7 @@ namespace nbl
         TextureManager*             mTextureManager;
         Level*                      mLevel;
 
+        UPtr<PrePass>               mPrePass;
         SPtr<GBufferPass>           mGBufferPass;
         UPtr<LightingPass>          mLightingPass;
         UPtr<TonemapPass>           mTonemapPass;

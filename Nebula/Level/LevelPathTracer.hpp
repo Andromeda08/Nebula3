@@ -17,7 +17,7 @@ namespace nbl
         uint64_t emitterPdfs;   // Emitter Discrete PDF BDA
         uint64_t vertices;      // Vertex BDA
         uint64_t indices;       // Index BDA
-        uint64_t materials;     // Materials BDA
+        uint64_t materials;     // Material.slang BDA
         uint64_t geometryInfos; // Geometry Info BDA
         uint64_t accumulated;   // Current accumulation frame counter
         uint64_t totalFrames;   // Total lifetime frame counter
