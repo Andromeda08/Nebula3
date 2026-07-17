@@ -20,14 +20,20 @@ int main(const int argc, const char** argv)
     auto* config = Configuration::getInstance();
 
     // 1.5. Compile shaders
-    std::ignore = nbl::ShaderBuild();
-
+    bool isShaderBuild = false;
     for (int i = 0; i < argc; i++)
     {
-        spdlog::info("{} -> {}", i, argv[i]);
+        if (std::string_view{argv[i]} == "--shaders")
+        {
+            isShaderBuild = true;
+        }
     }
 
-    return 0;
+    std::ignore = nbl::ShaderBuild();
+    if (isShaderBuild)
+    {
+        return 0;
+    }
 
     // 2. Create Application instance and set global reference.
     lApplication = App::create();

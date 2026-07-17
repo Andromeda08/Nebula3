@@ -19,16 +19,16 @@ namespace nbl
         }
 
         const auto graphicsPS = RHI::GraphicsPS()
-            .addDefaultAttachmentState(1)
+            // .addDefaultAttachmentState(1)
             .addAttachmentFormat(mDepthBuffer[0]->getProperties().format)
-            .addAttachmentFormat(mObjInstanceBuffer[0]->getProperties().format)
+            // .addAttachmentFormat(mObjInstanceBuffer[0]->getProperties().format)
             .addVertexType<Vertex>();
         const auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("PrePass")
-            .addDescriptorLayout(0, mLevel->mTextureManager->getDescriptor().get())
+            // .addDescriptorLayout(0, mLevel->mTextureManager->getDescriptor().get())
             .addShader("PrePass.vert.spv")
-            .addShader("PrePass.frag.spv")
-            .setPushConstant<PushConstants>(eVertex | eFragment);
+            // .addShader("PrePass.frag.spv")
+            .setPushConstant<PushConstants>(eVertex);
 
         mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
@@ -37,9 +37,15 @@ namespace nbl
     {
         pCommandList->beginLabel("PrePass");
 
+        RHI::Barrier()
+            .addBarrier(mLevel->mInstanceSystem->getBuffer()->getBarrier(RHI::BufferUsage::Compute_Read, RHI::BufferUsage::StorageRead))
+            .addBarrier(mLevel->mInstanceIndirectionMapBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::StorageRead))
+            .addBarrier(mLevel->mDrawCommandsBuffer[frameData.currentFrame]->getBarrier(RHI::BufferUsage::TransferDst, RHI::BufferUsage::DrawIndirect))
+            .insert(pCommandList);
+
         RHI::Rendering()
             .setLabel("PrePass_RenderPass")
-            .addAttachment(mObjInstanceBuffer[frameData.currentFrame], vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::ClearValue().setColor({ -1, -1, 0, 0 }))
+            // .addAttachment(mObjInstanceBuffer[frameData.currentFrame], vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::ClearValue().setColor({ -1, -1, 0, 0 }))
             .addAttachment(mDepthBuffer[frameData.currentFrame])
             .setRenderArea(mDepthBuffer[frameData.currentFrame]->getProperties().extent)
             .setViewportScissor(pCommandList)
@@ -55,7 +61,7 @@ namespace nbl
                 };
 
                 cmd->bindPipeline(mPipeline.get());
-                cmd->bindDescriptorSet(mLevel->mTextureManager->getDescriptor()->getSet(), 0);
+                // cmd->bindDescriptorSet(mLevel->mTextureManager->getDescriptor()->getSet(), 0);
                 cmd->pushConstants(&pc);
 
                 static constexpr vk::DeviceSize offsets[1] = { 0 };

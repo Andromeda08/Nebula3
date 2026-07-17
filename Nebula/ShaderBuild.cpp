@@ -58,10 +58,11 @@ namespace nbl
         }
 
         slang::SessionDesc sessionDesc = {
-            .targets                = &targetDesc,
-            .targetCount            = 1,
-            .preprocessorMacros     = macros.data(),
-            .preprocessorMacroCount = static_cast<SlangInt>(macros.size()),
+            .targets                 = &targetDesc,
+            .targetCount             = 1,
+            .defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
+            .preprocessorMacros      = macros.data(),
+            .preprocessorMacroCount  = static_cast<SlangInt>(macros.size()),
         };
 
         sessionDesc.targets     = &targetDesc;
@@ -75,7 +76,7 @@ namespace nbl
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
         if (!file.is_open())
         {
-            return std::unexpected { fmt::format("Failed to open file: {}", filePath.c_str()) };
+            return std::unexpected { fmt::format("Failed to open file: {}", filePath.string()) };
         }
 
         const std::streamsize fileSize = file.tellg();
@@ -102,12 +103,12 @@ namespace nbl
         Slang::ComPtr<slang::IModule> module;
         {
             Slang::ComPtr<slang::IBlob> diagnosticsBlob;
-            module = mSession->loadModuleFromSourceString(source.filename().c_str(), source.c_str(), sourceStr.c_str(), diagnosticsBlob.writeRef());
+            module = mSession->loadModuleFromSourceString(source.filename().string().c_str(), source.string().c_str(), sourceStr.c_str(), diagnosticsBlob.writeRef());
 
             diag(diagnosticsBlob);
             if (!module)
             {
-                spdlog::error("Failed to load shader: {}", source.c_str());
+                spdlog::error("Failed to load shader: {}", source.string());
                 return;
             }
         }
@@ -136,7 +137,7 @@ namespace nbl
                 diag(diagnosticsBlob);
                 if (SLANG_FAILED(result))
                 {
-                    spdlog::error("Failed to compile shader: {}", source.c_str());
+                    spdlog::error("Failed to compile shader: {}", source.string());
                     return;
                 }
             }
@@ -148,7 +149,7 @@ namespace nbl
                 diag(diagnosticsBlob);
                 if (SLANG_FAILED(result))
                 {
-                    spdlog::error("Failed to compile shader: {}", source.c_str());
+                    spdlog::error("Failed to compile shader: {}", source.string());
                     return;
                 }
             }
@@ -165,7 +166,7 @@ namespace nbl
                 diag(diagnosticsBlob);
                 if (SLANG_FAILED(result))
                 {
-                    spdlog::error("Failed to compile shader: {}", source.c_str());
+                    spdlog::error("Failed to compile shader: {}", source.string());
                     return;
                 }
             }
@@ -177,14 +178,14 @@ namespace nbl
                 return;
             }
 
-            auto binPath = Configuration::getShaderDir().append(fmt::format("{}.{}.spv", fullStem(source).c_str(), stageExt.value()));
+            auto binPath = Configuration::getShaderDir().append(fmt::format("{}.{}.spv", fullStem(source).string(), stageExt.value()));
 
             writeShader(binPath, spirvCode);
 
             spdlog::info("[{}] {} -> {}",
                          styled("ok", fg(fmt::color::cyan) | fmt::emphasis::bold),
-                         styled(source.filename().c_str(), fg(fmt::color::light_gray)),
-                         binPath.filename().c_str());
+                         styled(source.filename().string(), fg(fmt::color::light_gray)),
+                         binPath.filename().string());
 
             mStages++;
         }

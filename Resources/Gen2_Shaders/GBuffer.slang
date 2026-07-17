@@ -56,7 +56,7 @@ VSOutput vert_GBuffer(Vertex input, uint instanceID : SV_VulkanInstanceID)
     o.wTangent      = float4(mul(normalMatrix, input.tangent.xyz), bitangentSign);
     o.uv            = input.uv;
     o.currClipPos   = mul(pc.camera.getViewProj(),         float4(o.wPosition, 1.0));
-    o.currClipPos   = mul(pc.previousCamera.getViewProj(), float4(o.wPosition, 1.0));
+    o.prevClipPos   = mul(pc.previousCamera.getViewProj(), float4(o.wPosition, 1.0));
 
     return o;
 }
@@ -77,7 +77,6 @@ FSOutput frag_GBuffer(VSOutput input)
 {
     FSOutput o;
     o.wPosition = float4(input.wPosition, 1.0);
-
 
     var material = pc.materials[input.materialIndex];
     var s        = material.sample(uTextures, uTextureValidity, input.wNormal, input.wTangent, input.uv);

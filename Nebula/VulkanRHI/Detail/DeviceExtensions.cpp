@@ -10,6 +10,7 @@ namespace RHI
     {
         mFeatures = vk::PhysicalDeviceFeatures()
             .setMultiDrawIndirect(true)
+            .setFragmentStoresAndAtomics(true)
             .setDrawIndirectFirstInstance(true)
             .setFillModeNonSolid(true)
             .setSamplerAnisotropy(true)

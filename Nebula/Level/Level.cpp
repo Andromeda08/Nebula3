@@ -35,14 +35,10 @@ namespace nbl
         {
             mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
             mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
-        }
 
-        mPrePass = PrePass::create({
-            .pLevel = this,
-            .rhi    = mRHI,
-        });
-        mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get(), mPrePass.get());
-        mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
+            mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get(), nullptr);
+            mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
+        }
 
         mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
 
@@ -266,7 +262,7 @@ namespace nbl
             buildDrawCommands(pCommandList, frameData);
         }
 
-        mPrePass->execute(pCommandList, frameData);
+        // mPrePass->execute(pCommandList, frameData);
     }
 
     void Level::drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept

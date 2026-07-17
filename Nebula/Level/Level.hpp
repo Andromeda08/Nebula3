@@ -129,7 +129,7 @@ namespace nbl
         UPtr<TLASSystem>                    mTlasSystem;
 
         // Interactive Features
-        UPtr<PrePass>                       mPrePass;
+        // UPtr<PrePass>                       mPrePass;
         UPtr<SelectObjectFeature>           mSelectObjectFeature;
 
         // Draw Commands, Culling Stats and Configuration

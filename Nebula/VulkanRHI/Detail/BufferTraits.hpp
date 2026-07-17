@@ -88,7 +88,7 @@ namespace RHI
                 return { A::eIndexRead, S::eVertexInput };
             }
             case StorageRead: {
-                return { A::eShaderStorageRead, S::eAllGraphics };
+                return { A::eShaderRead | A::eShaderStorageRead, S::eAllGraphics };
             }
             case Host_Read: {
                 return { A::eHostRead, S::eHost };

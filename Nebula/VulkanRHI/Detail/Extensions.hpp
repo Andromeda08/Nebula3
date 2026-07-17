@@ -147,6 +147,7 @@ namespace RHI
         vk::PhysicalDeviceVulkan14Properties,
         [&]() -> void {
             mFeatureStruct = vk::PhysicalDeviceVulkan14Features()
+                .setPushDescriptor(true)
                 .setHostImageCopy(true)
                 .setMaintenance5(true)
                 .setMaintenance6(true);

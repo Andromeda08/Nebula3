@@ -40,7 +40,7 @@ namespace nbl
             .addAttachment(mAlbedoBuffer)
             .addAttachment(mEmissiveBuffer)
             .addAttachment(mParamsBuffer)
-            .addAttachment(prePassDepthBuffer ? prePassDepthBuffer : mDepthBuffer)
+            .addAttachment(prePassDepthBuffer ? prePassDepthBuffer : mDepthBuffer, prePassDepthBuffer ? vk::AttachmentLoadOp::eLoad : vk::AttachmentLoadOp::eClear)
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
                 const auto [w, h] = mWorldPosition->getProperties().extent;
@@ -108,11 +108,18 @@ namespace nbl
             .addAttachmentFormat(mEmissiveBuffer->getProperties().format)
             .addAttachmentFormat(mParamsBuffer->getProperties().format)
             .addAttachmentFormat(mDepthBuffer->getProperties().format)
+            // .configure([](auto& ps)
+            // {
+            //     ps.depthStencilState
+            //         .setDepthWriteEnable(false)
+            //         .setDepthCompareOp(vk::CompareOp::eEqual);
+            // })
             .addVertexType<Vertex>();
         const auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("G-Buffer")
             .addShader("GBuffer.vert.spv")
             .addShader("GBuffer.frag.spv")
+
             .addDescriptorLayout(0, mInput.pTextureManager->getDescriptor().get())
             .setPushConstant<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
 
