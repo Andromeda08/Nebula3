@@ -108,12 +108,12 @@ namespace nbl
             .addAttachmentFormat(mEmissiveBuffer->getProperties().format)
             .addAttachmentFormat(mParamsBuffer->getProperties().format)
             .addAttachmentFormat(mDepthBuffer->getProperties().format)
-            // .configure([](auto& ps)
-            // {
-            //     ps.depthStencilState
-            //         .setDepthWriteEnable(false)
-            //         .setDepthCompareOp(vk::CompareOp::eEqual);
-            // })
+            .configure([](auto& ps)
+            {
+                ps.depthStencilState
+                    .setDepthWriteEnable(false)
+                    .setDepthCompareOp(vk::CompareOp::eEqual);
+            })
             .addVertexType<Vertex>();
         const auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("G-Buffer")

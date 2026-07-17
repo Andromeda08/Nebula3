@@ -72,6 +72,7 @@ struct FSOutput
     float2 lightingParams   : SV_Target6;
 };
 
+[earlydepthstencil]
 [shader("fragment")]
 FSOutput frag_GBuffer(VSOutput input)
 {
@@ -81,10 +82,10 @@ FSOutput frag_GBuffer(VSOutput input)
     var material = pc.materials[input.materialIndex];
     var s        = material.sample(uTextures, uTextureValidity, input.wNormal, input.wTangent, input.uv);
 
-    if (s.albedo.a < 0.5)
-    {
-        discard;
-    }
+    // if (s.albedo.a < 0.5)
+    // {
+    //     discard;
+    // }
 
     float viewZ     = mul(pc.camera.view        , o.wPosition                     ).z;
     float viewZPrev = mul(pc.previousCamera.view, float4(input.wPositionPrev, 1.0)).z;
