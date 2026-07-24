@@ -60,7 +60,7 @@ namespace RHI
             mDevice->getDeviceName(), "N/A", config.enableDebugFeatures ? "Yes" : "No",
             mSwapchain->getImageCount(), vk::to_string(swapchainProperties.format), vk::to_string(swapchainProperties.colorSpace), vk::to_string(swapchainProperties.presentMode),
             swapchainProperties.extent.width, swapchainProperties.extent.height,
-            mDLSS->isAvailable() ? "No" : "Yes");
+            mDLSS->isAvailable() ? "Yes" : "No");
     }
 
     FrameData VulkanRHI::beginFrame() const

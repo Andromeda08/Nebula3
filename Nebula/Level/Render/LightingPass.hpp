@@ -64,7 +64,7 @@ namespace nbl
         SPtr<RHI::VulkanRHI>            mRHI;
 
         bool                            mEnableShadows  = true;
-        bool                            mEnableGI       = true;
+        bool                            mEnableGI       = false;
         int32_t                         mSampleCount    = 8;
         float                           mAmbientFactor  = 0.05f;
         float                           mShadowFactor   = 0.1f;

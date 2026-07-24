@@ -1,5 +1,6 @@
 #include "PathTracerView.hpp"
 
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/hash.hpp>
 
 #include "Core/Random.hpp"
@@ -225,6 +226,11 @@ namespace nbl
         mTlasSystem->onUpdate(frameData, pCommandList);
     }
 
+    void PTScene::onDrawUI()
+    {
+        mSelectObjectFeature->onDrawUI(mObjects);
+    }
+
     void PTScene::initEmitterData()
     {
         // TODO: For now this is used to initialize emitters before first render, update to be interactive later.
@@ -303,6 +309,12 @@ namespace nbl
                 hasRT ? "Yes" : "No", hasDLSS ? "Yes" : "No");
         }
 
+        mRHI->getDLSS()->getDLSSDenoiserFeature(RHI::Integration::DLSS_DenoiserParams
+        {
+            .inExtent     = mRHI->getSwapchain()->getProperties().extent,
+            .targetExtent = mRHI->getSwapchain()->getProperties().extent,
+        });
+
         using enum vk::ShaderStageFlagBits;
 
         mName  = "PathTracerView";
@@ -365,8 +377,6 @@ namespace nbl
             .outputFormat = vk::Format::eR32G32B32A32Sfloat,
             .rhi          = mRHI,
         });
-
-        mUserInterface->addComponent<ObjectEditorUI>(mScene->mObjects, mScene->mSelectObjectFeature->getSelectedObjectIdx());
     }
 
     void PathTracerView::onEvent(const SDL_Event& event)

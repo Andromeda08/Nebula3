@@ -16,6 +16,8 @@
 
 namespace nbl
 {
+    struct Object;
+
     class SelectObjectFeature
     {
         struct PushConstant
@@ -27,58 +29,11 @@ namespace nbl
             glm::vec2 screenSize;
         };
     public:
-        SelectObjectFeature(const SPtr<RHI::VulkanRHI>& rhi, CameraSystem* pCameraSystem, InstanceSystem* pInstanceSystem, TLASSystem* pTlasSystem, const PrePass* pPrePass)
-        : mRHI(rhi)
-        , mCameraSystem(pCameraSystem)
-        , mInstanceSystem(pInstanceSystem)
-        , mTlasSystem(pTlasSystem)
-        {
-            mObjSelectBuffer = mRHI->createBuffer({
-                .size  = sizeof(int32_t),
-                .type  = RHI::BufferType::Readback,
-                .label = "ObjSelectBuffer",
-            });
-
-            if (mRHI->getFeatures().rayTracing)
-            {
-                auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-                    .addDescriptorSetLayout(mTlasSystem->getDescriptor()->getLayout())
-                    .setComputeShader(Configuration::getShaderFilePath("RQSelect.comp.spv"))
-                    .setDebugName("ObjSelectPipeline")
-                    .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eCompute);
-                mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
-            }
-            else
-            {
-                if (pPrePass == nullptr)
-                {
-                    spdlog::warn("Object selection feature unavailable: No RT support or PrePass to use.");
-                    return;
-                }
-
-                mDescriptor = mRHI->createDescriptor({
-                    .bindings = {{ 0, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eCompute }},
-                    .setCount = RHI::gFramesInFlight,
-                    .debugName = "ObjSelect_Descriptor",
-                });
-
-                for (uint32_t i = 0; i < RHI::gFramesInFlight; i++)
-                {
-                    auto write = RHI::DescriptorWrite()
-                        .writeStorageImage(0, vk::ImageLayout::eGeneral, pPrePass->getObjInstanceBuffer(i));
-                    mDescriptor->write(i, write);
-                }
-
-                auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-                    .addDescriptorSetLayout(mDescriptor->getLayout())
-                    .setComputeShader(Configuration::getShaderFilePath("Select.comp.spv"))
-                    .setDebugName("ObjSelectPipeline")
-                    .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eCompute);
-                mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
-            }
-        }
+        SelectObjectFeature(const SPtr<RHI::VulkanRHI>& rhi, CameraSystem* pCameraSystem, InstanceSystem* pInstanceSystem, TLASSystem* pTlasSystem, const PrePass* pPrePass);
 
         void onEvent(const SDL_Event& event) noexcept;
+
+        void onDrawUI(const std::vector<UPtr<Object>>& objects) const;
 
         [[nodiscard]] int32_t* getSelectedObjectIdx() noexcept;
 

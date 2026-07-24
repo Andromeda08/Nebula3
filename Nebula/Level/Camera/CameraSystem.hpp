@@ -7,7 +7,6 @@
 #include <vector>
 #include "Camera.hpp"
 #include "Core/Types.hpp"
-#include "UserInterface/IComponent.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
@@ -22,6 +21,8 @@ namespace nbl
 
         void onUpdate(const RHI::FrameData& frameData) noexcept;
 
+        void onDrawUI();
+
         template <class T, class... Args>
         requires std::derived_from<T, Camera>
         T* addCamera(const bool makeActive, Args&&... args)
@@ -29,7 +30,7 @@ namespace nbl
             mCameras.push_back(makeUnique<T>(std::forward<Args>(args)...));
             if (mActiveCamera == -1 || makeActive)
             {
-                mActiveCamera = mCameras.size() - 1;
+                mActiveCamera = static_cast<int32_t>(mCameras.size()) - 1;
             }
             return static_cast<T*>(mCameras.back().get());
         }
@@ -56,16 +57,5 @@ namespace nbl
         // Previous frame data, always 1 frame behind at the same index.
         GPUCameraData                       mPreviousData;
         PerFrameArray<SPtr<RHI::Buffer>>    mPreviousUniformBuffers;
-    };
-
-    class CameraSystemUI : public IComponent
-    {
-    public:
-        explicit CameraSystemUI(CameraSystem* pCameraSystem);
-
-        void draw() override;
-
-    private:
-        CameraSystem* mCameraSystem;
     };
 }

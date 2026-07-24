@@ -20,7 +20,7 @@ struct ConfigurationData
     bool                enableDebugFeatures = true;
 
     // File paths
-    std::string         baseDirPath         = "/Users/andromeda/CLionProjects/NEBULAREAL/Resources";
+    std::string         baseDirPath         = "C:/Users/andromeda/CLionProjects/Nebula3/Resources";
     std::string         scenesDirName       = "Scenes";
     std::string         fontsDirName        = "Fonts";
     std::string         shadersDirName      = "Gen2_Shaders";

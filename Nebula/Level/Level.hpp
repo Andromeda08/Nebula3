@@ -48,9 +48,11 @@ namespace nbl
 
         void onUpdate(float dt, const RHI::FrameData& frameData, RHI::CommandList* pCommandList) noexcept;
 
+        void onDrawUI();
+
         void drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept;
 
-        uint64_t getCameraBuffer(const uint32_t frame) const;
+        uint64_t getCameraBuffer(uint32_t frame) const;
 
         template <class T = Object>
         requires std::derived_from<T, Object>
@@ -124,12 +126,10 @@ namespace nbl
         UPtr<LightSystem>                   mLightSystem;
         UPtr<MaterialSystem>                mMaterialSystem;
         UPtr<InstanceSystem>                mInstanceSystem;
-
         UPtr<BLASSystem>                    mBlasSystem;
         UPtr<TLASSystem>                    mTlasSystem;
 
         // Interactive Features
-        // UPtr<PrePass>                       mPrePass;
         UPtr<SelectObjectFeature>           mSelectObjectFeature;
 
         // Draw Commands, Culling Stats and Configuration
@@ -140,6 +140,8 @@ namespace nbl
         uint32_t                            mDrawCount     = 0;
         bool                                mEnableCulling = true;
         CullStats                           mLastCullStats = {};
+
+        void onDrawUI_Culling();
 
         // Objects
         std::vector<UPtr<Object>>           mObjects;

@@ -8,6 +8,11 @@ UPtr<App> lApplication;
 
 int main(const int argc, const char** argv)
 {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO))
+    {
+        return -1;
+    }
+
     // 0. Initial logger config
     spdlog::set_pattern("[%^%l%$] %v");
     #ifdef NDEBUG

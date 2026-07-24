@@ -38,25 +38,25 @@ struct GPUMaterialData
         s.albedo = solidColor;
         if (textureIndex >= 0)
         {
-            s.albedo = select(uValidity.Load(textureIndex) == nbl::TEXTURE_VALID,
-                uTex[textureIndex].Sample(uv),
-                uTex[nbl::MISSING_TEXTURE_INDEX].Sample(uv));
+            s.albedo = uValidity.Load(int2(textureIndex, 0)).r == nbl::TEXTURE_VALID
+                ? uTex[textureIndex].Sample(uv)
+                : uTex[nbl::MISSING_TEXTURE_INDEX].Sample(uv);
         }
 
         s.normal = normalize(wNormal);
-        if (normalMapIndex >= 0 && uValidity.Load(normalMapIndex) == nbl::TEXTURE_VALID)
+        if (normalMapIndex >= 0 && uValidity.Load(int2(normalMapIndex, 0)).r == nbl::TEXTURE_VALID)
         {
             var T = normalize(wTangent.xyz - dot(s.normal, wTangent.xyz) * s.normal);
             var B = cross(s.normal, T) * wTangent.w;
             var TBN = float3x3(T, B, s.normal);
 
             var read = uTex[normalMapIndex].Sample(uv).rgb;
-            s.normal = normalize(mul(TBN, read * 2.0 - 1.0));
+            s.normal = normalize(mul(read * 2.0 - 1.0, TBN));
         }
 
         s.metallic  = metallicFactor;
         s.roughness = roughnessFactor;
-        if (metallicRoughnessMapIndex >= 0 && uValidity.Load(metallicRoughnessMapIndex) == nbl::TEXTURE_VALID)
+        if (metallicRoughnessMapIndex >= 0 && uValidity.Load(int2(metallicRoughnessMapIndex, 0)).r == nbl::TEXTURE_VALID)
         {
             var read = uTex[metallicRoughnessMapIndex].Sample(uv);
             s.metallic  *= read.b;

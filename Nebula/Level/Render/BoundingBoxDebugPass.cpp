@@ -18,7 +18,7 @@ namespace nbl
         mInput.pLevel->mUserInterface->addComponent<BoundingBoxDebugPassUI>(this);
     }
 
-    void BoundingBoxDebugPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept
+    void BoundingBoxDebugPass::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const SPtr<RHI::Image>& depthBuffer) const noexcept
     {
         if (!mVisualizeAABBs)
         {
@@ -29,7 +29,7 @@ namespace nbl
             .setLabel("BoundingBoxVis_RenderPass")
             .setRenderArea(mInput.renderTargets[frameData.currentFrame]->getProperties().extent)
             .addAttachment(mInput.renderTargets[frameData.currentFrame], vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore)
-            .addAttachment(mInput.gBufferDepthBuffer, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone)
+            .addAttachment(depthBuffer, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eNone)
             .insertBarriers(pCommandList)
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
@@ -71,7 +71,7 @@ namespace nbl
             .setTopology(vk::PrimitiveTopology::eLineList)
             .addDefaultAttachmentState(1)
             .addAttachmentFormat(mInput.renderTargets[0]->getProperties().format)
-            .addAttachmentFormat(mInput.gBufferDepthBuffer->getProperties().format);
+            .addAttachmentFormat(vk::Format::eD32Sfloat);
         const auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("BoundingBoxVis")
             .addShader("BoundingBoxDebug.vert.spv")

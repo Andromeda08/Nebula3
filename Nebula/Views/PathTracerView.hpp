@@ -4,10 +4,8 @@
 #include "Level/Level.hpp"
 #include "Level/Light/AreaEmitter.hpp"
 #include "Level/Light/DiscretePDF.hpp"
-#include "Level/Object/ObjectEditorUI.hpp"
 #include "Level/Render/LevelRenderer.hpp"
 #include "Level/Render/Templates.hpp"
-#include "Math/DeltaTime.hpp"
 
 namespace nbl
 {
@@ -31,6 +29,8 @@ namespace nbl
         void onEvent(const SDL_Event& event) const noexcept;
 
         void onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) const noexcept;
+
+        void onDrawUI();
 
         void initEmitterData();
 

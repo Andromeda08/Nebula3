@@ -41,8 +41,7 @@ namespace nbl
 
         mBoundingBoxDebugPass = BoundingBoxDebugPass::create({
             .pLevel             = mLevel,
-            .renderTargets       = mTonemapPass->getResults(),
-            .gBufferDepthBuffer = mGBufferPass->getDepthBuffer(),
+            .renderTargets      = mAntiAliasingPass->getResults(),
             .rhi                = mRHI,
         });
     }
@@ -54,7 +53,7 @@ namespace nbl
         mLightingPass->execute(commandList, frameData);
         mTonemapPass->execute(mLightingPass->getResult(frameData.currentFrame), commandList, frameData);
         mAntiAliasingPass->execute(commandList, frameData);
-        mBoundingBoxDebugPass->execute(commandList, frameData);
+        mBoundingBoxDebugPass->execute(commandList, frameData, mPrePass->getDepthBuffer(frameData.currentFrame));
 
         commandList->blitToSwapchain(mAntiAliasingPass->getResult(frameData.currentFrame).get(), mRHI->getSwapchain(), frameData.acquiredIndex);
     }

@@ -14,7 +14,6 @@ namespace nbl
     {
         Level*                          pLevel             = nullptr;
         PerFrameArray<SPtr<RHI::Image>> renderTargets      = { nullptr, nullptr };
-        SPtr<RHI::Image>                gBufferDepthBuffer = nullptr;
         SPtr<RHI::VulkanRHI>            rhi                = nullptr;
     };
 
@@ -39,7 +38,7 @@ namespace nbl
 
         ~BoundingBoxDebugPass() = default;
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const noexcept;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const SPtr<RHI::Image>& depthBuffer) const noexcept;
 
     private:
         friend class BoundingBoxDebugPassUI;

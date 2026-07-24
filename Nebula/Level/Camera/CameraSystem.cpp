@@ -57,6 +57,37 @@ namespace nbl
         isFirstFrame = false;
     }
 
+    void CameraSystem::onDrawUI()
+    {
+        ImGui::Begin("Camera System");
+
+        const auto* activeCamera = getActiveCamera();
+        const std::string activeName = activeCamera ? activeCamera->getName() : "None";
+
+        ImGui::SeparatorText("Select Camera");
+        if (ImGui::BeginCombo("##CameraSelect", activeName.c_str()))
+        {
+            for (const auto& [i, camera] : enumerate(mCameras))
+            {
+                const std::string& name = camera->getName();
+                const bool isSelected = i == getActiveCameraIndex();
+
+                if (ImGui::Selectable(name.c_str(), isSelected))
+                {
+                    setActiveCamera(i);
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+
+            ImGui::EndCombo();
+        }
+
+        ImGui::End();
+    }
+
     void CameraSystem::setActiveCamera(const int32_t index)
     {
         if (index < 0 || index >= mCameras.size())
@@ -93,46 +124,5 @@ namespace nbl
     const SPtr<RHI::Buffer>& CameraSystem::getPreviousBuffer(const uint32_t frameIndex) const noexcept
     {
         return mPreviousUniformBuffers[frameIndex];
-    }
-
-    CameraSystemUI::CameraSystemUI(CameraSystem* pCameraSystem)
-    : IComponent()
-    , mCameraSystem(pCameraSystem)
-    {
-        if (!mCameraSystem)
-        {
-            exitWithError("CameraSystem was null");
-        }
-    }
-
-    void CameraSystemUI::draw()
-    {
-        ImGui::Begin("Camera System");
-
-        const auto* activeCamera = mCameraSystem->getActiveCamera();
-        const std::string activeName = activeCamera ? activeCamera->getName() : "None";
-
-        ImGui::SeparatorText("Select Camera");
-        if (ImGui::BeginCombo("##CameraSelect", activeName.c_str()))
-        {
-            for (const auto& [i, camera] : enumerate(mCameraSystem->getCameras()))
-            {
-                const std::string& name = camera->getName();
-                const bool isSelected = i == mCameraSystem->getActiveCameraIndex();
-
-                if (ImGui::Selectable(name.c_str(), isSelected))
-                {
-                    mCameraSystem->setActiveCamera(i);
-                }
-                if (isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
-        ImGui::End();
     }
 }

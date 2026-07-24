@@ -41,7 +41,7 @@ void main()
     vec3 dir    = normalize(farWorld - origin);
 
     rayQueryEXT rq;
-    rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsOpaqueEXT, 0xFF, origin, camera.data.nearPlane, dir, camera.data.farPlane);
+    rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsOpaqueEXT, 0xFF, origin, 0.0 /* camera.data.nearPlane */, dir, 1e9 /* camera.data.farPlane */);
 
     while (rayQueryProceedEXT(rq)) {}
 

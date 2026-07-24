@@ -95,10 +95,8 @@ set(V2_FILES
     Nebula/Level/Level.cpp
     Nebula/Level/Raytracing/BLASSystem.hpp
     Nebula/Level/Raytracing/TLASSystem.hpp
-    Nebula/Level/CullStats.cpp
     Nebula/Level/Raytracing/BLASSystem.cpp
     Nebula/Level/Raytracing/TLASSystem.cpp
-    Nebula/Level/Object/ObjectEditorUI.hpp
     Nebula/Level/Render/Templates.hpp
     Nebula/Level/Render/BoundingBoxDebugPass.cpp
     Nebula/Level/Render/LevelRenderer.cpp
@@ -144,6 +142,7 @@ set(V2_FILES
     Nebula/Level/Object/SelectObjectFeature.cpp
     Nebula/ShaderBuild.hpp
     Nebula/ShaderBuild.cpp
+    Nebula/Level/Camera/IsoCamera.hpp
 )
 
 add_executable(Nebula3

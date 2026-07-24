@@ -9,31 +9,11 @@
 
 namespace nbl
 {
-    LightSystemUI::LightSystemUI(LightSystem* pLightSystem)
-    : IComponent()
-    , mLightSystem(pLightSystem)
-    {
-        if (!mLightSystem)
-        {
-            exitWithError("LightSystem was null");
-        }
-
-        if (mLightSystem->getSize() > 0)
-        {
-            mSelectedLight = mLightSystem->getHandleFromDense(0);
-        }
-
-        for (const auto& type : getLightTypes())
-        {
-            mLightTypeNames.push_back(toString(type));
-        }
-    }
-
-    void LightSystemUI::draw()
+    void LightSystem::onDrawUI()
     {
         ImGui::Begin("Light System");
 
-        ImGui::Text("Count: (%u)", mLightSystem->getSize());
+        ImGui::Text("Count: (%u)", getSize());
 
         // Add Function
         // ============================
@@ -45,7 +25,7 @@ namespace nbl
                 ? glm::vec3(Random::get(-25.0f, 25.0f), Random::get(2.0f, 10.0f), Random::get(-25.0f, 25.0f))
                 : Random::getUnitVector<glm::vec3>();
 
-            mSelectedLight = mLightSystem->acquire({
+            mSelectedLight = acquire({
                 .vector       = vector,
                 .color        = Random::getVector<glm::vec3>(),
                 .intensity    = Random::get(100.0f, 1000.0f),
@@ -53,7 +33,7 @@ namespace nbl
                 .castsShadows = true,
                 .radius       = Random::get(5.0f, 25.0f),
                 .type         = type,
-                .name         = fmt::format("Light {}", mLightSystem->getSize()),
+                .name         = fmt::format("Light {}", getSize()),
             });
         }
 
@@ -62,14 +42,14 @@ namespace nbl
         ImGui::SameLine();
         if (ImGui::SmallButton("Remove"))
         {
-            mLightSystem->release(mSelectedLight);
-            mSelectedLight = (mLightSystem->getSize() > 0) ? mLightSystem->getHandleFromDense(0) : Handle {};
+            release(mSelectedLight);
+            mSelectedLight = (getSize() > 0) ? getHandleFromDense(0) : Handle {};
         }
 
         // Select Function
         // ============================
         ImGui::Separator();
-        if (mLightSystem->getSize() == 0)
+        if (getSize() == 0)
         {
             ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No lights");
         }
@@ -77,7 +57,7 @@ namespace nbl
         {
             if (ImGui::BeginMenu("Select Light"))
             {
-                mLightSystem->forEachView([&](CpuView<Light> lightView) -> void {
+                forEachView([&](CpuView<Light> lightView) -> void {
                     const auto& [ handle, light ] = lightView;
                     const bool isSelected = handle == mSelectedLight;
                     const bool isEnabled = !isSelected;
@@ -95,7 +75,7 @@ namespace nbl
         // ============================
         if (!mSelectedLight.isNull())
         {
-            auto        light    = Light(*mLightSystem->get(mSelectedLight));
+            auto        light    = Light(*get(mSelectedLight));
             bool        changed  = false;
 
             ImGui::SeparatorText("Edit Light");
@@ -130,7 +110,7 @@ namespace nbl
 
             if (changed)
             {
-                mLightSystem->update(mSelectedLight, light);
+                update(mSelectedLight, light);
             }
         }
 

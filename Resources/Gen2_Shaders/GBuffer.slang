@@ -52,8 +52,8 @@ VSOutput vert_GBuffer(Vertex input, uint instanceID : SV_VulkanInstanceID)
     o.materialIndex = instanceData.materialIndex;
     o.wPosition     = mul(instanceData.model,         position).xyz;
     o.wPositionPrev = mul(instanceData.modelPrevious, position).xyz;
-    o.wNormal       = mul(normalMatrix, input.normal);
-    o.wTangent      = float4(mul(normalMatrix, input.tangent.xyz), bitangentSign);
+    o.wNormal       = normalize(mul(normalMatrix, input.normal));
+    o.wTangent      = float4(normalize(mul(normalMatrix, input.tangent.xyz)), bitangentSign);
     o.uv            = input.uv;
     o.currClipPos   = mul(pc.camera.getViewProj(),         float4(o.wPosition, 1.0));
     o.prevClipPos   = mul(pc.previousCamera.getViewProj(), float4(o.wPosition, 1.0));

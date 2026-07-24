@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-#include "UserInterface/IComponent.hpp"
-
 namespace nbl
 {
     struct CullStats
@@ -27,17 +25,5 @@ namespace nbl
         uint32_t visibleCount       = 0;
         float    percent            = 0;
         float    cullTimeMs         = 0.0f;
-    };
-
-    class CullStatsUI : public IComponent
-    {
-    public:
-        explicit CullStatsUI(CullStats* pCullStats, bool* enableCulling);
-
-        void draw() override;
-
-    private:
-        CullStats*  mCullStats;
-        bool*       mEnableCulling;
     };
 }

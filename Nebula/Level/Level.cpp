@@ -1,15 +1,17 @@
 #include "Level.hpp"
 
 #include <unordered_map>
+
+#include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include "Core/Random.hpp"
 #include "TextureManager.hpp"
+#include "Core/Random.hpp"
+#include "Camera/IsoCamera.hpp"
 #include "GLTF/GLTFLoader.hpp"
 #include "Level/Camera/FlyingCamera.hpp"
-#include "Level/Camera/OrbitCamera.hpp"
 #include "Math/DeltaTime.hpp"
-#include "Object/ObjectEditorUI.hpp"
 #include "Object/RotatingObject.hpp"
 #include "UserInterface/UserInterface.hpp"
 #include "Voxel/TerrainGenerator.hpp"
@@ -21,12 +23,8 @@ namespace nbl
     : mRHI(rhi), mUserInterface(pUserInterface), mTextureManager(pTextureManager)
     {
         mCameraSystem = makeUnique<CameraSystem>(rhi);
-        mUserInterface->addComponent<CameraSystemUI>(mCameraSystem.get());
-
         mGeometrySystem = makeUnique<GeometrySystem>(rhi);
-
         mLightSystem = makeUnique<LightSystem>(rhi);
-        mUserInterface->addComponent<LightSystemUI>(mLightSystem.get());
 
         mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 65536);
         mInstanceSystem = makeUnique<InstanceSystem>(mRHI, 4194304);
@@ -35,16 +33,13 @@ namespace nbl
         {
             mBlasSystem = makeUnique<BLASSystem>(mRHI, mGeometrySystem.get());
             mTlasSystem = makeUnique<TLASSystem>(mRHI, mInstanceSystem.get());
-
             mSelectObjectFeature = makeUnique<SelectObjectFeature>(mRHI, mCameraSystem.get(), mInstanceSystem.get(), mTlasSystem.get(), nullptr);
-            mUserInterface->addComponent<ObjectEditorUI>(mObjects, mSelectObjectFeature->getSelectedObjectIdx());
         }
-
-        mUserInterface->addComponent<CullStatsUI>(&mLastCullStats, &mEnableCulling);
 
         /* Example Cameras */ {
             const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
             mCameraSystem->addCamera<FlyingCamera>(true, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
+            mCameraSystem->addCamera<IsometricCamera>(false);
         }
 
         /* GLTF Scene */ {
@@ -261,8 +256,16 @@ namespace nbl
         {
             buildDrawCommands(pCommandList, frameData);
         }
+    }
 
-        // mPrePass->execute(pCommandList, frameData);
+    void Level::onDrawUI()
+    {
+        mCameraSystem->onDrawUI();
+        mLightSystem->onDrawUI();
+        if (mSelectObjectFeature)
+        {
+            mSelectObjectFeature->onDrawUI(mObjects);
+        }
     }
 
     void Level::drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
@@ -494,5 +497,20 @@ namespace nbl
             .setDstBuffer(mInstanceIndirectionMapBuffer[frameData.currentFrame]->getHandle())
             .setRegions(mapRegion);
         pCommandList->getHandle().copyBuffer2(mapCopyInfo);
+    }
+
+    void Level::onDrawUI_Culling()
+    {
+        ImGui::Begin("Culling");
+
+        ImGui::SeparatorText("Options");
+        ImGui::Checkbox("Enable Culling", &mEnableCulling);
+
+        ImGui::SeparatorText("Stats");
+        ImGui::Text("Object Count: %d", mLastCullStats.totalObjectCount);
+        ImGui::Text("Culled Count: %d (%.3f)", mLastCullStats.culledCount, mLastCullStats.percent);
+        ImGui::Text("Time: %.3fms", mLastCullStats.cullTimeMs);
+
+        ImGui::End();
     }
 }

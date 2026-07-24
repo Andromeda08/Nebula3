@@ -8,6 +8,7 @@ struct SurfacePoint
     float3 pos;
     float3 N;
     float4 T;
+    float2 uv;
 
     Frame  shFrame;
     float3 geoN;
@@ -67,6 +68,7 @@ struct Triangle
         p.pos     = p0 * bc.x + p1 * bc.y + p2 * bc.z;
         p.N       = normalize(mul(nm, N));
         p.T       = float4(mul(nm, T.xyz), T.w);
+        p.uv      = v0.uv * bc.x + v1.uv * bc.y + v2.uv * bc.z;
         p.shFrame = Frame::build(p.N, p.T);
         p.geoN    = geometricNormal;
 

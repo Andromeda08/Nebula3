@@ -34,6 +34,11 @@ namespace nbl
             mLevelRenderer->render(frameData, pCommandList);
         }
 
+        void onDrawUI() override
+        {
+            mLevel->onDrawUI();
+        }
+
     private:
         UPtr<Level>           mLevel;
         UPtr<LevelRenderer>   mLevelRenderer;

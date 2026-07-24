@@ -1,9 +1,7 @@
 #pragma once
 
-#include <SDL3/SDL.h>
 #include "Light.hpp"
 #include "../SlotPool.hpp"
-#include "UserInterface/IComponent.hpp"
 
 namespace nbl
 {
@@ -13,24 +11,21 @@ namespace nbl
         explicit LightSystem(const SPtr<RHI::VulkanRHI>& rhi)
         : Pool(rhi, "LightSystem", 1024)
         {
+            for (const auto& type : getLightTypes())
+            {
+                mLightTypeNames.push_back(toString(type));
+            }
         }
 
         void onUpdate(const RHI::CommandList* commandList)
         {
             flush(commandList);
         }
-    };
 
-    class LightSystemUI : public IComponent
-    {
-    public:
-        explicit LightSystemUI(LightSystem* pLightSystem);
-
-        void draw() override;
+        void onDrawUI();
 
     private:
-        std::vector<std::string> mLightTypeNames;
-        LightSystem*             mLightSystem;
-        Handle                   mSelectedLight;
+        std::vector<std::string> mLightTypeNames = {};
+        Handle                   mSelectedLight  = {};
     };
 }
