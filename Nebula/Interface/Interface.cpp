@@ -30,13 +30,13 @@ namespace nbl
         });
 
         {
-            auto text = makeUnique<TextElement>("SOME THING", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 96));
-            text->mPosition = mSize.getPosition(Location::Center, text.get()) + glm::vec2(0.0f, -48.0f);
+            auto text = makeUnique<TextElement>("Nebula", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 64));
+            text->mPosition = mSize.getPosition(Location::CenterLeft, text.get()) + glm::vec2(64.0f, -32.0f);
             mElements.push_back(std::move(text));
         }
         {
-            auto text = makeUnique<TextElement>("Press any key.", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 24));
-            text->mPosition = mSize.getPosition(Location::Center, text.get()) + glm::vec2(0.0f, 48.0f);
+            auto text = makeUnique<TextElement>("press [space] to play", glm::vec3(1.0f), mFontLibrary->getFont("Fraktion", 24));
+            text->mPosition = mSize.getPosition(Location::CenterLeft, text.get()) + glm::vec2(64.0f, 32.0f);
             text->mColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
 
             mElements.push_back(std::move(text));

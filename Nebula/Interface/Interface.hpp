@@ -119,7 +119,8 @@ namespace nbl
 
     enum class Location
     {
-        Center
+        Center,
+        CenterLeft,
     };
 
     struct InterfaceSize
@@ -151,6 +152,12 @@ namespace nbl
             using enum Location;
             switch (location)
             {
+                case CenterLeft: {
+                    return {
+                        0.0f,
+                        center.y - (elemSize.y / 2.0f)
+                    };
+                }
                 case Center:
                 default: {
                     return center - (elemSize / 2.0f);

@@ -2,6 +2,7 @@
 
 #include "Configuration.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
+#include "Views/GameTest.hpp"
 #include "Views/HairView.hpp"
 #include "Views/LevelView.hpp"
 #include "Views/PathTracerView.hpp"
@@ -41,6 +42,7 @@ App::App()
 
     mUserInterface->addComponent<nbl::ViewSelectUI>(mViews, &mActiveView);
 
+    addView<nbl::GameTest>();
     // addView<nbl::PathTracerView>();
     addView<nbl::LevelView>();
     // if constexpr (!RHI::Platform::isApple)

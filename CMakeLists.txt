@@ -142,6 +142,7 @@ set(V2_FILES
     Nebula/Level/Object/SelectObjectFeature.cpp
     Nebula/ShaderBuild.hpp
     Nebula/ShaderBuild.cpp
+    Nebula/Views/GameTest.hpp
     Nebula/Level/Camera/IsoCamera.hpp
 )
 
