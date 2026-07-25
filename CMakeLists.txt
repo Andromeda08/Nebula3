@@ -328,6 +328,7 @@ target_compile_definitions(Nebula3 PUBLIC
     GLM_ENABLE_EXPERIMENTAL
     -DImTextureID=ImU64
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+    nbl_MOLTEN_VK
 )
 
 target_precompile_headers(Nebula3 PUBLIC

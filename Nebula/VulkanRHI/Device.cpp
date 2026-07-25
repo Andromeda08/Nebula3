@@ -20,10 +20,11 @@ namespace RHI
             .addExtension<Core14>(FeatureOption::Required)
             // General extensions specified by name only
             .addExtension(vk::KHRSwapchainExtensionName, FeatureOption::Required)
-            .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Required)
             // General Extensions
             .addExtension<DeviceFaultEXT>(FeatureOption::Optional)
             .addExtension<ShaderImageInt64AtomicsEXT>(FeatureOption::Optional)
+            // Deferred host ops are required for acceleration structures
+            .addExtension(vk::KHRDeferredHostOperationsExtensionName, FeatureOption::Optional)
             // Ray tracing
             .addExtension<AccelerationStructureKHR>(FeatureOption::Optional)
             .addExtension<RayQuery>(FeatureOption::Optional)

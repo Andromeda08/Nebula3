@@ -12,11 +12,11 @@ namespace RHI
             .setMultiDrawIndirect(true)
             .setFragmentStoresAndAtomics(true)
             .setDrawIndirectFirstInstance(true)
-            .setFillModeNonSolid(true)
+            .setFillModeNonSolid(false)
             .setSamplerAnisotropy(true)
             .setSampleRateShading(true)
             .setShaderInt64(true)
-            .setTessellationShader(!Platform::isApple)
+            .setTessellationShader(true)
             .setGeometryShader(!Platform::isApple);
     }
 
@@ -35,10 +35,12 @@ namespace RHI
 
     DeviceExtensions& DeviceExtensions::addPlatformRequiredExtensions() noexcept
     {
+        #ifdef nbl_MOLTEN_VK
         if constexpr (Platform::isApple)
         {
             return addExtension(gVulkanPortabilitySubsetExtensionName, FeatureOption::Required);
         }
+        #endif
         return *this;
     }
 
@@ -49,7 +51,7 @@ namespace RHI
 
     int32_t DeviceExtensions::evaluateDeviceSupport(const vk::PhysicalDevice& physicalDevice) const noexcept
     {
-        const std::vector<vk::ExtensionProperties> driverExtensions =physicalDevice.enumerateDeviceExtensionProperties();
+        const std::vector<vk::ExtensionProperties> driverExtensions = physicalDevice.enumerateDeviceExtensionProperties();
 
         int32_t                extensionScore = 0;
         std::map<size_t, bool> support        = {};
@@ -81,6 +83,7 @@ namespace RHI
             }
             else if (requestType == FeatureOption::Required)
             {
+                spdlog::warn("Device is missing the required extension: {}", extension->getName());
                 extensionScore += sDeviceScore_MissingRequiredExtension;
             }
         }

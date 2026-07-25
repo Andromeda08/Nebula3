@@ -16,20 +16,24 @@ namespace RHI::Platform
     // Get platform specific Vulkan Instance flags.
     [[nodiscard]] constexpr vk::InstanceCreateFlags getInstanceFlags() noexcept
     {
+        #ifdef nbl_MOLTEN_VK
         if constexpr (isApple)
         {
             return vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
         }
+        #endif
         return {};
     }
 
     // Get platform specific Vulkan Instance extensions.
     [[nodiscard]] inline std::vector<const char*> getInstanceExtensions() noexcept
     {
+        #ifdef nbl_MOLTEN_VK
         if (isApple)
         {
             return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
         }
+        #endif
         return {};
     }
 }
