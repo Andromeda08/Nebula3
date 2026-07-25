@@ -83,7 +83,7 @@ namespace nbl
 
     bool BoundingBoxDebugPass::hasSelectedObject() const
     {
-        return *mInput.pLevel->mSelectObjectFeature->getSelectedObjectIdx() != -1;
+        return mInput.pLevel->mSelectObjectFeature && *mInput.pLevel->mSelectObjectFeature->getSelectedObjectIdx() != -1;
     }
 }
 
