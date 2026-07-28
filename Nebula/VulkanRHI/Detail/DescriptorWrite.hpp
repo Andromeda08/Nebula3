@@ -72,6 +72,42 @@ namespace RHI
             return *this;
         }
 
+        template <std::ranges::input_range Range>
+        requires std::same_as<std::ranges::range_value_t<Range>, vk::DescriptorImageInfo>
+        DescriptorWrite& writeSampledImages(const uint32_t binding, Range&& imageInfos) noexcept
+        {
+            const auto key   = mWrites.size();
+            mImageInfos[key] = imageInfos | std::ranges::to<std::vector>();
+
+            const auto write = vk::WriteDescriptorSet()
+                .setDstBinding(binding)
+                .setDescriptorCount(mImageInfos[key].size())
+                .setDescriptorType(vk::DescriptorType::eSampledImage)
+                .setDstArrayElement(0)
+                .setPImageInfo(mImageInfos[key].data());
+            mWrites.push_back(write);
+
+            return *this;
+        }
+
+        template <std::ranges::input_range Range>
+        requires std::same_as<std::ranges::range_value_t<Range>, vk::DescriptorImageInfo>
+        DescriptorWrite& writeSamplers(const uint32_t binding, Range&& imageInfos) noexcept
+        {
+            const auto key   = mWrites.size();
+            mImageInfos[key] = imageInfos | std::ranges::to<std::vector>();
+
+            const auto write = vk::WriteDescriptorSet()
+                .setDstBinding(binding)
+                .setDescriptorCount(mImageInfos[key].size())
+                .setDescriptorType(vk::DescriptorType::eSampler)
+                .setDstArrayElement(0)
+                .setPImageInfo(mImageInfos[key].data());
+            mWrites.push_back(write);
+
+            return *this;
+        }
+
         // =============================
         // Acceleration Structures
         // =============================

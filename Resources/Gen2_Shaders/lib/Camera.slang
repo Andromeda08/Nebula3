@@ -22,26 +22,26 @@ struct GPUCameraData
     }
 
     // View to World Space conversion for points.
-    float3 viewToWorld_Point(float3 viewPosition, GPUCameraData camera)
+    float3 viewToWorld_Point(float3 viewPosition)
     {
-        return mul(camera.viewInverse, float4(viewPosition, 1.0)).xyz;
+        return mul(viewInverse, float4(viewPosition, 1.0)).xyz;
     }
 
     // View to World Space conversion for vectors.
-    float3 viewToWorld_Vector(float3 viewDirection, GPUCameraData camera)
+    float3 viewToWorld_Vector(float3 viewDirection)
     {
-        return mul(float3x3(camera.viewInverse), viewDirection);
+        return mul(float3x3(viewInverse), viewDirection);
     }
 
     // World to View Space conversion for points.
-    float3 worldToView_Point(float3 worldPosition, GPUCameraData camera)
+    float3 worldToView_Point(float3 worldPosition)
     {
-        return mul(camera.view, float4(worldPosition, 1.0)).xyz;
+        return mul(view, float4(worldPosition, 1.0)).xyz;
     }
 
     // World to View Space conversion for vectors.
-    float3 worldToView_Vector(float3 worldDirection, GPUCameraData camera)
+    float3 worldToView_Vector(float3 worldDirection)
     {
-        return mul(float3x3(camera.view), worldDirection);
+        return mul(float3x3(view), worldDirection);
     }
 };

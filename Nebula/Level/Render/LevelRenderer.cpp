@@ -22,8 +22,11 @@ namespace nbl
             .rhi             = mRHI,
         });
 
+        mSSAOPass = SSAOPass::create(mRHI);
+
         mLightingPass = LightingPass::create({
             .pGBufferPass    = mGBufferPass,
+            .pSSAOPass       = mSSAOPass.get(),
             .pTextureManager = mTextureManager,
             .pLevel          = mLevel,
             .rhi             = mRHI,
@@ -50,6 +53,12 @@ namespace nbl
     {
         mPrePass->execute(commandList, frameData);
         mGBufferPass->execute(commandList, frameData, mPrePass->getDepthBuffer(frameData.currentFrame));
+        mSSAOPass->execute({
+            .positions = mGBufferPass->mWorldPosition,
+            .normals = mGBufferPass->mWorldNormal,
+            .viewZ = mGBufferPass->mViewZ,
+            .cameraBuffer = mLevel->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+        }, commandList, frameData);
         mLightingPass->execute(commandList, frameData);
         mTonemapPass->execute(mLightingPass->getResult(frameData.currentFrame), commandList, frameData);
         mAntiAliasingPass->execute(commandList, frameData);

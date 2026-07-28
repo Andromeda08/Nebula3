@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SSAOPass.hpp"
 #include "Level/Render/AntiAliasingPass.hpp"
 #include "Level/Render/BoundingBoxDebugPass.hpp"
 #include "Level/Render/GBufferPass.hpp"
@@ -26,6 +27,7 @@ namespace nbl
 
         UPtr<PrePass>               mPrePass;
         SPtr<GBufferPass>           mGBufferPass;
+        UPtr<SSAOPass>              mSSAOPass;
         UPtr<LightingPass>          mLightingPass;
         UPtr<TonemapPass>           mTonemapPass;
         UPtr<AntiAliasingPass>      mAntiAliasingPass;

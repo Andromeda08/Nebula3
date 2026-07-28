@@ -144,6 +144,9 @@ set(V2_FILES
     Nebula/ShaderBuild.cpp
     Nebula/Views/GameTest.hpp
     Nebula/Level/Camera/IsoCamera.hpp
+    Nebula/Level/Render/SSAOPass.hpp
+    Nebula/Level/Render/SSAOPass.cpp
+    Nebula/Level/TextureSystem.hpp
 )
 
 add_executable(Nebula3

@@ -36,6 +36,10 @@ namespace nbl
         {
             barriers.addBarrier(level->mTlasSystem->getBackingBuffer()->getBarrier(RHI::BufferUsage::AS_BuildUpdate, RHI::BufferUsage::AS_Traverse));
         }
+        if (mInput.pSSAOPass)
+        {
+            barriers.addBarrier(mInput.pSSAOPass->getResult(frameData.currentFrame)->getBarrier(RHI::ImageUsage::ShaderReadOnly));
+        }
 
         barriers.insert(pCommandList);
 
@@ -57,8 +61,12 @@ namespace nbl
             .shadowFactor           = mShadowFactor,
             .emissiveFactor         = mEmissiveFactor,
         };
+        const PushConstantsNew pcs = {
+            .camera = level->mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+            .lights = level->mLightSystem->getBuffer()->getAddress(),
+        };
 
-        std::vector descriptors = { mDescriptor->getSet(0), mInput.pTextureManager->getDescriptor()->getSet(0) };
+        std::vector descriptors = { mDescriptor->getSet(frameData.currentFrame), mInput.pTextureManager->getDescriptor()->getSet(0) };
         if (mRHI->getFeatures().rayTracing)
         {
             descriptors.push_back(mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame));
@@ -71,8 +79,8 @@ namespace nbl
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
                 cmd->bindPipeline(mPipeline.get());
-                cmd->bindDescriptorSets(descriptors);
-                cmd->pushConstants(&pushConstants);
+                cmd->bindDescriptorSet(mDescriptor->getSet(frameData.currentFrame), 0);
+                cmd->pushConstants(&pcs);
                 cmd->getHandle().draw(3, 1, 0, 0);
             });
 
@@ -82,27 +90,34 @@ namespace nbl
     void LightingPass::init() noexcept
     {
         mDescriptor = mRHI->createDescriptor({
-           .bindings = {
-               { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-               { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-               { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-               { 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-               { 4, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-           },
-           .setCount = 1,
-           .debugName = "Lighting_Descriptor",
-       });
-
-        const auto descriptorWrite = RHI::DescriptorWrite()
-            .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mWorldPosition)
-            .writeCombinedImageSampler(1, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mWorldNormal)
-            .writeCombinedImageSampler(2, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mAlbedoBuffer)
-            .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mParamsBuffer)
-            .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mViewZ);
-        mDescriptor->write(0, descriptorWrite);
+            .bindings = {
+                { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                { 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                { 4, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                { 5, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            },
+            .setCount = RHI::gFramesInFlight,
+            .debugName = "Lighting_Descriptor",
+        });
 
         for (size_t i = 0; i < mLightingResult.size(); i++)
         {
+            auto descriptorWrite = RHI::DescriptorWrite()
+                .writeCombinedImageSampler(0, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mWorldPosition)
+                .writeCombinedImageSampler(1, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mWorldNormal)
+                .writeCombinedImageSampler(2, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mAlbedoBuffer)
+                .writeCombinedImageSampler(3, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mParamsBuffer)
+                .writeCombinedImageSampler(4, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pGBufferPass->mViewZ);
+
+            if (mInput.pSSAOPass)
+            {
+                descriptorWrite.writeCombinedImageSampler(5, 0, vk::ImageLayout::eShaderReadOnlyOptimal, mInput.pSSAOPass->getResult(i));
+            }
+
+            mDescriptor->write(i, descriptorWrite);
+
             mLightingResult[i] = makeRenderTarget(mRHI.get(), fmt::format("Lighting_Result_{}", i));
         }
 
@@ -113,10 +128,10 @@ namespace nbl
         auto pipelineInfo = RHI::PipelineCommon()
             .setLabel("Lighting")
             .addShader("FSQuad.vert.spv")
-            .addShader("Lighting.frag.spv")
+            .addShader("LightingV2.frag.spv")
             .addDescriptorLayout(0, mDescriptor.get())
-            .addDescriptorLayout(1, mInput.pTextureManager->getDescriptor().get())
-            .setPushConstant<PushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
+            // .addDescriptorLayout(1, mInput.pTextureManager->getDescriptor().get())
+            .setPushConstant<PushConstantsNew>(vk::ShaderStageFlagBits::eFragment);
 
         if (mRHI->getFeatures().rayTracing)
         {

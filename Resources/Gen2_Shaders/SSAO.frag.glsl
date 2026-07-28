@@ -7,7 +7,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 #define nbl_SSAO_SET         0
-#define nbl_SSAO_KERNEL_SIZE 32
+#define nbl_SSuAO_KERNEL_SIZE 32
 #define nbl_SSAO_RADIUS      1.0
 
 #include "nbl/Camera.inc.glsl"

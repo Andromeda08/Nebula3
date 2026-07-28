@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SSAOPass.hpp"
 #include "Core/Types.hpp"
 #include "Level/Level.hpp"
 #include "../TextureManager.hpp"
@@ -14,6 +15,7 @@ namespace nbl
     struct LightingPass_Params
     {
         SPtr<GBufferPass>    pGBufferPass    = nullptr;
+        SSAOPass*            pSSAOPass       = nullptr;
         TextureManager*      pTextureManager = nullptr;
         Level*               pLevel          = nullptr;
         SPtr<RHI::VulkanRHI> rhi             = nullptr;
@@ -40,6 +42,11 @@ namespace nbl
             float       ambientFactor;
             float       shadowFactor;
             float       emissiveFactor;
+        };
+        struct PushConstantsNew
+        {
+            uint64_t    camera;
+            uint64_t    lights;
         };
     public:
         nbl_DisableCopy(LightingPass);

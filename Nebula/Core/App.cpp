@@ -42,7 +42,7 @@ App::App()
 
     mUserInterface->addComponent<nbl::ViewSelectUI>(mViews, &mActiveView);
 
-    addView<nbl::GameTest>();
+    // addView<nbl::GameTest>();
     // addView<nbl::PathTracerView>();
     addView<nbl::LevelView>();
     // if constexpr (!RHI::Platform::isApple)

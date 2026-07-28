@@ -8,7 +8,7 @@
 
 // ============================================
 // #define nbl_RT
-// #define nbl_AMBIENT_OCCLUSION
+#define nbl_AMBIENT_OCCLUSION
 // ============================================
 
 #define nbl_TEMP_SKY_COLOR vec3(0.01)
@@ -297,7 +297,7 @@ vec3 computeDirectLighting(vec3 position, vec3 N, vec3 V, vec3 albedo, float met
         bool wantsShadow = (forceShadows == 1) || (shadowsEnabled != 0 && light.castsShadows == 1);
         if (wantsShadow)
         {
-            vec3 origin = offsetRay(position, N);
+            vec3 origin = offsetRay(position, N)
             contrib *= castShadow(origin, L, 0.01, tMax);
         }
         #endif
@@ -398,7 +398,7 @@ void main()
     aoFactor = texture(uAO, inUV).r;
     #endif
 
-    vec3  ambient  = (enableGI == 1) ? vec3(0.0) : computeAmbient(albedo, metallic) * aoFactor;
+    vec3  ambient  = computeAmbient(albedo, metallic) * aoFactor;
     vec3  direct   = computeDirectLighting(worldPosition, N, V, albedo, metallic, roughness, 0);
     vec3  indirect = vec3(0.0);
 
