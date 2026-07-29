@@ -119,7 +119,7 @@ set(V2_FILES
     Nebula/Interface/FadeEffect.hpp
     Nebula/Core/View.hpp
     Nebula/Views/LevelView.hpp
-    Nebula/Views/HairView.hpp
+    Nebula/Views/hair/HairView.hpp
     Nebula/Views/UITestView.hpp
     Nebula/Core/View.cpp
     Nebula/Level/Render/BloomPass.hpp
@@ -147,6 +147,8 @@ set(V2_FILES
     Nebula/Level/Render/SSAOPass.hpp
     Nebula/Level/Render/SSAOPass.cpp
     Nebula/Level/TextureSystem.hpp
+    Nebula/Views/hair/HairView.cpp
+    Nebula/Hair/Render/IHairRenderer.hpp
 )
 
 add_executable(Nebula3

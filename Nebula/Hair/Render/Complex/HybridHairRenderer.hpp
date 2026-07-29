@@ -8,11 +8,12 @@
 #include "HybridHair_SoftwareStage.hpp"
 #include "Shared.hpp"
 #include "Hair/HairGeometry.hpp"
+#include "Hair/Render/IHairRenderer.hpp"
 #include "VulkanRHI/VulkanRHI.hpp"
 
 namespace nbl
 {
-    class HybridHairRenderer
+    class HybridHairRenderer : public IHairRenderer
     {
     public:
         HybridHairRenderer(const SPtr<RHI::VulkanRHI>& rhi, HairModelSystem* pHairModelSystem)
@@ -27,7 +28,9 @@ namespace nbl
             mDebugComposeStage = makeUnique<HybridHair_DebugCompose>(mRHI, mShared.get());
         }
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress)
+        ~HybridHairRenderer() override = default;
+
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress) override
         {
             if (mMeshPrimitiveQueryValid[frameData.currentFrame])
             {
@@ -71,7 +74,7 @@ namespace nbl
             pCommandList->endLabel();
         }
 
-        [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t currentFrame) const noexcept
+        [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t currentFrame) const override
         {
             return mDebugComposeStage->getResult(currentFrame);
         }

@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "HairRenderingMode.hpp"
+#include "IHairRenderer.hpp"
 #include "Core/Random.hpp"
 #include "Core/Types.hpp"
 #include "Hair/HairGeometry.hpp"
@@ -14,7 +15,7 @@
 
 namespace nbl
 {
-    class ClassicHairRenderer
+    class ClassicHairRenderer : public IHairRenderer
     {
         struct PushConstants
         {
@@ -38,9 +39,11 @@ namespace nbl
     public:
         ClassicHairRenderer(const SPtr<RHI::VulkanRHI>& rhi, HairModelSystem* pHairModels);
 
-        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint32_t hairIndex, const uint64_t cameraBuffer) const;
+        ~ClassicHairRenderer() override = default;
 
-        const SPtr<RHI::Image>& getResult(const uint32_t frameIndex) const;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, uint64_t cameraBufferAddress) override;
+
+        const SPtr<RHI::Image>& getResult(uint32_t frameIndex) const override;
 
     private:
         void createDebugColors();
