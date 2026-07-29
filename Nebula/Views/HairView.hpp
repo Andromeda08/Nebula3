@@ -4,6 +4,9 @@
 #include "Hair/CyLoader.hpp"
 #include "Hair/HairGeometry.hpp"
 #include "Hair/Render/Complex/HybridHairRenderer.hpp"
+#include "Hair/Render/ClassicHairRenderer.hpp"
+#include "Level/Camera/CameraSystem.hpp"
+#include "Level/Camera/OrbitCamera.hpp"
 
 namespace nbl
 {
@@ -14,6 +17,9 @@ namespace nbl
         : nbl_ViewBaseCtor
         {
             mName = "HairView";
+
+            mCameraSystem = makeUnique<CameraSystem>(mRHI);
+            mCameraSystem->addCamera<OrbitCamera>(true);
 
             /* Load Hair Models */ {
                 mHairModelSystem = makeUnique<HairModelSystem>(mRHI);
@@ -40,6 +46,8 @@ namespace nbl
                 mHairModelSystem->createBuffers();
             }
 
+            mClassicRenderer = makeUnique<ClassicHairRenderer>(mRHI, mHairModelSystem.get());
+
             mHybrid = makeUnique<HybridHairRenderer>(mRHI, mHairModelSystem.get());
             mUserInterface->addComponent<HybridHairRendererUI>(mHybrid.get());
         }
@@ -48,20 +56,42 @@ namespace nbl
 
         void onEvent(const SDL_Event& event) override
         {
+            mCameraSystem->onEvent(event);
         }
 
         void onUpdate(float dt, RHI::CommandList* pCommandList, const RHI::FrameData& frameData) override
         {
+            mCameraSystem->onUpdate(frameData);
         }
 
         void onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) override
         {
-            // TODO: Local Camera
-            // mHybrid->execute(pCommandList, frameData, mLevel->getCameraBuffer(frameData.currentFrame));
+            if (mUseHybrid)
+            {
+                mHybrid->execute(pCommandList, frameData, mCameraSystem->getBuffer(frameData.currentFrame)->getAddress());
+            }
+            else
+            {
+                mClassicRenderer->render(pCommandList, frameData, 0, mCameraSystem->getBuffer(frameData.currentFrame)->getAddress());
+            }
+
+            auto* pFinalImage = mUseHybrid ? mHybrid->getResult(frameData.currentFrame).get() : mClassicRenderer->getResult(frameData.currentFrame).get();
+            pCommandList->blitToSwapchain(pFinalImage, mRHI->getSwapchain(), frameData.acquiredIndex);
+        }
+
+        void onDrawUI() override
+        {
+            ImGui::Begin("Hair Renderer");
+            ImGui::Checkbox("Use Hybrid Renderer", &mUseHybrid);
+            ImGui::End();
         }
 
     private:
-        UPtr<HairModelSystem>    mHairModelSystem;
-        UPtr<HybridHairRenderer> mHybrid;
+        bool                      mUseHybrid = true;
+
+        UPtr<CameraSystem>        mCameraSystem;
+        UPtr<HairModelSystem>     mHairModelSystem;
+        UPtr<HybridHairRenderer>  mHybrid;
+        UPtr<ClassicHairRenderer> mClassicRenderer;
     };
 }

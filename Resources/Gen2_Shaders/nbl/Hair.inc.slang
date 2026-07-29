@@ -1,3 +1,4 @@
+#pragma once
 
 // Workgroup config
 static const uint nbl_Hair_Workgroup_Size    = 32;
@@ -31,7 +32,6 @@ struct CameraData
     float4x4 viewInverse;
     float4x4 projInverse;
     float4 eye;
-    float4 frustumPlanes[6];
     float nearPlane;
     float farPlane;
 };

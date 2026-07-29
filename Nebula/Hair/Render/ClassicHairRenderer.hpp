@@ -33,124 +33,21 @@ namespace nbl
             uint32_t  vertexCount;
             uint32_t  firstStrand;
             uint32_t  strandCount;
-            // Renderer Config
-            uint32_t  renderMode;
-            uint32_t  _pad0;
         };
 
     public:
-        ClassicHairRenderer(const SPtr<RHI::VulkanRHI>& rhi, HairModelSystem* pHairModels)
-        : mRHI(rhi)
-        , mHairModels(pHairModels)
-        {
-            createDebugColors();
-            createResources();
-            createPipeline();
-        }
+        ClassicHairRenderer(const SPtr<RHI::VulkanRHI>& rhi, HairModelSystem* pHairModels);
 
-        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint32_t hairIndex, const uint64_t cameraBuffer)
-        {
-            pCommandList->beginLabel("Hair_Classic");
+        void render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint32_t hairIndex, const uint64_t cameraBuffer) const;
 
-            const glm::mat4 model = Transform().setRotation(glm::vec3(-90.0f, 0.0f, -45.0f)).getModel();
-
-            RHI::Barrier()
-                .addBarrier(mRenderTarget[frameData.currentFrame]->getBarrier(RHI::ImageUsage::ColorAttachment))
-                .addBarrier(mDepthBuffer[frameData.currentFrame]->getBarrier(RHI::ImageUsage::DepthAttachment))
-                .addBarrier(mDebugColorsBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::StorageRead))
-                .insert(pCommandList);
-
-            RHI::Rendering()
-                .setRenderArea(mScissor)
-                .addAttachment(mRenderTarget[frameData.currentFrame])
-                .addAttachment(mDepthBuffer[frameData.currentFrame])
-                .setLabel(fmt::format("Hair_Classic_RenderPass"))
-                .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
-                {
-                    const auto& info = mHairModels->mHairInfos[hairIndex];
-                    const auto pushConstants = PushConstants
-                    {
-                        .model                   = model,
-                        .diffuse                 = glm::vec4(0.32549f, 0.23921f, 0.20784f, 1.0f),
-                        .specular                = glm::vec4(0.41568f, 0.30588f, 0.21960f, 1.0f),
-                        .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
-                        // .attributesBufferAddress = mHairModels->mHairAttributes->getAddress(),
-                        .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
-                        .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
-                        .cameraBufferAddress     = cameraBuffer,
-                        .firstVertex             = info.firstVertex,
-                        .vertexCount             = info.vertexCount,
-                        .firstStrand             = info.firstStrand,
-                        .strandCount             = info.strandCount,
-                        .renderMode              = std::to_underlying(mRenderingMode),
-                        ._pad0                   = 0,
-                    };
-
-                    mPipeline->bind(cmd);
-                    mPipeline->pushConstants(cmd, &pushConstants);
-
-                    const auto taskGroupSizeX = static_cast<uint32_t>(std::floor(info.strandCount / gHairMaxStrandletSize));
-                    cmd->getHandle().drawMeshTasksEXT(1, 1, 1);
-                });
-
-            pCommandList->endLabel();
-        }
-
-        const SPtr<RHI::Image>& getResult(const uint32_t frameIndex) const
-        {
-            return mRenderTarget[frameIndex];
-        }
+        const SPtr<RHI::Image>& getResult(const uint32_t frameIndex) const;
 
     private:
-        void createDebugColors()
-        {
-            for (size_t i = 0; i < mDebugColors.size(); i++)
-            {
-                mDebugColors[i] = Random::getColor();
-            }
-            mDebugColorsBuffer = mRHI->createBuffer({
-                .size  = mDebugColors.size() * sizeof(glm::vec4),
-                .type  = RHI::BufferType::Storage,
-                .label = "HairRenderer_DebugColorsBuffer",
-            });
-            mRHI->immediate_uploadToBuffer(mDebugColorsBuffer.get(), mDebugColors.data(), mDebugColors.size() * sizeof(glm::vec4));
-        }
+        void createDebugColors();
 
-        void createResources()
-        {
-            for (size_t i = 0; i < mRenderTarget.size(); i++)
-            {
-                mRenderTarget[i] = makeRenderTarget(mRHI.get(), fmt::format("HairRenderer_Target_{}", i));
-                mDepthBuffer[i]  = makeRenderTarget(mRHI.get(), fmt::format("HairRenderer_Depth_{}", i), vk::Format::eD32Sfloat);
-            }
-        }
+        void createResources();
 
-        void createPipeline()
-        {
-            mScissor = getRenderAreaForAttachment(mRenderTarget[0].get());
-            mViewport = vk::Viewport {
-                0.0f, 0.0f,
-                static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
-                0.0f, 1.0f
-            };
-
-            const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-                .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment)
-                .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
-                {
-                    stateInfo
-                        .addDefaultAttachmentStates(1)
-                        .setCullMode(vk::CullModeFlagBits::eNone);
-                }))
-                .addShader({ Configuration::getShaderFilePath("Hair_Classic.task.spv"), vk::ShaderStageFlagBits::eTaskEXT })
-                .addShader({ Configuration::getShaderFilePath("Hair_Classic.mesh.spv"), vk::ShaderStageFlagBits::eMeshEXT })
-                .addShader({ Configuration::getShaderFilePath("Hair_Classic.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-                .addColorAttachmentFormat(mRenderTarget[0]->getProperties().format)
-                .setDepthAttachmentFormat(mDepthBuffer[0]->getProperties().format)
-                .setDebugName("Hair_Classic_Pipeline");
-
-            mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
-        }
+        void createPipeline();
 
         SPtr<RHI::VulkanRHI>                    mRHI;
         HairModelSystem*                        mHairModels;

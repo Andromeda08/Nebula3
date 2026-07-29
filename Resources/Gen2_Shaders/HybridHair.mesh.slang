@@ -208,8 +208,8 @@ void main(
     float4 v1 = mul(pc.model, float4(nextVertex.position, 1.0));
 
     // Technically we don't need v2 here :)
-    float4 v2 = v1 + offsetDir * nextAttribs.thickness;
-    float4 v3 = v0 + offsetDir * currAttribs.thickness;
+    float4 v2 = v1 + offsetDir * 0.15; // nextAttribs.thickness;
+    float4 v3 = v0 + offsetDir * 0.15; // currAttribs.thickness;
 
     const float4x4 VP = mul(pc.cameraBuffer.proj, pc.cameraBuffer.view);
     
