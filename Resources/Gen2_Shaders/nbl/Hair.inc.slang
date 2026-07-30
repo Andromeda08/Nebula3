@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../lib/Camera.slang"
+#include "../lib/Emitter.slang"
+#include "../lib/Marschner.slang"
+#include "../lib/KajiyaKay.slang"
+
 // Workgroup config
 static const uint nbl_Hair_Workgroup_Size    = 32;
 static const uint nbl_Hair_Max_StrandletSize = nbl_Hair_Workgroup_Size;
@@ -23,17 +28,6 @@ struct MeshVertex
     float3 worldPosition;
     float3 worldTangent;
     float3 color;
-};
-
-struct CameraData
-{
-    float4x4 view;
-    float4x4 proj;
-    float4x4 viewInverse;
-    float4x4 projInverse;
-    float4 eye;
-    float nearPlane;
-    float farPlane;
 };
 
 struct HairVertex
@@ -75,7 +69,8 @@ struct MeshPushConstants
     HairVertex*          vertexBuffer;
     HairAttributes*      attribBuffer;
     HairStrandDesc*      strandDescBuffer;
-    CameraData*          cameraBuffer;
+    GPUCameraData*       cameraBuffer;
+    GPULightData*        lights;
     ScreenSpaceTriangle* trianglesBuffer;
     float4*              debugColorBuffer;
     
@@ -92,6 +87,13 @@ struct MeshPushConstants
 
     float                specularFactor;
     int32_t              useCustomColor;
+
+    int32_t              isHybrid;
+
+    // Marschner BSDF Params
+    MarschnerParams      bsdf;
+
+    int32_t              vizMode;
 };
 
 struct VisibilityPushConstants

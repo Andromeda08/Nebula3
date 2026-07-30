@@ -30,7 +30,7 @@ namespace nbl
 
         ~HybridHairRenderer() override = default;
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress) override
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const HairRenderer_BDAs& buffers) override
         {
             if (mMeshPrimitiveQueryValid[frameData.currentFrame])
             {
@@ -55,28 +55,75 @@ namespace nbl
             pCommandList->getHandle().beginQuery(pool, 0, {});
 
             // ============================================
-            mMeshStage->execute(pCommandList, frameData, cameraBufferAddress);
+            mMeshStage->execute(pCommandList, frameData, buffers, mHybridMode);
             // ============================================
 
             pCommandList->getHandle().endQuery(pool, 0);
             mMeshPrimitiveQueryValid[frameData.currentFrame] = true;
 
             // ============================================
-            mSoftwareStage->execute(pCommandList, frameData);
+            if (mHybridMode)
+            {
+                mSoftwareStage->execute(pCommandList, frameData);
+            }
             // ============================================
 
             readbackSmallTriangleCount(pCommandList, frameData.currentFrame);
 
             // ============================================
-            mDebugComposeStage->execute(pCommandList, frameData, mMeshStage->getResult(frameData.currentFrame), mSoftwareStage->getResult(frameData.currentFrame));
+            if (mHybridMode)
+            {
+                mDebugComposeStage->execute(pCommandList, frameData, mMeshStage->getResult(frameData.currentFrame), mSoftwareStage->getResult(frameData.currentFrame));
+            }
             // ============================================
 
             pCommandList->endLabel();
         }
 
+        void onDrawUI() override
+        {
+            constexpr uint32_t uint32min = 0;
+
+            ImGui::Begin("HybridHairRenderer Options");
+
+            const auto hairIndexMax = mHairModelSystem->getModelCount() - 1;
+            ImGui::SliderScalar("Hair Model", ImGuiDataType_U32, &mShared->config.hairIndex, &uint32min, &hairIndexMax);
+
+            ImGui::SeparatorText("Hybrid Config & Stats");
+
+            ImGui::Checkbox("Hybrid Mode", &mHybridMode);
+
+            const auto percent = (static_cast<float>(mSmallTriangles) / static_cast<float>(mMeshTriangles)) * 100.0f;
+
+            ImGui::Text("Mesh Triangles: %llu", mMeshTriangles);
+            ImGui::Text("Small Triangles: %llu (%.2f%%)", mSmallTriangles, percent);
+            ImGui::DragFloat("Alpha", &mShared->config.debugAlphaBlend, 0.05f, 0.0f, 1.0f);
+            ImGui::DragFloat("Small Triangle Threshold", &mShared->config.smallTriangleThreshold, 0.1f, 0.0f, 8.0f);
+
+            ImGui::SeparatorText("Task Workgroup Size");
+
+            const auto defaultGroupSize = mHairModelSystem->getHairGeometry(mShared->config.hairIndex).taskGroupSizeX;
+
+            ImGui::Text("Default size: %u", defaultGroupSize);
+            ImGui::Checkbox("Override", &mShared->config.useCustomWgSize);
+            ImGui::SliderScalar("X", ImGuiDataType_U32, &mShared->config.customTaskWgSize, &uint32min, &defaultGroupSize);
+
+            mMeshStage->onDrawUI();
+
+            ImGui::SeparatorText("Custom Color");
+            ImGui::Checkbox("Enable", &mShared->config.overrideColors);
+            ImGui::ColorEdit3("Diffuse", glm::value_ptr(mShared->config.diffuse));
+            ImGui::ColorEdit3("Specular", glm::value_ptr(mShared->config.specular));
+            ImGui::DragFloat("Specular", &mShared->config.specularFactor, 0.05f, 0.0f, 32.0f);
+
+            ImGui::End();
+        }
+
         [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t currentFrame) const override
         {
-            return mDebugComposeStage->getResult(currentFrame);
+            return mHybridMode
+                ? mDebugComposeStage->getResult(currentFrame)
+                : mMeshStage->getResult(currentFrame);
         }
 
     private:
@@ -123,12 +170,12 @@ namespace nbl
             }
         }
 
-        friend class HybridHairRendererUI;
-
         SPtr<RHI::VulkanRHI>             mRHI;
         HairModelSystem*                 mHairModelSystem;
 
         UPtr<HairShared>                 mShared;
+
+        bool                             mHybridMode = true;
 
         UPtr<HybridHair_MeshStage>       mMeshStage;
         UPtr<HybridHair_SoftwareStage>   mSoftwareStage;
@@ -140,55 +187,5 @@ namespace nbl
 
         uint64_t                         mMeshTriangles  = 0;
         uint64_t                         mSmallTriangles = 0;
-    };
-
-    class HybridHairRendererUI : public IComponent
-    {
-    public:
-        explicit HybridHairRendererUI(HybridHairRenderer* pHairRenderer)
-        : IComponent()
-        , mHairRenderer(pHairRenderer)
-        , mShared(pHairRenderer->mShared.get())
-        {
-        }
-
-        void draw() override
-        {
-            constexpr uint32_t uint32min = 0;
-
-            ImGui::Begin("HairRenderer");
-
-            const auto hairIndexMax = mHairRenderer->mHairModelSystem->getModelCount() - 1;
-            ImGui::SliderScalar("Hair Model", ImGuiDataType_U32, &mShared->config.hairIndex, &uint32min, &hairIndexMax);
-
-            ImGui::SeparatorText("Hybrid Config & Stats");
-
-            const auto percent = (static_cast<float>(mHairRenderer->mSmallTriangles) / static_cast<float>(mHairRenderer->mMeshTriangles)) * 100.0f;
-
-            ImGui::Text("Mesh Triangles: %llu", mHairRenderer->mMeshTriangles);
-            ImGui::Text("Small Triangles: %llu (%.2f%%)", mHairRenderer->mSmallTriangles, percent);
-            ImGui::DragFloat("Alpha", &mShared->config.debugAlphaBlend, 0.05f, 0.0f, 1.0f);
-            ImGui::DragFloat("Small Triangle Threshold", &mShared->config.smallTriangleThreshold, 0.1f, 0.0f, 8.0f);
-
-            ImGui::SeparatorText("Task Workgroup Size");
-
-            const auto defaultGroupSize = mHairRenderer->mHairModelSystem->getHairGeometry(mShared->config.hairIndex).taskGroupSizeX;
-
-            ImGui::Text("Default size: %u", defaultGroupSize);
-            ImGui::Checkbox("Override", &mShared->config.useCustomWgSize);
-            ImGui::SliderScalar("X", ImGuiDataType_U32, &mShared->config.customTaskWgSize, &uint32min, &defaultGroupSize);
-
-            ImGui::SeparatorText("Custom Color");
-            ImGui::Checkbox("Enable", &mShared->config.overrideColors);
-            ImGui::ColorEdit3("Diffuse", glm::value_ptr(mShared->config.diffuse));
-            ImGui::ColorEdit3("Specular", glm::value_ptr(mShared->config.specular));
-            ImGui::DragFloat("Specular", &mShared->config.specularFactor, 0.05f, 0.0f, 32.0f);
-
-            ImGui::End();
-        }
-
-    private:
-        HybridHairRenderer* mHairRenderer;
-        HairShared*         mShared;
     };
 }

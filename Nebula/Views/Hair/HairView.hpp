@@ -5,6 +5,8 @@
 #include "Hair/Render/ClassicHairRenderer.hpp"
 #include "Hair/Render/Complex/HybridHairRenderer.hpp"
 #include "Level/Camera/CameraSystem.hpp"
+#include "Level/Light/LightSystem.hpp"
+#include "Level/Render/TonemapPass.hpp"
 
 namespace nbl
 {
@@ -24,11 +26,15 @@ namespace nbl
         void onDrawUI() override;
 
     private:
-        bool                      mUseHybrid = true;
+        IHairRenderer* getRenderer() const;
 
-        UPtr<CameraSystem>        mCameraSystem;
-        UPtr<HairModelSystem>     mHairModelSystem;
-        UPtr<HybridHairRenderer>  mHybrid;
-        UPtr<ClassicHairRenderer> mClassicRenderer;
+        bool                        mUseHybrid = true;
+
+        UPtr<CameraSystem>          mCameraSystem;
+        UPtr<LightSystem>           mLightSystem;
+        UPtr<HairModelSystem>       mHairModelSystem;
+        UPtr<HybridHairRenderer>    mHybrid;
+        UPtr<ClassicHairRenderer>   mClassicRenderer;
+        UPtr<TonemapPass>           mTonemapPass;
     };
 }

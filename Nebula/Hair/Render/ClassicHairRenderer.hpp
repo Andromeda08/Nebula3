@@ -41,7 +41,9 @@ namespace nbl
 
         ~ClassicHairRenderer() override = default;
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, uint64_t cameraBufferAddress) override;
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const HairRenderer_BDAs& buffers) override;
+
+        void onDrawUI() override {}
 
         const SPtr<RHI::Image>& getResult(uint32_t frameIndex) const override;
 

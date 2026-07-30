@@ -57,9 +57,12 @@ namespace nbl
         isFirstFrame = false;
     }
 
-    void CameraSystem::onDrawUI()
+    void CameraSystem::onDrawUI(const bool asSubSection)
     {
-        ImGui::Begin("Camera System");
+        if (!asSubSection)
+        {
+            ImGui::Begin("Camera System");
+        }
 
         const auto* activeCamera = getActiveCamera();
         const std::string activeName = activeCamera ? activeCamera->getName() : "None";
@@ -85,7 +88,10 @@ namespace nbl
             ImGui::EndCombo();
         }
 
-        ImGui::End();
+        if (!asSubSection)
+        {
+            ImGui::End();
+        }
     }
 
     void CameraSystem::setActiveCamera(const int32_t index)

@@ -8,6 +8,33 @@
 
 namespace nbl
 {
+    enum class VizMode : int32_t
+    {
+        HairColor           = 0,
+        LongScattering      = 1,
+        AzimuthalScattering = 2,
+        CombinedScattering  = 3,
+        Ambient             = 4,
+        Diffuse             = 5,
+        Marschner           = 6,
+    };
+
+    inline const char* toString(const VizMode e)
+    {
+        using enum VizMode;
+        switch (e)
+        {
+            case HairColor:           return "HairColor (None)";
+            case LongScattering:      return "LongScattering";
+            case AzimuthalScattering: return "AzimuthalScattering";
+            case CombinedScattering:  return "CombinedScattering";
+            case Ambient:             return "Ambient";
+            case Diffuse:             return "Diffuse";
+            case Marschner:           return "Marschner";
+            default:                  return "unknown";
+        }
+    }
+
     class HybridHair_MeshStage
     {
         struct PushConstants
@@ -21,6 +48,7 @@ namespace nbl
             uint64_t  attributesBuffer;
             uint64_t  strandDescriptionBuffer;
             uint64_t  cameraBuffer;
+            uint64_t  lights;
             uint64_t  trianglesBuffer;
             uint64_t  colorsBuffer;
 
@@ -40,6 +68,21 @@ namespace nbl
             // Extras
             float     specularFactor;
             int32_t   useCustomColor;
+
+            int32_t   isHybrid;
+
+            // Marschner BSDF Params
+            float     roughness         = glm::radians(6.0f);
+            float     azimuthalWidth    = 0.3f;
+            glm::vec3 absorption        = glm::vec3(0.4, 0.2, 0.05);
+            float     shiftR            = glm::radians(-4.5f);
+            float     shiftTT           = 0.0f;
+            float     shiftTRT          = glm::radians(4.5f);
+            float     scaleR            = 1.0f;
+            float     scaleTT           = 1.0f;
+            float     scaleTRT          = 0.5f;
+
+            int32_t   vizMode           = 0;
         };
 
     public:
@@ -47,11 +90,18 @@ namespace nbl
         : mRHI(rhi)
         , mShared(pShared)
         {
+            using enum VizMode;
+            mVizModes = {
+                toString(HairColor), toString(LongScattering), toString(AzimuthalScattering),
+                toString(CombinedScattering), toString(Ambient), toString(Diffuse),
+                toString(Marschner),
+            };
+
             createResources();
             createPipeline();
         }
 
-        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress) const
+        void execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const HairRenderer_BDAs& buffers, const bool isHybridMode) const
         {
             pCommandList->beginLabel("MeshStage");
 
@@ -79,13 +129,12 @@ namespace nbl
                     .addBarrier(trianglesBuffer->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Compute_Write))
                     .insert(pCommandList);
 
-                pCommandList->setViewportScissor(mViewport, mScissor);
-
                 RHI::Rendering()
-                    .setRenderArea(mScissor)
+                    .setRenderArea(mRenderTarget[0]->getProperties().extent)
+                    .setViewportScissor(pCommandList)
                     .addAttachment(mRenderTarget[frameData.currentFrame])
                     .addAttachment(mDepthBuffer[frameData.currentFrame])
-                    .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
+                    .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
                     {
                         const glm::mat4 model = Transform().setRotation(glm::vec3(-90.0f, 0.0f, -45.0f)).getModel();
                         const auto& info = mShared->hairModels->getHairInfo(mShared->config.hairIndex);
@@ -98,7 +147,8 @@ namespace nbl
                             .vertexBuffer               = mShared->hairModels->getVertexAddress(),
                             .attributesBuffer           = mShared->hairModels->getAttributesAddress(),
                             .strandDescriptionBuffer    = mShared->hairModels->getStrandDescriptionsAddress(),
-                            .cameraBuffer               = cameraBufferAddress,
+                            .cameraBuffer               = buffers.cameraBuffer,
+                            .lights                     = buffers.lightsBuffer,
                             .trianglesBuffer            = trianglesBuffer->getAddress(),
                             .colorsBuffer               = mShared->colorsBuffer->getAddress(),
                             .firstVertex                = info.firstVertex,
@@ -108,21 +158,32 @@ namespace nbl
                             .smallTriangleCounterBuffer = counterBuffer->getAddress(),
                             .maxSmallTriangles          = info.vertexCount * 2,
                             .smallTriangleThreshold     = mShared->config.smallTriangleThreshold,
-                            .width                      = mViewport.width,
-                            .height                     = mViewport.height,
+                            .width                      = static_cast<float>(mRenderTarget[0]->getProperties().extent.width),
+                            .height                     = static_cast<float>(mRenderTarget[0]->getProperties().extent.height),
                             .specularFactor             = mShared->config.specularFactor,
                             .useCustomColor             = mShared->config.overrideColors ? 1 : 0,
+                            .isHybrid                   = isHybridMode ? 1 : 0,
+                            .roughness                  = glm::radians(6.0f),
+                            .azimuthalWidth             = 0.3f,
+                            .absorption                 = mAbsorption,
+                            .shiftR                     = mShiftR,
+                            .shiftTT                    = mShiftTT,
+                            .shiftTRT                   = mShiftTRT,
+                            .scaleR                     = mScaleR, // was 1.0f
+                            .scaleTT                    = mScaleTT,
+                            .scaleTRT                   = mScaleTRT,
+                            .vizMode                    = std::to_underlying(mVizMode),
                         };
 
-                        mPipeline->bind(cmd);
-                        mPipeline->pushConstants(cmd, &pushConstants);
+                        cmd->bindPipeline(mPipeline.get());
+                        cmd->pushConstants(&pushConstants);
 
                         auto taskGroupSizeX = mShared->hairModels->getHairGeometry(static_cast<size_t>(mShared->config.hairIndex)).taskGroupSizeX;
                         if (mShared->config.useCustomWgSize)
                         {
                             taskGroupSizeX = mShared->config.customTaskWgSize;
                         }
-                        cmd->getHandle().drawMeshTasksEXT(taskGroupSizeX, 1, 1);
+                        cmd->drawMeshTasks(taskGroupSizeX, 1, 1);
                     });
 
                 pCommandList->endLabel();
@@ -134,6 +195,50 @@ namespace nbl
         [[nodiscard]] const SPtr<RHI::Image>& getResult(const uint32_t frameIndex) const
         {
             return mRenderTarget[frameIndex];
+        }
+
+        void onDrawUI()
+        {
+            if (mAutoAbsorption)
+            {
+                mAbsorption = -glm::log(mShared->config.diffuse + glm::vec3(0.001));
+            }
+
+            ImGui::SeparatorText("Marschner BSDF");
+            ImGui::Checkbox("Auto-Absorption", &mAutoAbsorption);
+
+            ImGuiColorEditFlags flags = mAutoAbsorption ? ImGuiColorEditFlags_NoPicker : 0;
+            ImGui::BeginDisabled(mAutoAbsorption);
+            ImGui::ColorEdit3("Absorption", glm::value_ptr(mAbsorption), flags);
+            ImGui::EndDisabled();
+
+            ImGui::DragFloat("Scale R",   &mScaleR,   0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Scale TT",  &mScaleTT,  0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("Scale TRT", &mScaleTRT, 0.01f, 0.0f, 1.0f);
+
+            ImGui::SliderAngle("Shift R",   &mShiftR);
+            ImGui::SliderAngle("Shift TT",  &mShiftTT);
+            ImGui::SliderAngle("Shift TRT", &mShiftTRT);
+
+            const auto currentMode = std::to_underlying(mVizMode);
+            if (ImGui::BeginCombo("##Debug Visualization", mVizModes[currentMode].c_str()))
+            {
+                for (const auto& [i, camera] : enumerate(mVizModes))
+                {
+                    const bool isSelected = currentMode == i;
+
+                    if (ImGui::Selectable(mVizModes[i].c_str(), isSelected))
+                    {
+                        mVizMode = static_cast<VizMode>(i);
+                    }
+                    if (isSelected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui::EndCombo();
+            }
         }
 
     private:
@@ -148,38 +253,41 @@ namespace nbl
 
         void createPipeline()
         {
-            mScissor = getRenderAreaForAttachment(mRenderTarget[0].get());
-            mViewport = vk::Viewport {
-                0.0f, 0.0f,
-                static_cast<float>(mScissor.extent.width), static_cast<float>(mScissor.extent.height),
-                0.0f, 1.0f
-            };
+            using enum vk::ShaderStageFlagBits;
+            const auto graphicsPS = RHI::GraphicsPS()
+                .addAlphaAttachmentState(1)
+                .addAttachmentFormat(mRenderTarget[0]->getProperties().format)
+                .addAttachmentFormat(mDepthBuffer[0]->getProperties().format)
+                .setCullMode(vk::CullModeFlagBits::eNone);
+            const auto pipelineInfo = RHI::PipelineCommon()
+                .setLabel("HybridHair_MeshStage_Pipeline")
+                .addShader("HybridHair.task.spv")
+                .addShader("HybridHair.mesh.spv")
+                .addShader("HybridHair.frag.spv")
+                .setPushConstant<PushConstants>(eMeshEXT | eTaskEXT | eFragment);
 
-            const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-                .setPushConstantRange<PushConstants>(vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment)
-                .setStateInfo(RHI::makeGraphicsStateInfo([&](RHI::GraphicsPipelineStateInfo& stateInfo)
-                {
-                    stateInfo
-                        .addDefaultAttachmentStates(1)
-                        .setCullMode(vk::CullModeFlagBits::eNone);
-                }))
-                .addShader({ Configuration::getShaderFilePath("HybridHair.task.spv"), vk::ShaderStageFlagBits::eTaskEXT })
-                .addShader({ Configuration::getShaderFilePath("HybridHair.mesh.spv"), vk::ShaderStageFlagBits::eMeshEXT })
-                .addShader({ Configuration::getShaderFilePath("HybridHair.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-                .addColorAttachmentFormat(mRenderTarget[0]->getProperties().format)
-                .setDepthAttachmentFormat(mDepthBuffer[0]->getProperties().format)
-                .setDebugName("HybridHair_MeshStage_Pipeline");
-
-            mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+            mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
         }
+
+        bool      mAutoAbsorption = true;
+        glm::vec3 mAbsorption     = glm::vec3(0.4f, 0.2f, 0.05f);
+
+        float mScaleR   = 0.2f;
+        float mShiftR   = glm::radians(-4.5f);
+
+        float mScaleTT  = 1.0f;
+        float mShiftTT  = 0.0f;
+
+        float mScaleTRT = 0.5f;
+        float mShiftTRT = glm::radians(4.5f);
+
+        VizMode                                 mVizMode = VizMode::HairColor;
+        std::vector<std::string>                mVizModes;
 
         SPtr<RHI::VulkanRHI>                    mRHI;
         HairShared*                             mShared;
 
-        vk::Rect2D                              mScissor;
-        vk::Viewport                            mViewport;
-
-        SPtr<RHI::Pipeline>                     mPipeline;
+        SPtr<RHI::GraphicsPipeline2>            mPipeline;
         PerFrameArray<SPtr<RHI::Image>>         mRenderTarget;
         PerFrameArray<SPtr<RHI::Image>>         mDepthBuffer;
     };

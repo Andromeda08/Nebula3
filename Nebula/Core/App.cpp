@@ -3,10 +3,10 @@
 #include "Configuration.hpp"
 #include "UserInterface/Components/StatisticsComponent.hpp"
 #include "Views/GameTest.hpp"
-#include "Views/HairView.hpp"
 #include "Views/LevelView.hpp"
 #include "Views/PathTracerView.hpp"
 #include "Views/UITestView.hpp"
+#include "Views/Hair/HairView.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "Window/SplashWindow.hpp"
 
@@ -44,11 +44,11 @@ App::App()
 
     // addView<nbl::GameTest>();
     // addView<nbl::PathTracerView>();
-    addView<nbl::LevelView>();
-    // if constexpr (!RHI::Platform::isApple)
-    // {
-    //     addView<nbl::HairView>();
-    // }
+    // addView<nbl::LevelView>();
+    if constexpr (!RHI::Platform::isApple)
+    {
+        addView<nbl::HairView>();
+    }
     // addView<nbl::UITestView>();
 
     mWindow->reveal();

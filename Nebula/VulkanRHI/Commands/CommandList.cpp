@@ -136,6 +136,11 @@ namespace RHI
             x, y, depth);
     }
 
+    void CommandList::drawMeshTasks(const uint32_t x, const uint32_t y, const uint32_t z) const
+    {
+        mCommandBuffer.drawMeshTasksEXT(x, y, z);
+    }
+
     void CommandList::beginLabel(const std::array<float, 3>& color, const std::string& name) const
     {
         beginLabel(name, color);

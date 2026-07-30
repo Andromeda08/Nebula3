@@ -11,7 +11,7 @@ namespace nbl
         createPipeline();
     }
 
-    void ClassicHairRenderer::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const uint64_t cameraBufferAddress)
+    void ClassicHairRenderer::execute(RHI::CommandList* pCommandList, const RHI::FrameData& frameData, const HairRenderer_BDAs& buffers)
     {
         pCommandList->beginLabel("Hair_Classic");
 
@@ -39,7 +39,7 @@ namespace nbl
                     .vertexBufferAddress     = mHairModels->mHairVertices->getAddress(),
                     .strandDescBufferAddress = mHairModels->mStrandDescriptions->getAddress(),
                     .debugColorBufferAddress = mDebugColorsBuffer->getAddress(),
-                    .cameraBufferAddress     = cameraBufferAddress,
+                    .cameraBufferAddress     = buffers.cameraBuffer,
                     .firstVertex             = info.firstVertex,
                     .vertexCount             = info.vertexCount,
                     .firstStrand             = info.firstStrand,

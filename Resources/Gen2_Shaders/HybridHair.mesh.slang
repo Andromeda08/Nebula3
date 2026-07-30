@@ -227,32 +227,41 @@ void main(
     float4 clip3 = mul(VP, v3);
     float2 s3    = toScreen(clip3, viewportSize);
 
-    bool tri0_isSmall = isSmallTriangle(s0, s2, s1, pc.smallTriangleThreshold);
-    bool tri1_isSmall = isSmallTriangle(s2, s3, s1, pc.smallTriangleThreshold);
-
-    uint basePrimitiveId = (globalStrandIndex << 12) | (strandletIndex << 6) | (threadIndex * 2);
-
-    if (tri0_isSmall)
+    if (pc.isHybrid == 1)
     {
-        appendSmallTriangle(
-            clip0, clip2, clip1,
-            s0,    s2,    s1,
-            T, currAttribs.color.rgb, basePrimitiveId + 0
-        );
-    }
+        bool tri0_isSmall = isSmallTriangle(s0, s2, s1, pc.smallTriangleThreshold);
+        bool tri1_isSmall = isSmallTriangle(s2, s3, s1, pc.smallTriangleThreshold);
 
-    if (tri1_isSmall)
-    {
-        appendSmallTriangle(
-            clip2, clip3, clip1,
-            s2,    s3,    s1,
-            T, currAttribs.color.rgb, basePrimitiveId + 1
-        );
+        uint basePrimitiveId = (globalStrandIndex << 12) | (strandletIndex << 6) | (threadIndex * 2);
+
+        if (tri0_isSmall)
+        {
+            appendSmallTriangle(
+                clip0, clip2, clip1,
+                s0,    s2,    s1,
+                T, currAttribs.color.rgb, basePrimitiveId + 0
+            );
+        }
+
+        if (tri1_isSmall)
+        {
+            appendSmallTriangle(
+                clip2, clip3, clip1,
+                s2,    s3,    s1,
+                T, currAttribs.color.rgb, basePrimitiveId + 1
+            );
+        }
+
+        tris[outOffset + 0] = tri0_isSmall ? uint3(0) + outOffset : uint3(0, 2, 1) + outOffset;
+        tris[outOffset + 1] = tri1_isSmall ? uint3(0) + outOffset : uint3(2, 3, 1) + outOffset;
     }
 
     verts[outOffset + 0] = { clip0, v0.xyz, T, currAttribs.color.rgb };
     verts[outOffset + 1] = { clip3, v3.xyz, T, currAttribs.color.rgb };
     
-    tris[outOffset + 0] = tri0_isSmall ? uint3(0) + outOffset : uint3(0, 2, 1) + outOffset;
-    tris[outOffset + 1] = tri1_isSmall ? uint3(0) + outOffset : uint3(2, 3, 1) + outOffset;
+    if (pc.isHybrid == 0)
+    {
+        tris[outOffset + 0] = uint3(0, 2, 1) + outOffset;
+        tris[outOffset + 1] = uint3(2, 3, 1) + outOffset;
+    }
 }

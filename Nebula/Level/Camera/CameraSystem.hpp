@@ -21,7 +21,7 @@ namespace nbl
 
         void onUpdate(const RHI::FrameData& frameData) noexcept;
 
-        void onDrawUI();
+        void onDrawUI(bool asSubSection = false);
 
         template <class T, class... Args>
         requires std::derived_from<T, Camera>

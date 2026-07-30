@@ -22,6 +22,16 @@ namespace nbl
             flush(commandList);
         }
 
+        [[nodiscard]] Handle addLight(const Light& light)
+        {
+            const auto hLight = acquire(light);
+            if (mSelectedLight.isNull())
+            {
+                mSelectedLight = hLight;
+            }
+            return hLight;
+        }
+
         void onDrawUI();
 
     private:

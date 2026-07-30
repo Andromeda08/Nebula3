@@ -17,8 +17,9 @@ namespace nbl
     class OrbitCamera : public Camera
     {
     public:
-        OrbitCamera()
+        explicit OrbitCamera(const float initDistance = 5.0f)
         : Camera("OrbitCamera")
+        , mRadius(initDistance)
         {
         }
 

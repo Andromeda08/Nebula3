@@ -97,6 +97,8 @@ namespace RHI
          */
         void traceRays(uint32_t x, uint32_t y, uint32_t rayDepth = 1) const;
 
+        void drawMeshTasks(uint32_t x, uint32_t y, uint32_t z) const;
+
         #pragma endregion
 
         #pragma region "Debug Markers"
