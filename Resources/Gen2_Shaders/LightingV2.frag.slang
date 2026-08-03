@@ -18,6 +18,44 @@ struct LightingPushConstants
 
 [[vk::push_constant]] LightingPushConstants pc;
 
+#ifdef nbl_RT
+[[vk::binding(0, 1)]] RaytracingAccelerationStructure uTopLevelAS;
+
+float3 offsetRay(float3 p, float3 n)
+{
+    const float intScale   = 256.0;
+    const float floatScale = 1.0 / 65536.0;
+    const float origin     = 1.0 / 32.0;
+
+    int3 of_i = int3(intScale * n);
+
+    float3 p_i = asfloat(asint(p) + select(p < 0.0, -of_i, of_i));
+
+    return select(abs(p) < origin, p + floatScale * n, p_i);
+}
+
+float castShadow(float3 origin, float3 direction, float tMin, float tMax)
+{
+    RayDesc ray;
+    ray.Origin    = origin;
+    ray.TMin      = tMin;
+    ray.Direction = direction;
+    ray.TMax      = tMax;
+
+    RayQuery<RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE> q;
+    q.TraceRayInline(uTopLevelAS, RAY_FLAG_NONE, 0xFF, ray);
+
+    while (q.Proceed()) {}
+
+    if (q.CommittedStatus() != COMMITTED_NOTHING)
+    {
+        return 0.1;
+    }
+
+    return 1.0;
+}
+#endif
+
 float3 computeAmbient(float3 albedo, float metallic)
 {
     float3 F0 = lerp(float3(0.04), albedo, metallic);
@@ -70,7 +108,7 @@ float3 computeDirectLighting(float3 position, float3 N, float3 V, float3 albedo,
         float3 contrib = evaluateBRDF(N, V, L, albedo, metallic, roughness) * radiance;
 
         #ifdef nbl_RT
-        float3 origin = offsetRay(position, N)
+        float3 origin = offsetRay(position, N);
         contrib *= castShadow(origin, L, 0.01, tMax);
         #endif
 
@@ -92,6 +130,7 @@ float normalFiltering(float3 normal, float roughness)
 }
 
 [shader("fragment")]
+[require(spvRayQueryKHR)]
 float4 main(float2 uv) : SV_Target0
 {
     var viewZ = uViewZ.Sample(uv).r;

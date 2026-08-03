@@ -66,7 +66,7 @@ namespace nbl
             .lights = level->mLightSystem->getBuffer()->getAddress(),
         };
 
-        std::vector descriptors = { mDescriptor->getSet(frameData.currentFrame), mInput.pTextureManager->getDescriptor()->getSet(0) };
+        std::vector descriptors = { mDescriptor->getSet(frameData.currentFrame) };
         if (mRHI->getFeatures().rayTracing)
         {
             descriptors.push_back(mInput.pLevel->mTlasSystem->getDescriptor()->getSet(frameData.currentFrame));
@@ -79,7 +79,7 @@ namespace nbl
             .setViewportScissor(pCommandList)
             .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
                 cmd->bindPipeline(mPipeline.get());
-                cmd->bindDescriptorSet(mDescriptor->getSet(frameData.currentFrame), 0);
+                cmd->bindDescriptorSets(descriptors, 0);
                 cmd->pushConstants(&pcs);
                 cmd->getHandle().draw(3, 1, 0, 0);
             });
@@ -130,12 +130,11 @@ namespace nbl
             .addShader("FSQuad.vert.spv")
             .addShader("LightingV2.frag.spv")
             .addDescriptorLayout(0, mDescriptor.get())
-            // .addDescriptorLayout(1, mInput.pTextureManager->getDescriptor().get())
             .setPushConstant<PushConstantsNew>(vk::ShaderStageFlagBits::eFragment);
 
         if (mRHI->getFeatures().rayTracing)
         {
-            pipelineInfo.addDescriptorLayout(2, mInput.pLevel->mTlasSystem->getDescriptor().get());
+            pipelineInfo.addDescriptorLayout(1, mInput.pLevel->mTlasSystem->getDescriptor().get());
         }
 
         mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
