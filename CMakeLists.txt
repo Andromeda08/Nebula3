@@ -29,11 +29,14 @@ add_subdirectory(External/spdlog            EXCLUDE_FROM_ALL)
 add_subdirectory(External/meshopt           EXCLUDE_FROM_ALL)
 
 set("IMGUI_DIR" External/imgui)
+set("IMGUIZMO_DIR" External/imguizmo)
 set("IMGUI_FILES"
     ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
     ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui.h ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
+
+    ${IMGUIZMO_DIR}/src/ImGuizmo.h ${IMGUIZMO_DIR}/src/ImGuizmo.cpp
 )
 
 set(IMNODES_DIR External/imnodes)
@@ -280,6 +283,7 @@ target_include_directories(Nebula3 PUBLIC
     External/imgui
     External/imgui/backends
     External/imgui/misc/cpp
+    External/ImGuizmo/src
     External/imnodes
     External/json/include
     External/meshopt/src

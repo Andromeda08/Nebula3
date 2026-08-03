@@ -1,7 +1,10 @@
 #include "SelectObjectFeature.hpp"
 
 #include <imgui.h>
+#include <imgui_stdlib.h>
+#include <ImGuizmo.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "Object.hpp"
 
@@ -117,18 +120,96 @@ namespace nbl
         }
     }
 
-    void SelectObjectFeature::onDrawUI(const std::vector<UPtr<Object>>& objects) const
+    void SelectObjectFeature::onDrawUI(const std::vector<UPtr<Object>>& objects)
     {
+        static ImGuizmo::OPERATION gizmoOp   = ImGuizmo::TRANSLATE;
+        static ImGuizmo::MODE      gizmoMode = ImGuizmo::WORLD;
+
         ImGui::Begin("Object Editor");
+
+        if (ImGui::RadioButton("Translate", gizmoOp == ImGuizmo::TRANSLATE))
+        {
+            gizmoOp = ImGuizmo::TRANSLATE;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Rotate", gizmoOp == ImGuizmo::ROTATE))
+        {
+            gizmoOp = ImGuizmo::ROTATE;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Scale", gizmoOp == ImGuizmo::SCALE))
+        {
+            gizmoOp = ImGuizmo::SCALE;
+        }
 
         if (mSelectedObject == -1)
         {
-            ImGui::Text("none");
+            ImGui::Text("No selected object.");
         }
         else
         {
+            if (ImGui::SmallButton("Clear Selection"))
+            {
+                mSelectedObject = -1;
+                ImGui::End();
+                return;
+            }
+
             auto* pSelectedObject = objects[mSelectedObject].get();
-            ImGui::Text("%s", pSelectedObject->name.c_str());
+            ImGui::SetNextItemWidth(200);
+            ImGui::InputText("Name", &pSelectedObject->name);
+
+            auto& tf = pSelectedObject->transform;
+
+            float translate[3] = { tf._translate.x, tf._translate.y, tf._translate.z };
+            float rotate[3]    = { tf._euler.x,     tf._euler.y,     tf._euler.z     };
+            float scale[3]     = { tf._scale.x,     tf._scale.y,     tf._scale.z     };
+
+            bool edited = false;
+            edited |= ImGui::InputFloat3("T", translate);
+            edited |= ImGui::InputFloat3("R", rotate);
+            edited |= ImGui::InputFloat3("S", scale);
+
+            if (edited)
+            {
+                tf.setTranslate({ translate[0], translate[1], translate[2] })
+                  .setRotation ({ rotate[0],    rotate[1],    rotate[2]    })
+                  .setScale    ({ scale[0],     scale[1],     scale[2]     });
+                pSelectedObject->isInstanceDirty = true;
+            }
+
+            auto matrix = tf.getModel();
+
+            auto cameraData = mCameraSystem->getActiveCamera()->getGpuCameraData();
+            cameraData.proj[1][1] *= -1.0f;
+
+            ImGuiIO& io = ImGui::GetIO();
+            ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+            const bool gizmoEdited = ImGuizmo::Manipulate(glm::value_ptr(cameraData.view), glm::value_ptr(cameraData.proj),
+                gizmoOp, gizmoMode, glm::value_ptr(matrix), nullptr, nullptr);
+
+            if (gizmoEdited)
+            {
+                glm::vec3 t, s, skew;
+                glm::quat q;
+                glm::vec4 persp;
+                glm::decompose(matrix, s, q, t, skew, persp);
+
+                float yaw, pitch, roll;
+                glm::extractEulerAngleYXZ(glm::mat4_cast(q), yaw, pitch, roll);
+
+                pSelectedObject->transform
+                    .setTranslate(t)
+                    .setRotation(glm::degrees(glm::vec3(pitch, yaw, roll)))
+                    .setScale(s);
+                pSelectedObject->isInstanceDirty = true;
+            }
+        }
+
+        /*
+        else
+        {
+
             if (ImGui::CollapsingHeader("Transform"))
             {
                 bool dirty = false;
@@ -141,6 +222,7 @@ namespace nbl
                 }
             }
         }
+        */
 
         ImGui::End();
     }

@@ -46,3 +46,6 @@
 [submodule "External/fmt"]
 	path = External/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "External/ImGuizmo"]
+	path = External/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

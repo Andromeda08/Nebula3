@@ -33,7 +33,7 @@ namespace nbl
 
         void onEvent(const SDL_Event& event) noexcept;
 
-        void onDrawUI(const std::vector<UPtr<Object>>& objects) const;
+        void onDrawUI(const std::vector<UPtr<Object>>& objects);
 
         [[nodiscard]] int32_t* getSelectedObjectIdx() noexcept;
 

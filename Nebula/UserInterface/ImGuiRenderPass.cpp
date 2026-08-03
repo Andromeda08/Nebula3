@@ -1,6 +1,7 @@
 #include "ImGuiRenderPass.hpp"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <imnodes.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -58,7 +59,10 @@ void ImGuiRenderPass::render(const RHI::CommandList* pCommandList, const RHI::Fr
         ImGui_ImplSDL3_NewFrame();
 
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
+
         uiDraws();
+        
         ImGui::EndFrame();
 
         ImGui::Render();
