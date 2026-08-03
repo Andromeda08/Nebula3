@@ -5,8 +5,8 @@
 namespace SSAO
 {
     static const int   gKernelSize = 32;
-    static const float gRadius     = 4.0;
-    static const float gExposure   = 4.0;
+    static const float gRadius     = 2.0;
+    static const float gExposure   = 1.0;
     static const float gBias       = 0.025;
 }
 
