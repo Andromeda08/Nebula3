@@ -16,10 +16,26 @@ A cross-platform rendering engine built with Vulkan.
 </p>
 <p align="center">Bistro Scene with RT Shadows</p>
 
+<table align="center">
+   <tr>
+      <td align="center">
+         <img src="./Resources/gi.png" width="85%" />
+      </td>
+      <td align="center">
+         <img src="./Resources/molecule.png" width="75%" />
+      </td>
+   </tr>
+   <tr>
+      <td align="center">
+         <p>Experimental Single-bounce GI with RQ</p>
+      </td>
+      <td align="center">
+         <p>Impl. of <a href="https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.inst.100/institut/Papers/viscom/2018/hermosilla2018molsss.pdf">Hermosilla et al. 2018</a> with <a href="https://github.com/peterkain">@peterkain</a></p>
+      </td>
+   </tr>
+</table>
+
 <p align="center">
-  <img src="./Resources/gi.png" width="75%" />
-</p>
-<p align="center">[Experiment] Single-bounce diffuse GI with Ray Queries</p>
 
 ### Features
 - Supports Windows and macOS
