@@ -19,10 +19,10 @@ A cross-platform rendering engine built with Vulkan.
 <table align="center">
    <tr>
       <td align="center">
-         <img src="./Resources/gi.png" width="85%" />
+         <img src="./Resources/gi.png" width="70%" />
       </td>
       <td align="center">
-         <img src="./Resources/molecule.png" width="75%" />
+         <img src="./Resources/img5XUYsubsurf.png" width="100%" />
       </td>
    </tr>
    <tr>
