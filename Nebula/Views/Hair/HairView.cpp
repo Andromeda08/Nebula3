@@ -78,7 +78,7 @@ namespace nbl
             .addAttachmentFormat(HairShared::sColorFormat)
             .addAttachmentFormat(HairShared::sDepthFormat);
         const auto pipelineInfo = RHI::PipelineCommon()
-            .setLabel("G-Buffer")
+            .setLabel("HybridHair_HeadModel")
             .addShader("HybridHair_HeadModel.vert.spv")
             .addShader("HybridHair_HeadModel.frag.spv")
             .setPushConstant<HeadPushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
