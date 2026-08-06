@@ -175,6 +175,11 @@ namespace RHI
         return Descriptor::create(descriptorInfo);
     }
 
+    UPtr<ComputePipeline2> VulkanRHI::createComputePipeline2(const PipelineCommon& common) const
+    {
+        return makeUnique<ComputePipeline2>(common, mDevice);
+    }
+
     UPtr<GraphicsPipeline2> VulkanRHI::createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const
     {
         return makeUnique<GraphicsPipeline2>(std::move(ps), common, mDevice);

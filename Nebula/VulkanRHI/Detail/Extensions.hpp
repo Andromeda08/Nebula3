@@ -108,7 +108,8 @@ namespace RHI
         vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan11Properties,
         [&]() -> void {
-            mFeatureStruct = vk::PhysicalDeviceVulkan11Features();
+            mFeatureStruct = vk::PhysicalDeviceVulkan11Features()
+                .setShaderDrawParameters(true);
         }
     );
 

@@ -2,16 +2,27 @@
 
 #include "Core/View.hpp"
 #include "Hair/HairGeometry.hpp"
-#include "Hair/Render/ClassicHairRenderer.hpp"
-#include "Hair/Render/Complex/HybridHairRenderer.hpp"
+#include "Hair/Hybrid/HairRenderer.hpp"
 #include "Level/Camera/CameraSystem.hpp"
+#include "Level/Geometry/GeometrySystem.hpp"
 #include "Level/Light/LightSystem.hpp"
+#include "Level/Material/MaterialPool.hpp"
 #include "Level/Render/TonemapPass.hpp"
 
 namespace nbl
 {
     class HairView : public View
     {
+        struct HeadPushConstants
+        {
+            uint64_t       vertexBuffer;
+            uint64_t       cameraBuffer;
+            uint64_t       lightBuffer;
+            glm::vec3      baseColor;
+            uint32_t       firstIndex;
+            uint32_t       firstVertex;
+        };
+
     public:
         HairView(nbl_ViewCtorParams);
 
@@ -26,15 +37,19 @@ namespace nbl
         void onDrawUI() override;
 
     private:
-        IHairRenderer* getRenderer() const;
+        void onRender_HeadModel(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const;
 
-        bool                        mUseHybrid = true;
+        UPtr<CameraSystem>              mCameraSystem;
+        UPtr<LightSystem>               mLightSystem;
+        UPtr<HairModelSystem>           mHairModelSystem;
 
-        UPtr<CameraSystem>          mCameraSystem;
-        UPtr<LightSystem>           mLightSystem;
-        UPtr<HairModelSystem>       mHairModelSystem;
-        UPtr<HybridHairRenderer>    mHybrid;
-        UPtr<ClassicHairRenderer>   mClassicRenderer;
-        UPtr<TonemapPass>           mTonemapPass;
+        UPtr<GeometrySystem>            mGeometrySystem;
+        UPtr<MaterialSystem>            mMaterialSystem;
+
+        UPtr<HairRenderer>              mRenderer;
+
+        UPtr<RHI::GraphicsPipeline2>    mHeadPipeline;
+
+        UPtr<TonemapPass>               mTonemapPass;
     };
 }

@@ -52,9 +52,8 @@ struct HairStrandDesc
 
 struct ScreenSpaceTriangle
 {
-    float3 v0;
-    float3 v1;
-    float3 v2;
+    float3 v0, v1, v2;
+    float3 w0, w1, w2;
     float3 tangent;
     float3 color;
     uint   primitiveId;
@@ -63,16 +62,13 @@ struct ScreenSpaceTriangle
 struct MeshPushConstants
 {
     float4x4             model;
-    float4               diffuse;
-    float4               specular;
 
     HairVertex*          vertexBuffer;
     HairAttributes*      attribBuffer;
-    HairStrandDesc*      strandDescBuffer;
-    GPUCameraData*       cameraBuffer;
+    HairStrandDesc*      strandDescriptions;
+    GPUCameraData*       camera;
     GPULightData*        lights;
     ScreenSpaceTriangle* trianglesBuffer;
-    float4*              debugColorBuffer;
     
     uint                 hairFirstVertex;
     uint                 hairVertexCount;
@@ -82,34 +78,11 @@ struct MeshPushConstants
     uint*                smallTriangleCountBuffer;
     uint                 maxSmallTriangles;
     float                smallTriangleThreshold;
-    float                width;
-    float                height;
-
-    float                specularFactor;
-    int32_t              useCustomColor;
+    float2               viewport;
 
     int32_t              isHybrid;
 
-    // Marschner BSDF Params
     MarschnerParams      bsdf;
-
-    int32_t              vizMode;
-};
-
-struct VisibilityPushConstants
-{
-    ScreenSpaceTriangle* trianglesBuffer;
-    uint*                smallTriangleCountBuffer;
-    float                width;
-    float                height;
-};
-
-struct ResolvePushConstants
-{
-    float3* colorsBuffer;
-    uint    colorCount;
-    float   width;
-    float   height;
 };
 
 /**
@@ -119,7 +92,7 @@ HairStrandDesc getStrandDescription(MeshPushConstants pc, uint globalStrandIndex
 {
     // A single buffer is used for all hair models, we need the global index for that buffer.
     uint index = pc.hairFirstStrand + globalStrandIndex;
-    return pc.strandDescBuffer[index];
+    return pc.strandDescriptions[index];
 }
 
 float getSignedArea(float2 a, float2 b, float2 c)

@@ -27,9 +27,8 @@ namespace nbl
      */
     struct ScreenSpaceTriangle
     {
-        glm::vec3 v0;
-        glm::vec3 v1;
-        glm::vec3 v2;
+        glm::vec3 v0, v1, v2;
+        glm::vec3 w0, w1, w2;
         glm::vec3 tangent;
         glm::vec3 color;
         uint32_t  primitiveId;

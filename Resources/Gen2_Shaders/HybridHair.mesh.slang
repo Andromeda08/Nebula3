@@ -6,10 +6,10 @@
 ConstantBuffer<MeshPushConstants> pc;
 
 /**
- * Which strand within the [Task] wourkgroup this [Mesh] workgroup is rendering.
+ * Which strand within the [Task] workgroup this [Mesh] workgroup is rendering.
  *
  * Depending on how many points a complete hair strand consists of, multiple
- * mesh shader workgroups may be dispatced to render them. A mesh shader workgroup
+ * mesh shader workgroups may be dispatched to render them. A mesh shader workgroup
  * is responsible for rendering a single strandlet.
  *
  * E.g. for strands 0 (2 strandlets), 1 (3 strandlets) and 2 (4 strandlets)
@@ -59,7 +59,7 @@ HairStrandDesc getStrandDescription(uint globalStrandIndex)
 {
     // A single buffer is used for all hair models, we need the global index for that buffer.
     uint index = pc.hairFirstStrand + globalStrandIndex;
-    return pc.strandDescBuffer[index];
+    return pc.strandDescriptions[index];
 }
 
 /**
@@ -95,12 +95,13 @@ float3 makeWorldTangent(HairVertex start, HairVertex end)
 float3 getViewDirection(HairVertex current)
 {
     float4 worldPos = mul(pc.model, float4(current.position, 1.0));
-    return normalize(pc.cameraBuffer.eye.xyz - worldPos.xyz);
+    return normalize(pc.camera.eye.xyz - worldPos.xyz);
 }
 
 void appendSmallTriangle(
     float4 clip0, float4 clip1, float4 clip2,
     float2 s0,    float2 s1,    float2 s2,
+    float3 w0,    float3 w1,    float3 w2,
     float3 tangent,
     float3 color,
     uint   primitiveId
@@ -118,6 +119,9 @@ void appendSmallTriangle(
     tri.v0 = float3(s0, clip0.z / clip0.w);
     tri.v1 = float3(s1, clip1.z / clip1.w);
     tri.v2 = float3(s2, clip2.z / clip2.w);
+    tri.w0 = w0;
+    tri.w1 = w1;
+    tri.w2 = w2;
 
     tri.tangent = tangent;
     tri.color   = color;
@@ -211,21 +215,19 @@ void main(
     float4 v2 = v1 + offsetDir * 0.15; // nextAttribs.thickness;
     float4 v3 = v0 + offsetDir * 0.15; // currAttribs.thickness;
 
-    const float4x4 VP = mul(pc.cameraBuffer.proj, pc.cameraBuffer.view);
+    const float4x4 VP = mul(pc.camera.proj, pc.camera.view);
     
     // For both vertices and triangles
     const uint outOffset = threadIndex * 2;
 
-    float2 viewportSize = float2(pc.width, pc.height);
-
     float4 clip0 = mul(VP, v0);
-    float2 s0    = toScreen(clip0, viewportSize);
+    float2 s0    = toScreen(clip0, pc.viewport);
     float4 clip1 = mul(VP, v1);
-    float2 s1    = toScreen(clip1, viewportSize);
+    float2 s1    = toScreen(clip1, pc.viewport);
     float4 clip2 = mul(VP, v2);
-    float2 s2    = toScreen(clip2, viewportSize);
+    float2 s2    = toScreen(clip2, pc.viewport);
     float4 clip3 = mul(VP, v3);
-    float2 s3    = toScreen(clip3, viewportSize);
+    float2 s3    = toScreen(clip3, pc.viewport);
 
     if (pc.isHybrid == 1)
     {
@@ -237,8 +239,9 @@ void main(
         if (tri0_isSmall)
         {
             appendSmallTriangle(
-                clip0, clip2, clip1,
-                s0,    s2,    s1,
+                clip0,  clip2,  clip1,
+                s0,     s2,     s1,
+                v0.xyz, v2.xyz, v1.xyz,
                 T, currAttribs.color.rgb, basePrimitiveId + 0
             );
         }
@@ -246,8 +249,9 @@ void main(
         if (tri1_isSmall)
         {
             appendSmallTriangle(
-                clip2, clip3, clip1,
-                s2,    s3,    s1,
+                clip2,  clip3,  clip1,
+                s2,     s3,     s1,
+                v2.xyz, v3.xyz, v1.xyz,
                 T, currAttribs.color.rgb, basePrimitiveId + 1
             );
         }

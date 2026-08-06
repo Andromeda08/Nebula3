@@ -64,6 +64,8 @@ App::~App()
     mVulkanRHI->getDevice()->waitIdle();
 }
 
+
+
 void App::run()
 {
     mRunning = true;

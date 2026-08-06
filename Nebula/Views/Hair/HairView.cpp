@@ -1,8 +1,12 @@
 #include "HairView.hpp"
 
+#include <imgui.h>
+
 #include "Hair/CyLoader.hpp"
+#include "Hair/Hybrid/Shared.hpp"
 #include "Level/Camera/FlyingCamera.hpp"
 #include "Level/Camera/OrbitCamera.hpp"
+#include "Level/GLTF/GLTFLoader.hpp"
 
 namespace nbl
 {
@@ -12,14 +16,14 @@ namespace nbl
         mName = "HairView";
 
         mCameraSystem = makeUnique<CameraSystem>(mRHI);
-        mCameraSystem->addCamera<OrbitCamera>(true, 50.0f);
+        mCameraSystem->addCamera<OrbitCamera>(true, 250.0f);
 
         const auto [width, height] = mRHI->getSwapchain()->getProperties().extent;
         mCameraSystem->addCamera<FlyingCamera>(false, glm::ivec2(width, height), glm::vec3(0.0f, 25.0f, 5.0f));
 
         mLightSystem = makeUnique<LightSystem>(mRHI);
         const auto hInitLight = mLightSystem->addLight({
-            .vector    = { 0.2f, 0.8f, 0.5f },
+            .vector    = { -2.5f, 6.1f, 3.5f },
             .intensity = 1.0f,
             .type      = LightType::Directional,
         });
@@ -49,13 +53,37 @@ namespace nbl
             mHairModelSystem->createBuffers();
         }
 
-        mClassicRenderer = makeUnique<ClassicHairRenderer>(mRHI, mHairModelSystem.get());
-        mHybrid          = makeUnique<HybridHairRenderer>(mRHI, mHairModelSystem.get());
-
+        mRenderer = makeUnique<HairRenderer>(mRHI, mHairModelSystem.get());
         mTonemapPass     = TonemapPass::create({
-            .outputFormat = mHybrid->getResult(0)->getProperties().format,
+            .outputFormat = HairShared::sColorFormat,
             .rhi = mRHI,
         });
+
+        mGeometrySystem = makeUnique<GeometrySystem>(rhi);
+        mMaterialSystem = makeUnique<MaterialSystem>(mRHI, 16);
+
+        GLTFLoader loader({
+            .filePath        = Configuration::getSceneFilePath("Model.glb"),
+            .pLevel          = nullptr,
+            .pTextureManager = mTextureManager,
+            .pGeometrySystem = mGeometrySystem.get(),
+            .pLightSystem    = mLightSystem.get(),
+            .pMaterialSystem = mMaterialSystem.get(),
+        });
+
+        loader.load();
+
+        const auto graphicsPS = RHI::GraphicsPS()
+            .addDefaultAttachmentState(1)
+            .addAttachmentFormat(HairShared::sColorFormat)
+            .addAttachmentFormat(HairShared::sDepthFormat);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("G-Buffer")
+            .addShader("HybridHair_HeadModel.vert.spv")
+            .addShader("HybridHair_HeadModel.frag.spv")
+            .setPushConstant<HeadPushConstants>(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
+
+        mHeadPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 
     void HairView::onEvent(const SDL_Event& event)
@@ -66,19 +94,24 @@ namespace nbl
     void HairView::onUpdate(float dt, RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
         mCameraSystem->onUpdate(frameData);
+        mMaterialSystem->onUpdate(pCommandList);
+        mGeometrySystem->onUpdate(frameData, pCommandList);
         mLightSystem->onUpdate(pCommandList);
     }
 
     void HairView::onRender(RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
     {
-        auto* renderer = getRenderer();
+        if (mRenderer->mShared->config.renderHead)
+        {
+            onRender_HeadModel(pCommandList, frameData);
+        }
 
-        renderer->execute(pCommandList, frameData, {
+        mRenderer->execute(pCommandList, frameData, {
             .cameraBuffer = mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
             .lightsBuffer = mLightSystem->getBuffer()->getAddress(),
         });
 
-        const auto& tonemapInput = renderer->getResult(frameData.currentFrame);
+        const auto& tonemapInput = mRenderer->getResult(frameData.currentFrame);
         mTonemapPass->execute(tonemapInput, pCommandList, frameData);
 
         auto* pFinalImage = mTonemapPass->getResult(frameData.currentFrame).get();
@@ -87,28 +120,49 @@ namespace nbl
 
     void HairView::onDrawUI()
     {
-        ImGui::Begin("Hair Renderer");
-
-        ImGui::Checkbox("Use Hybrid Renderer", &mUseHybrid);
-
-        mCameraSystem->onDrawUI(true);
         mLightSystem->onDrawUI();
 
-        ImGui::End();
+        ImGui::Begin("Hair Renderer");
 
-        if (auto* renderer = getRenderer())
-        {
-            renderer->onDrawUI();
-        }
+        mCameraSystem->onDrawUI();
+        mRenderer->drawUI();
+
+        ImGui::End();
     }
 
-    IHairRenderer* HairView::getRenderer() const
+    void HairView::onRender_HeadModel(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
     {
-        IHairRenderer* renderer = mHybrid.get();
-        if (!mUseHybrid)
-        {
-            renderer = mClassicRenderer.get();
-        }
-        return renderer;
+        RHI::Barrier()
+            .addBarrier(mRenderer->mShared->colorTarget[frameData.currentFrame]->getBarrier(RHI::ImageUsage::ColorAttachment))
+            .addBarrier(mRenderer->mShared->depthBuffer[frameData.currentFrame]->getBarrier(RHI::ImageUsage::DepthAttachment))
+            .addBarrier(mGeometrySystem->getBuffers().getVertexBuffer()->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Vertex))
+            .addBarrier(mGeometrySystem->getBuffers().getIndexBuffer()->getBarrier(RHI::BufferUsage::All, RHI::BufferUsage::Index))
+            .insert(pCommandList);
+
+        RHI::Rendering()
+            .setLabel("HeadModel")
+            .setRenderArea(mRenderer->mShared->renderResolution)
+            .setViewportScissor(pCommandList)
+            .addAttachment(mRenderer->mShared->colorTarget[frameData.currentFrame])
+            .addAttachment(mRenderer->mShared->depthBuffer[frameData.currentFrame])
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
+            {
+                auto& info = mGeometrySystem->getGeometryInfo(0);
+
+                cmd->bindPipeline(mHeadPipeline.get());
+
+                const auto pushConstants = HeadPushConstants {
+                    .vertexBuffer = mGeometrySystem->getBuffers().getVertexBuffer()->getAddress(),
+                    .cameraBuffer = mCameraSystem->getBuffer(frameData.currentFrame)->getAddress(),
+                    .lightBuffer  = mLightSystem->getBuffer()->getAddress(),
+                    .baseColor    = mRenderer->mShared->config.headColor,
+                    .firstIndex   = info.firstIndex,
+                    .firstVertex  = info.firstVertex,
+                };
+                cmd->pushConstants(&pushConstants);
+                cmd->getHandle().bindIndexBuffer(mGeometrySystem->getBuffers().getIndexBuffer()->getHandle(), 0, vk::IndexType::eUint32);
+
+                cmd->drawIndexed(info.indexCount, 1, 0, 0, 0);
+            });
     }
 }

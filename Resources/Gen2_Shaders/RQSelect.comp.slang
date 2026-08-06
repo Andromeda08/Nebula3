@@ -13,8 +13,7 @@ struct PushConstants
 
 [[vk::push_constant]] PushConstants pc;
 
-[shader("compute")]
-[numthreads(1, 1, 1)]
+[shader("compute"), numthreads(1, 1, 1), require(spvRayQueryKHR)]
 void main(uint3 id : SV_DispatchThreadID)
 {
     const float2 ndcMousePos = float2(

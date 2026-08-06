@@ -52,18 +52,27 @@ set(NBL_HAIR_FILES
     Nebula/Hair/Utils.hpp
     Nebula/Hair/HairGeometry.cpp
     Nebula/Hair/Utils.cpp
-    Nebula/Hair/Render/ClassicHairRenderer.hpp
-    Nebula/Hair/Render/ClassicHairRenderer.cpp
-    Nebula/Hair/Render/HairRenderingMode.hpp
-    Nebula/Hair/Render/HairRenderer.hpp
-    Nebula/Hair/Render/HairRenderer.cpp
-    Nebula/Hair/Render/Complex/SoftwareRasterizer.hpp
-    Nebula/Hair/Render/Complex/SoftwareRasterizer.cpp
-    Nebula/Hair/Render/Complex/Shared.hpp
-    Nebula/Hair/Render/Complex/HybridHair_MeshStage.hpp
-    Nebula/Hair/Render/Complex/HybridHairRenderer.hpp
-    Nebula/Hair/Render/Complex/HybridHair_SoftwareStage.hpp
-    Nebula/Hair/Render/Complex/HybridHair_DebugCompose.hpp
+    # Nebula/Hair/Render/ClassicHairRenderer.hpp
+    # Nebula/Hair/Render/ClassicHairRenderer.cpp
+    # Nebula/Hair/Render/HairRenderingMode.hpp
+    # Nebula/Hair/Render/HairRenderer.hpp
+    # Nebula/Hair/Render/HairRenderer.cpp
+    # Nebula/Hair/Render/Complex/SoftwareRasterizer.hpp
+    # Nebula/Hair/Render/Complex/SoftwareRasterizer.cpp
+    # Nebula/Hair/Render/Complex/Shared.hpp
+    # Nebula/Hair/Render/Complex/HybridHair_MeshStage.hpp
+    # Nebula/Hair/Render/Complex/HybridHairRenderer.hpp
+    # Nebula/Hair/Render/Complex/HybridHair_SoftwareStage.hpp
+    # Nebula/Hair/Render/Complex/HybridHair_DebugCompose.hpp
+    # Nebula/Hair/Render/IHairRenderer.hpp
+
+    Nebula/Views/hair/HairView.cpp
+    Nebula/Hair/Hybrid/MarschnerBSDF.hpp
+    Nebula/Hair/Hybrid/GPUScreenSpaceTriangle.hpp
+    Nebula/Hair/Hybrid/Shared.hpp
+    Nebula/Hair/Hybrid/Shared.cpp
+    Nebula/Hair/Hybrid/HairRenderer.hpp
+    Nebula/Hair/Hybrid/HairRenderer.cpp
 )
 
 set(V2_FILES
@@ -150,8 +159,9 @@ set(V2_FILES
     Nebula/Level/Render/SSAOPass.hpp
     Nebula/Level/Render/SSAOPass.cpp
     Nebula/Level/TextureSystem.hpp
-    Nebula/Views/hair/HairView.cpp
-    Nebula/Hair/Render/IHairRenderer.hpp
+    Nebula/Hair/Hybrid/Stages/Hybrid_MeshStage.hpp
+    Nebula/Hair/Hybrid/Stages/Hybrid_MeshStage.cpp
+    Nebula/Hair/Hybrid/Stages/Hybrid_SoftwareStage.cpp
 )
 
 add_executable(Nebula3

@@ -431,12 +431,15 @@ namespace nbl
                     continue;
                 }
 
-                mLevel->addObject<Object>({
-                    .geometryIndex = primInfo.geometryIndex,
-                    .transform = Transform().setCustomMatrix(worldTransform),
-                    .hMaterial = primInfo.hMaterial,
-                    .name = fmt::format("obj_{}", primInfo.name),
-                });
+                if (mLevel)
+                {
+                    mLevel->addObject<Object>({
+                        .geometryIndex = primInfo.geometryIndex,
+                        .transform = Transform().setCustomMatrix(worldTransform),
+                        .hMaterial = primInfo.hMaterial,
+                        .name = fmt::format("obj_{}", primInfo.name),
+                    });
+                }
             }
         }
 

@@ -55,6 +55,8 @@ namespace RHI
         [[nodiscard]] SPtr<Image>      createImage     (const RHIImageCreateInfo&      createInfo) const;
         [[nodiscard]] SPtr<Descriptor> createDescriptor(const RHIDescriptorCreateInfo& createInfo) const;
 
+        [[nodiscard]] UPtr<ComputePipeline2> createComputePipeline2(const PipelineCommon& common) const;
+
         [[nodiscard]] UPtr<GraphicsPipeline2> createGraphicsPipeline2(GraphicsPS ps, const PipelineCommon& common) const;
 
         [[nodiscard]] UPtr<RayTracingPipeline2> createRayTracingPipeline2(RayTracingPS ps, const PipelineCommon& common) const;
