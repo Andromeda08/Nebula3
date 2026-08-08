@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "VulkanRHI/Rendering/VertexTraits.hpp"
+#include "VulkanRHI/Render/VertexTraits.hpp"
 
 namespace nbl
 {

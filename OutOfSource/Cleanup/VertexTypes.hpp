@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
-#include "VulkanRHI/Rendering/VertexTraits.hpp"
+#include "VulkanRHI/Render/VertexTraits.hpp"
 
 namespace nbl
 {

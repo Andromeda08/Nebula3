@@ -5,7 +5,7 @@
 #include "Core/Types.hpp"
 #include "Level/Geometry/Vertex.hpp"
 #include "Math/BoundingBox.hpp"
-#include "VulkanRHI/Rendering/VertexTraits.hpp"
+#include "VulkanRHI/Render/VertexTraits.hpp"
 
 namespace nbl
 {

@@ -14,7 +14,7 @@
 #include "VulkanRHI/Descriptor.hpp"
 #include "VulkanRHI/Detail/Resource.hpp"
 #include "VulkanRHI/Raytracing/ShaderBindingTable.hpp"
-#include "VulkanRHI/Rendering/VertexTraits.hpp"
+#include "VertexTraits.hpp"
 
 namespace RHI
 {

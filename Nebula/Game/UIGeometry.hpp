@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include "Math/BoundingBox.hpp"
 
-#include "VulkanRHI/Rendering/VertexTraits.hpp"
+#include "VulkanRHI/Render/VertexTraits.hpp"
 
 struct UIVertex
 {

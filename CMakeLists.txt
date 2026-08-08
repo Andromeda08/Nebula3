@@ -205,8 +205,8 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Buffer.cpp
     Nebula/VulkanRHI/DebugContext.hpp
     Nebula/VulkanRHI/DebugContext.cpp
-    Nebula/VulkanRHI/Rendering/Shader.hpp
-    Nebula/VulkanRHI/Rendering/Shader.cpp
+    Nebula/VulkanRHI/Render/Shader.hpp
+    Nebula/VulkanRHI/Render/Shader.cpp
     Nebula/VulkanRHI/Commands/CommandList.hpp
     Nebula/VulkanRHI/Commands/CommandList.cpp
     Nebula/VulkanRHI/Commands/CommandPool.hpp
@@ -229,7 +229,7 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Allocation.hpp
     Nebula/Level/Vertex.hpp
     Nebula/Level/GPUObjectInstanceData.hpp
-    Nebula/VulkanRHI/Rendering/VertexTraits.hpp
+    Nebula/VulkanRHI/Render/VertexTraits.hpp
     Nebula/VulkanRHI/Detail/ImageTraits.hpp
     Nebula/UserInterface/ImGuiRenderPass.hpp
     Nebula/UserInterface/ImGuiRenderPass.cpp
