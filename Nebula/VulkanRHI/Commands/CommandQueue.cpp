@@ -80,12 +80,17 @@ namespace RHI
         fn(commandList);
         commandList->end();
 
-        const auto submitInfo = vk::SubmitInfo()
-            .setCommandBufferCount(1)
-            .setPCommandBuffers(&handle);
+        const auto cmdBufInfo = vk::CommandBufferSubmitInfo().setCommandBuffer(handle);
+        const auto submitInfo = vk::SubmitInfo2().setCommandBufferInfos(cmdBufInfo);
 
-        const auto result = mQueue.queue.submit(1, &submitInfo, nullptr);
-        exitOnAssert(result == vk::Result::eSuccess, "Submission to Queue failed");
+        try
+        {
+            mQueue.queue.submit2(submitInfo, nullptr);
+        }
+        catch (const vk::SystemError& err)
+        {
+            exitWithError("Submission to Queue failed: {}", err.what());
+        }
 
         mQueue.queue.waitIdle();
         mImmediatePool->free(commandList);
