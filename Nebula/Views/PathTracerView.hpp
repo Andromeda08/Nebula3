@@ -28,7 +28,7 @@ namespace nbl
 
         void onEvent(const SDL_Event& event) const noexcept;
 
-        void onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) const noexcept;
+        void onUpdate(float dt, const RHI::FrameData& frameData, RHI::CommandList* pCommandList) const noexcept;
 
         void onDrawUI();
 

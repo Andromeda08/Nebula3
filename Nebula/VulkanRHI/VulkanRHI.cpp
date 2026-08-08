@@ -190,24 +190,6 @@ namespace RHI
         return makeUnique<RayTracingPipeline2>(std::move(ps), common, mDevice);
     }
 
-    UPtr<GraphicsPipeline> VulkanRHI::createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const
-    {
-        createInfo.setDevice(mDevice);
-        return GraphicsPipeline::create(createInfo);
-    }
-
-    UPtr<ComputePipeline> VulkanRHI::createComputePipeline(ComputePipelineCreateInfo& createInfo) const
-    {
-        createInfo.setDevice(mDevice);
-        return ComputePipeline::create(createInfo);
-    }
-
-    UPtr<RaytracingPipeline> VulkanRHI::createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const
-    {
-        createInfo.setDevice(mDevice);
-        return RaytracingPipeline::create(createInfo);
-    }
-
     Integration::DLSS* VulkanRHI::getDLSS() const
     {
         return mDLSS.get();

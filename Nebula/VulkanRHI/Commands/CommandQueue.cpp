@@ -71,7 +71,7 @@ namespace RHI
         mQueue.queue.submit2(vkSubmitInfo, submitInfo.fence);
     }
 
-    void CommandQueue::immediate(const std::function<void(const CommandList*)>& fn) const
+    void CommandQueue::immediate(const std::function<void(CommandList*)>& fn) const
     {
         auto* commandList = mImmediatePool->allocate();
         const auto handle = commandList->getHandle();

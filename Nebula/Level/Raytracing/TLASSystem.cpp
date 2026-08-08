@@ -2,34 +2,23 @@
 
 namespace nbl
 {
+    struct TLASUpdatePushConstants
+    {
+        uint64_t tlasInstances;
+        uint64_t instances;
+        uint32_t size;
+    };
+
     TLASSystem::TLASSystem(const SPtr<RHI::VulkanRHI>& rhi, InstanceSystem* pInstanceSystem)
     : mRHI(rhi)
     , mInstanceSystem(pInstanceSystem)
     , mMaxInstances(0)
     {
-        mUpdateDescriptor = mRHI->createDescriptor({
-            .bindings  = {
-                vk::DescriptorSetLayoutBinding()
-                    .setBinding(0)
-                    .setDescriptorCount(1)
-                    .setDescriptorType(vk::DescriptorType::eStorageBuffer)
-                    .setStageFlags(vk::ShaderStageFlagBits::eCompute),
-                vk::DescriptorSetLayoutBinding()
-                    .setBinding(1)
-                    .setDescriptorCount(1)
-                    .setDescriptorType(vk::DescriptorType::eStorageBuffer)
-                    .setStageFlags(vk::ShaderStageFlagBits::eCompute),
-            },
-            .setCount  = 1,
-            .debugName = "TLAS_Instance_Update_Descriptor",
-        });
-
-        auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-            .setComputeShader(Configuration::getShaderFilePath("TLAS_Instances.comp.spv").string())
-            // .addDescriptorSetLayout(mUpdateDescriptor->getLayout())
-            .setPushConstantRange({ vk::ShaderStageFlagBits::eCompute, 0, sizeof(TLASUpdatePushConstants) })
-            .setDebugName("TLAS_Instance_Update");
-        mUpdatePipeline = mRHI->createComputePipeline(pipelineInfo);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("TLAS_Instance_Update")
+            .setPushConstant<TLASUpdatePushConstants>(vk::ShaderStageFlagBits::eCompute)
+            .addShader("TLAS_Instances.comp.spv");
+        mUpdatePipeline = mRHI->createComputePipeline2(pipelineInfo);
 
         createInitialEmptyTLAS();
 
@@ -51,16 +40,9 @@ namespace nbl
             .setCount  = RHI::gFramesInFlight,
             .debugName = "TLAS_Descriptor",
         });
-
-        for (auto i = 0; i < mDescriptor->getSetCount(); i++)
-        {
-            const auto descriptorWrite = RHI::DescriptorWrite()
-                .writeAccelerationStructure(0, mTLAS);
-            mDescriptor->write(i, descriptorWrite);
-        }
     }
 
-    void TLASSystem::onUpdate(const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) noexcept
+    void TLASSystem::onUpdate(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) noexcept
     {
         const auto instanceCount = mInstanceSystem->getSize();
         if (instanceCount == 0)
@@ -116,6 +98,16 @@ namespace nbl
         mDescriptor->write(frameData.currentFrame, descriptorWrite);
 
         pCommandList->endLabel();
+    }
+
+    const SPtr<RHI::AccelerationStructure>& TLASSystem::getTLAS() const noexcept
+    {
+        return mTLAS;
+    }
+
+    const SPtr<RHI::Buffer>& TLASSystem::getBackingBuffer() const noexcept
+    {
+        return mBackingBuffer;
     }
 
     const SPtr<RHI::Descriptor>& TLASSystem::getDescriptor() const noexcept
@@ -219,14 +211,9 @@ namespace nbl
             .type = RHI::AccelerationStructureType::TopLevel,
             .label = "TLAS",
         }, mRHI->getDevice());
-    
-        auto writeInfo = RHI::DescriptorWrite()
-            .writeStorageBuffer(0, mInstanceSystem->getBuffer())
-            .writeStorageBuffer(1, mInstanceBuffer);
-        mUpdateDescriptor->write(0, writeInfo);
     }
     
-    void TLASSystem::execute_TLASUpdateInstances(const RHI::CommandList* pCommandList) const noexcept
+    void TLASSystem::execute_TLASUpdateInstances(RHI::CommandList* pCommandList) const noexcept
     {
         pCommandList->beginLabel("TLAS_Update_Instances");
     
@@ -236,17 +223,16 @@ namespace nbl
             .size = mInstanceSystem->getSize()
         };
     
-        mUpdatePipeline->bind(pCommandList);
-        // mUpdatePipeline->bindDescriptorSet(pCommandList, mUpdateDescriptor->getSet(0));
-        mUpdatePipeline->pushConstants(pCommandList, &pc);
+        pCommandList->bindPipeline(mUpdatePipeline.get());
+        pCommandList->pushConstants(&pc);
     
         const auto x = (pc.size + 63) / 64;
-        mUpdatePipeline->dispatch(pCommandList, x, 1, 1);
+        pCommandList->dispatch(x, 1, 1);
     
         pCommandList->endLabel();
     }
     
-    void TLASSystem::execute_TLASBuild(const RHI::CommandList* pCommandList) const noexcept
+    void TLASSystem::execute_TLASBuild(RHI::CommandList* pCommandList) const noexcept
     {
         pCommandList->beginLabel("TLAS_Build");
     

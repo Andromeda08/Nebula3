@@ -135,29 +135,20 @@ TitleScreen::TitleScreen(const glm::vec2& size, const SPtr<RHI::VulkanRHI>& rhi,
         .debugName     = "UI_Result",
     });
 
-    const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-        .addDescriptorSetLayout(mTextureManager->getDescriptor()->getLayout())
-        .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstant) })
-        .setStateInfo(RHI::GraphicsPipelineStateInfo()
-            .configure([](RHI::GraphicsPipelineStateInfo& stateInfo) {
-                stateInfo.addAttributeDescriptions<UIVertex>(0, 0);
-                stateInfo.addBindingDescriptions<UIVertex>(0);
-            })
-            .setCullMode(vk::CullModeFlagBits::eNone)
-            .addAttachmentState(RHI::PipelineUtils::makeColorBlendAttachmentState()
-                .setBlendEnable(true)
-                .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
-                .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                .setColorBlendOp(vk::BlendOp::eAdd)
-                .setSrcAlphaBlendFactor(vk::BlendFactor::eSrcAlpha)
-                .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                .setAlphaBlendOp(vk::BlendOp::eAdd)))
-        .addShader({ Configuration::getShaderFilePath("UI.vert.spv"), vk::ShaderStageFlagBits::eVertex })
-        .addShader({ Configuration::getShaderFilePath("UI.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-        .addColorAttachmentFormat(mRHI->getSwapchain()->getProperties().format)
-        .setDebugName("UI_Pipeline");
+    using enum vk::ShaderStageFlagBits;
+    const auto graphicsPS = RHI::GraphicsPS()
+        .addVertexType<UIVertex>()
+        .setCullMode(vk::CullModeFlagBits::eNone)
+        .addAlphaAttachmentState(1)
+        .addAttachmentFormat(mResult->getProperties().format);
+    const auto pipelineInfo = RHI::PipelineCommon()
+        .setLabel("UI_Pipeline")
+        .addShader("UI.vert.spv")
+        .addShader("UI.frag.spv")
+        .setPushConstant<PushConstant>(eVertex | eFragment)
+        .addDescriptorLayout(0, mTextureManager->getDescriptor().get());
 
-    mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+    mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
 }
 
 void TitleScreen::render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData) const
@@ -176,13 +167,13 @@ void TitleScreen::render(RHI::CommandList* pCommandList, const RHI::FrameData& f
     RHI::Rendering()
         .setRenderArea(scissor)
         .addAttachment(mRHI->getSwapchain()->getImageRHI(frameData.acquiredIndex), vk::AttachmentLoadOp::eLoad)
-        .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void
+        .execute(pCommandList, [&](RHI::CommandList* cmd) -> void
         {
             PushConstant pushConstant;
             pushConstant.proj = mScreen.proj;
 
-            mPipeline->bind(cmd);
-            mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
+            cmd->bindPipeline(mPipeline.get());
+            cmd->bindDescriptorSet(mTextureManager->getDescriptor()->getSet(0), 0);
 
             constexpr vk::DeviceSize offset = 0;
             cmd->getHandle().bindVertexBuffers(0, 1, &mVertices->getHandle(), &offset);
@@ -199,7 +190,7 @@ void TitleScreen::render(RHI::CommandList* pCommandList, const RHI::FrameData& f
             {
                 pushConstant.textureIndex = static_cast<int32_t>(mText[i].pFont->getTextureIndex());
                 pushConstant.color = mText[i].color;
-                mPipeline->pushConstants(cmd, &pushConstant);
+                cmd->pushConstants(&pushConstant);
                 pCommandList->getHandle().drawIndexed(mText[i].indexCount, 1, mText[i].indexOffset, 0, 0);
             }
         });

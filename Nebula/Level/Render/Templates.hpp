@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.hpp>
 #include "Core/Types.hpp"
 #include "VulkanRHI/Image.hpp"
-#include "VulkanRHI/Rendering/RenderPass.hpp"
+#include "VulkanRHI/VulkanRHI.hpp"
 
 namespace nbl
 {

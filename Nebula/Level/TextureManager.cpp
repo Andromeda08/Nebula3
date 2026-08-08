@@ -1,10 +1,6 @@
 #include "TextureManager.hpp"
 
-#include <vector>
-#include <stb_image.h>
-
 #include "VulkanRHI/Barrier.hpp"
-#include "VulkanRHI/VulkanRHI.hpp"
 
 TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
 : mRHI(createInfo.rhi)
@@ -16,6 +12,23 @@ TextureManager::TextureManager(const TextureManagerCreateInfo& createInfo)
     {
         mFreeSlots.push(i);
     }
+
+    constexpr auto defaultSampler = vk::SamplerCreateInfo()
+        .setAnisotropyEnable(true)
+        .setMaxAnisotropy(16.0f)
+        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+        .setUnnormalizedCoordinates(false)
+        .setCompareEnable(false)
+        .setCompareOp(vk::CompareOp::eAlways)
+        .setMipmapMode(vk::SamplerMipmapMode::eLinear)
+        .setMipLodBias(0.0f)
+        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+        .setMagFilter(vk::Filter::eLinear)
+        .setMinFilter(vk::Filter::eLinear);
+    mSamplers.insert_or_assign(defaultSampler, mRHI->getDevice()->getHandle().createSampler(defaultSampler));
+    mDefaultSampler = &mSamplers[defaultSampler];
 
     const auto result = loadTexture(sMissingTextureName, sMissingTextureId);
     mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
@@ -58,7 +71,7 @@ uint32_t TextureManager::loadTexture(const std::string& textureFile, const std::
             .setHeight(static_cast<uint32_t>(height)),
         .format = vk::Format::eR8G8B8A8Srgb,
         .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
-        .createSampler = true,
+        .createSampler = false,
         .aliased = false,
         .debugName = std::format("{}[slot={}]", textureFile, loadSlot),
     });
@@ -78,6 +91,21 @@ uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const s
     const int32_t width, const int32_t height, const std::optional<uint32_t>& slot,
      const std::optional<vk::SamplerCreateInfo>& samplerInfo, const vk::Format format) noexcept
 {
+    static constexpr auto sDefaultSampler = vk::SamplerCreateInfo()
+        .setAnisotropyEnable(true)
+        .setMaxAnisotropy(16.0f)
+        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+        .setUnnormalizedCoordinates(false)
+        .setCompareEnable(false)
+        .setCompareOp(vk::CompareOp::eAlways)
+        .setMipmapMode(vk::SamplerMipmapMode::eLinear)
+        .setMipLodBias(0.0f)
+        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+        .setMagFilter(vk::Filter::eLinear)
+        .setMinFilter(vk::Filter::eLinear);
+
     const auto loadSlot = slot.value_or(acquireNextSlot());
     exitOnAssert(loadSlot < mTextures.size(), "Texture slot out of bounds: {} (/{})", loadSlot, sMaxTextureCount);
 
@@ -91,7 +119,7 @@ uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const s
             .setHeight(static_cast<uint32_t>(height)),
         .format = format,
         .usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
-        .createSampler = true,
+        .createSampler = false,
         .aliased = false,
         .mipmapping = true,
         .debugName = std::format("{}[slot={}]", label, loadSlot),
@@ -101,7 +129,8 @@ uint32_t TextureManager::loadTextureFromMemory(const std::string& label, const s
     const auto loadInfo = TextureLoadInfo {
         .stagingBuffer = stagingBuffer,
         .textureImage  = image,
-        .slot          = loadSlot
+        .slot          = loadSlot,
+        .samplerInfo   = samplerInfo.value_or(sDefaultSampler),
     };
 
     loadImmediately(loadInfo);
@@ -119,7 +148,13 @@ void TextureManager::update(const RHI::CommandList* commandList) const
 
 void TextureManager::loadImmediately(const TextureLoadInfo& textureLoadInfo) noexcept
 {
-    const auto [stagingBuffer, textureImage, slot] = textureLoadInfo;
+    const auto [stagingBuffer, textureImage, slot, samplerInfo] = textureLoadInfo;
+
+    if (!mSamplers.contains(samplerInfo))
+    {
+        mSamplers.insert_or_assign(samplerInfo, mRHI->getDevice()->getHandle().createSampler(samplerInfo));
+    }
+
     mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* commandList) -> void {
         RHI::Barrier().addImageBarrier({
             .dstUsage = RHI::ImageUsage::TransferDst,
@@ -143,7 +178,7 @@ void TextureManager::loadImmediately(const TextureLoadInfo& textureLoadInfo) noe
     setSlot(slot, true);
 
     const auto write = RHI::DescriptorWrite()
-        .writeCombinedImageSampler(0, slot, vk::ImageLayout::eShaderReadOnlyOptimal, mTextures[slot], mTextures[slot]->getSampler());
+        .writeCombinedImageSampler(0, slot, vk::ImageLayout::eShaderReadOnlyOptimal, mTextures[slot], mSamplers[textureLoadInfo.samplerInfo]);
     mDescriptor->writeAll(write);
 }
 
@@ -229,7 +264,7 @@ void TextureManager::writeInitialDescriptors() const
         textureImageInfos[i] = vk::DescriptorImageInfo()
             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
             .setImageView(mTextures[0]->getImageView())
-            .setSampler(mTextures[0]->getSampler());
+            .setSampler(*mDefaultSampler);
     }
 
     const auto descriptorWrite = RHI::DescriptorWrite()

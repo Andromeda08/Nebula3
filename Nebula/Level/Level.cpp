@@ -249,7 +249,7 @@ namespace nbl
 
         if (mRHI->getFeatures().rayTracing)
         {
-            mTlasSystem->onUpdate(frameData, pCommandList);
+            mTlasSystem->onUpdate(pCommandList, frameData);
         }
 
         if (!mObjects.empty())

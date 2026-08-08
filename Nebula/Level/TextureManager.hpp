@@ -1,10 +1,13 @@
 #pragma once
 
 #include <array>
-#include <expected>
 #include <queue>
-#include <stb_image.h>
 #include <string>
+#include <unordered_map>
+
+#include <stb_image.h>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_hash.hpp>
 
 #include "Core/Macro.hpp"
 #include "Core/Types.hpp"
@@ -28,9 +31,10 @@ class TextureManager
 {
     struct TextureLoadInfo
     {
-        SPtr<RHI::Buffer> stagingBuffer;
-        SPtr<RHI::Image>  textureImage;
-        uint32_t          slot;
+        SPtr<RHI::Buffer>       stagingBuffer;
+        SPtr<RHI::Image>        textureImage;
+        uint32_t                slot;
+        vk::SamplerCreateInfo   samplerInfo;
     };
 public:
     static constexpr uint32_t sMaxTextureCount  = 1024;
@@ -100,8 +104,12 @@ private:
 
     static constexpr auto sMissingTextureName = "missingTexture.png";
 
+    // Samplers
+    std::unordered_map<vk::SamplerCreateInfo, vk::Sampler> mSamplers;
+    vk::Sampler*                                           mDefaultSampler;
+
     // Textures
-    std::array<SPtr<RHI::Image>, sMaxTextureCount> mTextures;
+    std::array<SPtr<RHI::Image>, sMaxTextureCount>  mTextures;
 
     // Free slots
     std::queue<uint32_t>                    mFreeSlots;

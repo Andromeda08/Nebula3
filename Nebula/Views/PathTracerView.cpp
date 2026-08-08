@@ -184,7 +184,7 @@ namespace nbl
         mSelectObjectFeature->onEvent(event);
     }
 
-    void PTScene::onUpdate(float dt, const RHI::FrameData& frameData, const RHI::CommandList* pCommandList) const noexcept
+    void PTScene::onUpdate(const float dt, const RHI::FrameData& frameData, RHI::CommandList* pCommandList) const noexcept
     {
         mCameraSystem->onUpdate(frameData);
         mLightSystem->onUpdate(pCommandList);
@@ -223,7 +223,7 @@ namespace nbl
 
         mInstanceSystem->onUpdate(pCommandList);
 
-        mTlasSystem->onUpdate(frameData, pCommandList);
+        mTlasSystem->onUpdate(pCommandList, frameData);
     }
 
     void PTScene::onDrawUI()

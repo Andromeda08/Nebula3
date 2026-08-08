@@ -297,8 +297,6 @@ namespace RHI
         [[nodiscard]] const vk::Image&        getImage()      const { return mImage; }
         [[nodiscard]] const vk::ImageView&    getImageView()  const { return mImageView; }
         [[nodiscard]] const ImageProperties&  getProperties() const { return mProperties; }
-
-        [[deprecated("Per-image samplers are deprecated")]]
         [[nodiscard]] const vk::Sampler&      getSampler()    const { return mSampler; }
 
     private:

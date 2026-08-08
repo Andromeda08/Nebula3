@@ -47,6 +47,6 @@ namespace nbl
 
         int32_t                     mSelectedObject = -1;
         SPtr<RHI::Buffer>           mObjSelectBuffer;
-        SPtr<RHI::ComputePipeline>  mObjSelectPipeline;
+        SPtr<RHI::ComputePipeline2> mObjSelectPipeline;
     };
 }

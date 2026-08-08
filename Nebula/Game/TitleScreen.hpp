@@ -135,6 +135,6 @@ private:
     SPtr<RHI::VulkanRHI>        mRHI;
     TextureManager*             mTextureManager;
 
-    SPtr<RHI::Pipeline>         mPipeline;
+    SPtr<RHI::GraphicsPipeline2> mPipeline;
     SPtr<RHI::Image>            mResult;
 };

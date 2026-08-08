@@ -41,7 +41,7 @@ namespace RHI
         void              waitIdle() const;
         void              submit(const SubmitInfo& submitInfo);
 
-        void immediate(const std::function<void(const CommandList*)>& fn) const;
+        void immediate(const std::function<void(CommandList*)>& fn) const;
 
     private:
         SPtr<Device>        mDevice;

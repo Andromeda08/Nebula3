@@ -107,30 +107,21 @@ namespace nbl
             }
         }
 
-        const auto pipelineCreateInfo = RHI::GraphicsPipelineCreateInfo()
-            .addDescriptorSetLayout(mTextureManager->getDescriptor()->getLayout())
-            .setPushConstantRange({ vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstant) })
-            .setStateInfo(RHI::GraphicsPipelineStateInfo()
-                .configure([](RHI::GraphicsPipelineStateInfo& stateInfo) {
-                    stateInfo.addAttributeDescriptions<UIVertex>(0, 0);
-                    stateInfo.addBindingDescriptions<UIVertex>(0);
-                    stateInfo.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e4);
-                })
-                .setCullMode(vk::CullModeFlagBits::eNone)
-                .addAttachmentState(RHI::PipelineUtils::makeColorBlendAttachmentState()
-                    .setBlendEnable(true)
-                    .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
-                    .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                    .setColorBlendOp(vk::BlendOp::eAdd)
-                    .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
-                    .setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
-                    .setAlphaBlendOp(vk::BlendOp::eAdd)))
-            .addShader({ Configuration::getShaderFilePath("UI.vert.spv"), vk::ShaderStageFlagBits::eVertex })
-            .addShader({ Configuration::getShaderFilePath("UI.frag.spv"), vk::ShaderStageFlagBits::eFragment })
-            .addColorAttachmentFormat(mResult[0]->getProperties().format)
-            .setDebugName("UI_Pipeline");
+        using enum vk::ShaderStageFlagBits;
+        const auto graphicsPS = RHI::GraphicsPS()
+            .addVertexType<UIVertex>()
+            .configure([](auto& s){ s.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e4); })
+            .setCullMode(vk::CullModeFlagBits::eNone)
+            .addAlphaAttachmentState(1)
+            .addAttachmentFormat(mResult[0]->getProperties().format);
+        const auto pipelineInfo = RHI::PipelineCommon()
+            .setLabel("UI_Pipeline")
+            .addShader("UI.vert.spv")
+            .addShader("UI.frag.spv")
+            .setPushConstant<PushConstant>(eVertex | eFragment)
+            .addDescriptorLayout(0, mTextureManager->getDescriptor().get());
 
-        mPipeline = mRHI->createGraphicsPipeline(pipelineCreateInfo);
+        mPipeline = mRHI->createGraphicsPipeline2(graphicsPS, pipelineInfo);
     }
 
     void Interface::render(RHI::CommandList* pCommandList, const RHI::FrameData& frameData)
@@ -148,7 +139,7 @@ namespace nbl
             .addAttachment(mResult[i], vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, std::nullopt, mResolvedResult[i])
             .setRenderArea(mSize.getRenderArea())
             .setLabel(fmt::format("UI_RenderPass_{}", i))
-            .execute(pCommandList, [&](const RHI::CommandList* cmd) -> void {
+            .execute(pCommandList, [&](RHI::CommandList* cmd) -> void {
                 const auto [w, h, d] = mResult[i]->getProperties().getExtent3D();
                 const auto scissor   = vk::Rect2D {{ 0, 0 }, {w, h} };
                 const auto viewport  = vk::Viewport { 0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, 1.0f };
@@ -157,8 +148,8 @@ namespace nbl
                 PushConstant pushConstant;
                 pushConstant.proj = mSize.projection;
 
-                mPipeline->bind(cmd);
-                mPipeline->bindDescriptorSet(cmd, mTextureManager->getDescriptor()->getSet(0));
+                cmd->bindPipeline(mPipeline.get());
+                cmd->bindDescriptorSet(mTextureManager->getDescriptor()->getSet(), 0);
 
                 constexpr vk::DeviceSize offset = 0;
                 cmd->getHandle().bindVertexBuffers(0, 1, &mVertexBuffer->getHandle(), &offset);
@@ -169,8 +160,8 @@ namespace nbl
                     pushConstant.isText = 1;
                     pushConstant.textureIndex = static_cast<int32_t>(mElements[j]->getTextureIndex());
                     pushConstant.color = glm::vec4(1.0f);
-                    mPipeline->pushConstants(cmd, &pushConstant);
-                    pCommandList->getHandle().drawIndexed(mGeometryInfo[j].indexCount, 1, mGeometryInfo[j].firstIndex, 0, 0);
+                    cmd->pushConstants(&pushConstant);
+                    cmd->getHandle().drawIndexed(mGeometryInfo[j].indexCount, 1, mGeometryInfo[j].firstIndex, 0, 0);
                 }
             });
 

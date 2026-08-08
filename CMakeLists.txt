@@ -205,17 +205,8 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Buffer.cpp
     Nebula/VulkanRHI/DebugContext.hpp
     Nebula/VulkanRHI/DebugContext.cpp
-    Nebula/VulkanRHI/Rendering/ComputePipeline.hpp
-    Nebula/VulkanRHI/Rendering/ComputePipeline.cpp
-    Nebula/VulkanRHI/Rendering/GraphicsPipeline.hpp
-    Nebula/VulkanRHI/Rendering/GraphicsPipeline.cpp
-    Nebula/VulkanRHI/Rendering/Pipeline.hpp
-    Nebula/VulkanRHI/Rendering/Pipeline.cpp
     Nebula/VulkanRHI/Rendering/Shader.hpp
     Nebula/VulkanRHI/Rendering/Shader.cpp
-    Nebula/VulkanRHI/Rendering.hpp
-    Nebula/VulkanRHI/Rendering/RenderPass.hpp
-    Nebula/VulkanRHI/Rendering/RenderPass.cpp
     Nebula/VulkanRHI/Commands/CommandList.hpp
     Nebula/VulkanRHI/Commands/CommandList.cpp
     Nebula/VulkanRHI/Commands/CommandPool.hpp
@@ -232,8 +223,6 @@ add_executable(Nebula3
     Nebula/VulkanRHI/Barrier.cpp
     Nebula/VulkanRHI/Descriptor.cpp
     Nebula/VulkanRHI/Descriptor.hpp
-    Nebula/VulkanRHI/Raytracing/RaytracingPipeline.cpp
-    Nebula/VulkanRHI/Raytracing/RaytracingPipeline.hpp
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.cpp
     Nebula/VulkanRHI/Raytracing/ShaderBindingTable.hpp
     Nebula/VulkanRHI/Raytracing.hpp

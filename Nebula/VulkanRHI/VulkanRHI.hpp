@@ -17,7 +17,6 @@
 #include "Instance.hpp"
 #include "IWindow.hpp"
 #include "Raytracing.hpp"
-#include "Rendering.hpp"
 #include "Swapchain.hpp"
 #include "VulkanCore.hpp"
 #include "Core/Configuration.hpp"
@@ -27,6 +26,13 @@
 
 namespace RHI
 {
+    // Not really used anymore?
+    struct Attachment
+    {
+        vk::Image                   image;
+        vk::RenderingAttachmentInfo attachmentInfo;
+    };
+
     struct VulkanRHICreateInfo
     {
         SPtr<IWindow> pWindow = nullptr;
@@ -72,15 +78,6 @@ namespace RHI
         {
              return gFeatures;
         }
-
-        [[deprecated("Use createGraphicsPipeline2")]]
-        [[nodiscard]] UPtr<GraphicsPipeline>   createGraphicsPipeline(GraphicsPipelineCreateInfo createInfo) const;
-
-        [[deprecated("Use createComputePipeline2")]]
-        [[nodiscard]] UPtr<ComputePipeline>    createComputePipeline(ComputePipelineCreateInfo& createInfo) const;
-
-        [[deprecated("Use createRaytracingPipeline2")]]
-        [[nodiscard]] UPtr<RaytracingPipeline> createRaytracingPipeline(RaytracingPipelineCreateInfo createInfo) const;
 
         Integration::DLSS* getDLSS() const;
 

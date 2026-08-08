@@ -29,12 +29,12 @@ namespace nbl
 
         if (mRHI->getFeatures().rayTracing)
         {
-            auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-                .addDescriptorSetLayout(mTlasSystem->getDescriptor()->getLayout())
-                .setComputeShader(Configuration::getShaderFilePath("RQSelect.comp.spv"))
-                .setDebugName("ObjSelectPipeline")
-                .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eCompute);
-            mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
+            auto pipelineInfo = RHI::PipelineCommon()
+                .addDescriptorLayout(0, mTlasSystem->getDescriptor().get())
+                .addShader("RQSelect.comp.spv")
+                .setLabel("ObjSelectPipeline")
+                .setPushConstant<PushConstant>(vk::ShaderStageFlagBits::eCompute);
+            mObjSelectPipeline = mRHI->createComputePipeline2(pipelineInfo);
         }
         else
         {
@@ -57,12 +57,12 @@ namespace nbl
                 mDescriptor->write(i, write);
             }
 
-            auto pipelineInfo = RHI::ComputePipelineCreateInfo()
-                .addDescriptorSetLayout(mDescriptor->getLayout())
-                .setComputeShader(Configuration::getShaderFilePath("Select.comp.spv"))
-                .setDebugName("ObjSelectPipeline")
-                .setPushConstantRange<PushConstant>(vk::ShaderStageFlagBits::eCompute);
-            mObjSelectPipeline = mRHI->createComputePipeline(pipelineInfo);
+            auto pipelineInfo = RHI::PipelineCommon()
+                .addDescriptorLayout(0, mDescriptor.get())
+                .addShader("Select.comp.spv")
+                .setLabel("ObjSelectPipeline")
+                .setPushConstant<PushConstant>(vk::ShaderStageFlagBits::eCompute);
+            mObjSelectPipeline = mRHI->createComputePipeline2(pipelineInfo);
         }
     }
 
@@ -77,7 +77,7 @@ namespace nbl
         {
             if (const auto& mouseEvent = event.button; mouseEvent.button == SDL_BUTTON_RIGHT)
             {
-                mRHI->getGraphicsQueue()->immediate([&](const RHI::CommandList* pCommandList) -> void {
+                mRHI->getGraphicsQueue()->immediate([&](RHI::CommandList* pCommandList) -> void {
                     const auto [w, h]   = mRHI->getSwapchain()->getProperties().extent;
                     glm::vec2  mousePos = { mouseEvent.x, mouseEvent.y };
                     spdlog::info("Select at: [{}, {}]", mousePos.x, mousePos.y);
@@ -93,19 +93,19 @@ namespace nbl
                         .screenSize      = glm::vec2(w, h),
                     };
 
-                    mObjSelectPipeline->bind(pCommandList);
+                    pCommandList->bindPipeline(mObjSelectPipeline.get());
 
                     if (mRHI->getFeatures().rayTracing)
                     {
-                        mObjSelectPipeline->bindDescriptorSet(pCommandList, mTlasSystem->getDescriptor()->getSet(0));
+                        pCommandList->bindDescriptorSet(mTlasSystem->getDescriptor()->getSet(0), 0);
                     }
                     else
                     {
-                        mObjSelectPipeline->bindDescriptorSet(pCommandList, mDescriptor->getSet(0));
+                        pCommandList->bindDescriptorSet(mDescriptor->getSet(0), 0);
                     }
 
-                    mObjSelectPipeline->pushConstants(pCommandList, &pushConstants);
-                    mObjSelectPipeline->dispatch(pCommandList, 1);
+                    pCommandList->pushConstants(&pushConstants);
+                    pCommandList->dispatch();
 
                     RHI::Barrier()
                         .addBarrier(mObjSelectBuffer->getBarrier(RHI::BufferUsage::Compute_Write, RHI::BufferUsage::Host_Read))

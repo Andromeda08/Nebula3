@@ -215,8 +215,7 @@ namespace nbl
         SPtr<RHI::Buffer>                       mVertexBuffer;
         SPtr<RHI::Buffer>                       mIndexBuffer;
 
-        SPtr<RHI::Pipeline>                     mPipeline;
-        PerFrameArray<SPtr<RHI::RenderPass>>    mRenderPass;
+        SPtr<RHI::GraphicsPipeline2>            mPipeline;
         PerFrameArray<SPtr<RHI::Image>>         mResult;
         PerFrameArray<SPtr<RHI::Image>>         mResolvedResult;
     };
