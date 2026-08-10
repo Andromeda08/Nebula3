@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "RHI/DynamicRHI.hpp"
 #include "VulkanRHI/Barrier.hpp"
 #include "VulkanRHI/Buffer.hpp"
 #include "VulkanRHI/Device.hpp"
@@ -44,7 +45,7 @@ namespace RHI
         bool               singleTimeSubmit = false;
     };
 
-    class CommandList
+    class CommandList final : public ICommandList
     {
     public:
         nbl_DISABLE_COPY(CommandList);
@@ -53,13 +54,13 @@ namespace RHI
         nbl_CTOR(CommandList);
 
         // ❗(Lifetime) mCommandBuffer is freed by VulkanCommandPool::free();
-        ~CommandList() = default;
+        ~CommandList() override = default;
 
         // Begin recording the CommandList
-        void begin();
+        void begin() override;
 
         // End the recording of the CommandList
-        void end();
+        void end() override;
 
         void setViewportScissor(const vk::Viewport& viewport, const vk::Rect2D& scissor) const;
 

@@ -10,9 +10,7 @@ namespace RHI
 
     struct FrameData
     {
-        vk::Fence       waitFence;
-        vk::Semaphore   imageReadySemaphore;
-        vk::Semaphore   renderingFinishedSemaphore;
+        const uint64_t  frameValue;
         const uint64_t  currentFrame;
         const uint64_t  lifetimeFrameCounter;
         const uint32_t  acquiredIndex;

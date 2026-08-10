@@ -162,6 +162,9 @@ set(V2_FILES
     Nebula/Hair/Hybrid/Stages/Hybrid_MeshStage.hpp
     Nebula/Hair/Hybrid/Stages/Hybrid_MeshStage.cpp
     Nebula/Hair/Hybrid/Stages/Hybrid_SoftwareStage.cpp
+    Nebula/RHI/DynamicRHI.hpp
+    Nebula/RHI/Timeline.hpp
+    Nebula/VulkanRHI/Commands/VulkanTimelineSync.hpp
 )
 
 add_executable(Nebula3

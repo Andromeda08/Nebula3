@@ -1,6 +1,7 @@
 #include "CommandQueue.hpp"
 
 #include "CommandPool.hpp"
+#include "VulkanTimelineSync.hpp"
 
 namespace RHI
 {
@@ -8,10 +9,18 @@ namespace RHI
     : mDevice(createInfo.device)
     , mQueue(createInfo.queue)
     {
+        mTimeline = makeUnique<Timeline>(
+            makeUnique<VulkanTimelineSync>(mDevice, "Timeline")
+        );
         mImmediatePool = CommandPool::create({
             .queue  = mQueue,
             .device = mDevice,
         });
+    }
+
+    Timeline* CommandQueue::getTimeline() const
+    {
+        return mTimeline.get();
     }
 
     QueueType CommandQueue::getQueueType() const noexcept
@@ -29,70 +38,82 @@ namespace RHI
 
     void CommandQueue::waitIdle() const
     {
-        mQueue.queue.waitIdle();
+        const uint64_t value = mTimeline->getNextValue();
+        submit(SubmitInfo().addSignal(mTimeline->getSync(), value));
+        const bool ok = mTimeline->hostWait(value);
+        if (!ok) { exitWithError("waitIdle timed out on queue timeline"); }
     }
 
-    void CommandQueue::submit(const SubmitInfo& submitInfo)
+    void CommandQueue::submit(const SubmitInfo& submitInfo) const
+    {
+        submitWithBinarySync(submitInfo, {}, {});
+    }
+
+    void CommandQueue::submitWithBinarySync(const SubmitInfo& submitInfo, const std::vector<vk::Semaphore>& binaryWaits, const std::vector<vk::Semaphore>& binarySignals) const
     {
         std::vector<vk::CommandBufferSubmitInfo> commandBufferSubmitInfos;
-        for (const auto commandBuffer : submitInfo.commandLists | std::views::transform([](const auto* x){ return x->getHandle(); }))
+        for (const auto commandBuffer : submitInfo.commandLists | std::views::transform([](const auto* x){ return rhi_cast<CommandList>(x)->getHandle(); }))
         {
-            const auto info = vk::CommandBufferSubmitInfo()
-                .setCommandBuffer(commandBuffer);
+            const auto info = vk::CommandBufferSubmitInfo().setCommandBuffer(commandBuffer);
             commandBufferSubmitInfos.push_back(info);
         }
 
         std::vector<vk::SemaphoreSubmitInfo> waitSemaphoreInfos;
-        for (const auto waitSemaphore : submitInfo.waitSemaphores)
+        waitSemaphoreInfos.reserve(submitInfo.waits.size() + binaryWaits.size());
+
+        for (const auto& [pSync, value] : submitInfo.waits)
         {
-            const auto waitSemaphoreInfo = vk::SemaphoreSubmitInfo()
-                .setSemaphore(waitSemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
-            waitSemaphoreInfos.push_back(waitSemaphoreInfo);
+            waitSemaphoreInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(rhi_cast<VulkanTimelineSync>(pSync)->getHandle())
+                .setValue(value)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+        }
+        for (const auto& binaryWait : binaryWaits)
+        {
+            waitSemaphoreInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(binaryWait)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
         }
 
         std::vector<vk::SemaphoreSubmitInfo> signalSemaphoreInfos;
-        for (const auto signalSemaphore : submitInfo.signalSemaphores)
+        signalSemaphoreInfos.reserve(submitInfo.signals.size() + binarySignals.size());
+
+        for (const auto& [pSync, value] : submitInfo.signals)
         {
-            const auto signalSemaphoreInfo = vk::SemaphoreSubmitInfo()
-                .setSemaphore(signalSemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
-            signalSemaphoreInfos.push_back(signalSemaphoreInfo);
+            signalSemaphoreInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(rhi_cast<VulkanTimelineSync>(pSync)->getHandle())
+                .setValue(value)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+        }
+        for (const auto& binaryWait : binarySignals)
+        {
+            signalSemaphoreInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(binaryWait)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
         }
 
         const auto vkSubmitInfo = vk::SubmitInfo2()
             .setCommandBufferInfos(commandBufferSubmitInfos)
-            .setCommandBufferInfoCount(commandBufferSubmitInfos.size())
             .setWaitSemaphoreInfos(waitSemaphoreInfos)
-            .setWaitSemaphoreInfoCount(waitSemaphoreInfos.size())
-            .setSignalSemaphoreInfos(signalSemaphoreInfos)
-            .setSignalSemaphoreInfoCount(signalSemaphoreInfos.size());
+            .setSignalSemaphoreInfos(signalSemaphoreInfos);
 
-        mQueue.queue.submit2(vkSubmitInfo, submitInfo.fence);
+        mQueue.queue.submit2(vkSubmitInfo);
     }
 
     void CommandQueue::immediate(const std::function<void(CommandList*)>& fn) const
     {
         auto* commandList = mImmediatePool->allocate();
-        const auto handle = commandList->getHandle();
 
         commandList->begin();
         fn(commandList);
         commandList->end();
 
-        const auto cmdBufInfo = vk::CommandBufferSubmitInfo().setCommandBuffer(handle);
-        const auto submitInfo = vk::SubmitInfo2().setCommandBufferInfos(cmdBufInfo);
+        const uint64_t value = mTimeline->getNextValue();
+        submit(SubmitInfo().addCommandList(commandList).addSignal(mTimeline->getSync(), value));
 
-        try
-        {
-            mQueue.queue.submit2(submitInfo, nullptr);
-        }
-        catch (const vk::SystemError& err)
-        {
-            exitWithError("Submission to Queue failed: {}", err.what());
-        }
+        const bool ok = mTimeline->hostWait(value);
+        if (!ok) { exitWithError("immediate() timed out on queue timeline"); }
 
-        mQueue.queue.waitIdle();
         mImmediatePool->free(commandList);
     }
 }

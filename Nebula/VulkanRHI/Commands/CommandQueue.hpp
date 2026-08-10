@@ -8,19 +8,12 @@
 #include "VulkanRHI/Device.hpp"
 #include "VulkanRHI/VulkanCore.hpp"
 
+#include "RHI/Timeline.hpp"
+
 namespace RHI
 {
     class CommandPool;
     class CommandList;
-
-    struct SubmitInfo
-    {
-        std::vector<CommandList*>   commandLists;
-        std::vector<vk::Semaphore>  waitSemaphores;
-        std::vector<vk::Semaphore>  signalSemaphores;
-        vk::PipelineStageFlags2     waitStages {vk::PipelineStageFlagBits2::eAllCommands};
-        vk::Fence                   fence {nullptr};
-    };
 
     struct CommandQueueCreateInfo
     {
@@ -36,16 +29,27 @@ namespace RHI
 
         ~CommandQueue() = default;
 
+        Timeline* getTimeline() const;
+
         QueueType         getQueueType() const noexcept;
+
         SPtr<CommandPool> createCommandPool() const;
-        void              waitIdle() const;
-        void              submit(const SubmitInfo& submitInfo);
+
+        void waitIdle() const;
+
+        void submit(const SubmitInfo& submitInfo) const;
+
+        /**
+         * Used for present path, Vulkan doesn't support timeline semaphores for it.
+         */
+        void submitWithBinarySync(const SubmitInfo& submitInfo, const std::vector<vk::Semaphore>& binaryWaits, const std::vector<vk::Semaphore>& binarySignals) const;
 
         void immediate(const std::function<void(CommandList*)>& fn) const;
 
     private:
         SPtr<Device>        mDevice;
         DeviceQueue         mQueue;
+        UPtr<Timeline>      mTimeline;
         SPtr<CommandPool>   mImmediatePool;
     };
 }

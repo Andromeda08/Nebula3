@@ -65,15 +65,19 @@ namespace RHI
 
     FrameData VulkanRHI::beginFrame() const
     {
-        const vk::Device device = mDevice->getHandle();
+        const vk::Device device   = mDevice->getHandle();
+        Timeline*        timeline = mGraphicsQueue->getTimeline();
 
         const uint64_t currentFrame = mFrameSync->currentFrame;
-        const vk::Fence fence = mFrameSync->frameInFlight[currentFrame];
+        const uint64_t frameValue   = timeline->getNextValue();
 
-        const vk::Result result = device.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
-        exitOnAssert(result == vk::Result::eSuccess, "vk::Device::waitForFences failed: {}", vk::to_string(result));
-
-        device.resetFences(fence);
+        if (frameValue > gFramesInFlight)
+        {
+            if (const bool ok = timeline->hostWait(frameValue - gFramesInFlight); !ok)
+            {
+                exitWithError("Timeout");
+            }
+        }
 
         const auto acquireInfo = vk::AcquireNextImageInfoKHR()
             .setSwapchain(mSwapchain->getHandle())
@@ -83,9 +87,7 @@ namespace RHI
         const auto acquiredIndex = device.acquireNextImage2KHR(acquireInfo).value;
 
         return {
-            .waitFence                  = mFrameSync->frameInFlight[currentFrame],
-            .imageReadySemaphore        = mFrameSync->imageReady[currentFrame],
-            .renderingFinishedSemaphore = mFrameSync->renderingFinished[currentFrame],
+            .frameValue                 = frameValue,
             .currentFrame               = currentFrame,
             .lifetimeFrameCounter       = mFrameSync->lifetimeFrameCounter,
             .acquiredIndex              = acquiredIndex,
@@ -95,37 +97,20 @@ namespace RHI
     void VulkanRHI::endFrame_submitAndPresent(const PresentSubmitInfo& presentSubmitInfo) const
     {
         const auto& frameData = presentSubmitInfo.frameData;
+        const auto* timeline  = mGraphicsQueue->getTimeline();
 
-        const auto info = vk::CommandBufferSubmitInfo()
-                .setCommandBuffer(presentSubmitInfo.pCommandList->getHandle());
-        std::vector commandBufferSubmitInfos { info };
+        const vk::Semaphore imageReady        = mFrameSync->imageReady[frameData.currentFrame];
+        const vk::Semaphore renderingFinished = mFrameSync->renderingFinished[frameData.acquiredIndex];
 
-        const auto waitSemaphoreInfo = vk::SemaphoreSubmitInfo()
-                .setSemaphore(frameData.imageReadySemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
-        std::vector waitSemaphoreInfos { waitSemaphoreInfo };
-
-        const auto signalSemaphoreInfo = vk::SemaphoreSubmitInfo()
-                .setSemaphore(frameData.renderingFinishedSemaphore)
-                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands);
-        std::vector signalSemaphoreInfos { signalSemaphoreInfo };
-
-        const auto vkSubmitInfo = vk::SubmitInfo2()
-            .setCommandBufferInfos(commandBufferSubmitInfos)
-            .setCommandBufferInfoCount(commandBufferSubmitInfos.size())
-            .setWaitSemaphoreInfos(waitSemaphoreInfos)
-            .setWaitSemaphoreInfoCount(waitSemaphoreInfos.size())
-            .setSignalSemaphoreInfos(signalSemaphoreInfos)
-            .setSignalSemaphoreInfoCount(signalSemaphoreInfos.size());
-
-        mDevice->getGraphicsQueue().queue.submit2(vkSubmitInfo, frameData.waitFence);
+        const auto submitInfo = SubmitInfo()
+            .addCommandList(presentSubmitInfo.pCommandList)
+            .addSignal(timeline->getSync(), frameData.frameValue);
+        mGraphicsQueue->submitWithBinarySync(submitInfo, { imageReady }, { renderingFinished });
 
         const auto swapchain = mSwapchain->getHandle();
         const auto presentInfo = vk::PresentInfoKHR()
-            .setPWaitSemaphores(&frameData.renderingFinishedSemaphore)
-            .setWaitSemaphoreCount(1)
-            .setPSwapchains(&swapchain)
-            .setSwapchainCount(1)
+            .setWaitSemaphores(renderingFinished)
+            .setSwapchains(swapchain)
             .setImageIndices(frameData.acquiredIndex)
             .setPResults(nullptr);
 
@@ -137,21 +122,7 @@ namespace RHI
 
     bool VulkanRHI::isFrameComplete(const uint64_t frame) const
     {
-        const vk::Fence  fence  = mFrameSync->frameInFlight[frame % gFramesInFlight];
-        const vk::Result result = mDevice->getHandle().getFenceStatus(fence);
-
-        if (result == vk::Result::eSuccess)
-        {
-            return true;
-        }
-
-        if (result == vk::Result::eNotReady)
-        {
-            return false;
-        }
-
-        exitOnAssert(false, "vk::Device::getFenceStatus failed: {}", vk::to_string(result));
-        return false;
+        return mGraphicsQueue->getTimeline()->isComplete(frame);
     }
 
     SPtr<Buffer> VulkanRHI::createBuffer(const RHIBufferCreateInfo& createInfo) const
