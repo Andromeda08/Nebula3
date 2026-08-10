@@ -24,7 +24,7 @@ namespace nbl
     {
         int32_t                     geometryIndex   = -1;
         Transform                   transform       = {};
-        Handle                      hMaterial       = {};
+        PoolHandle                  hMaterial       = {};
         std::optional<std::string > name            = std::nullopt;
         Object*                     pParent         = nullptr;
 

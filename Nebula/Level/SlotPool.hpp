@@ -12,12 +12,12 @@
 /**
  * Generational Handle
  */
-struct Handle
+struct PoolHandle
 {
     uint32_t index      = std::numeric_limits<uint32_t>::max();
     uint32_t generation = 0;
 
-    [[nodiscard]] bool operator==(const Handle& other) const
+    [[nodiscard]] bool operator==(const PoolHandle& other) const
     {
         return index == other.index && generation == other.generation;
     }
@@ -40,8 +40,8 @@ concept IsConvertibleToGpu = requires(const CpuType& cpuType)
 template <class CpuType>
 struct CpuView
 {
-    Handle   handle;
-    CpuType* data;
+    PoolHandle handle;
+    CpuType*   data;
 };
 
 /**
@@ -85,7 +85,7 @@ public:
         }
     }
 
-    [[nodiscard]] Handle acquire(const CpuType& data)
+    [[nodiscard]] PoolHandle acquire(const CpuType& data)
     {
         uint32_t slot;
         if (!mFreeList.empty())
@@ -114,7 +114,7 @@ public:
         return { slot, mGenerations[slot] };
     }
 
-    void update(const Handle& handle, const CpuType& data)
+    void update(const PoolHandle& handle, const CpuType& data)
     {
         if (!isValid(handle))
         {
@@ -128,7 +128,7 @@ public:
 
     template <typename F>
     requires std::invocable<F&, CpuType&>
-    void modify(const Handle& handle, F&& updateFn)
+    void modify(const PoolHandle& handle, F&& updateFn)
     {
         if (!isValid(handle))
         {
@@ -140,7 +140,7 @@ public:
         mDirtyDense.push_back(mSlotToDense[slot]);
     }
 
-    void release(const Handle& handle)
+    void release(const PoolHandle& handle)
     {
         if (!isValid(handle))
         {
@@ -165,7 +165,7 @@ public:
         mFreeList.push_back(slot);
     }
 
-    [[nodiscard]] const CpuType* get(const Handle& handle) const
+    [[nodiscard]] const CpuType* get(const PoolHandle& handle) const
     {
         if (!isValid(handle))
         {
@@ -174,7 +174,7 @@ public:
         return &mCpuData[handle.index];
     }
 
-    [[nodiscard]] bool isValid(const Handle& handle) const
+    [[nodiscard]] bool isValid(const PoolHandle& handle) const
     {
         return handle.index != INVALID_SLOT
             && handle.index < mGenerations.size()
@@ -268,7 +268,7 @@ public:
     /**
      * Dense index (not slot) is used to access on the GPU.
      */
-    [[nodiscard]] uint32_t getGpuIndex(const Handle& handle) const
+    [[nodiscard]] uint32_t getGpuIndex(const PoolHandle& handle) const
     {
         if (!isValid(handle))
         {
@@ -297,7 +297,7 @@ public:
         return &mCpuData[mDenseToSlot[denseIndex]];
     }
 
-    [[nodiscard]] Handle getHandleFromDense(const uint32_t dense) const
+    [[nodiscard]] PoolHandle getHandleFromDense(const uint32_t dense) const
     {
         if (dense >= mDenseToSlot.size())
         {
@@ -317,7 +317,7 @@ public:
             uint32_t slot = mDenseToSlot[i];
 
             CpuView<CpuType> view {
-                .handle = Handle {slot, mGenerations[slot] },
+                .handle = PoolHandle {slot, mGenerations[slot] },
                 .data   = &mCpuData[slot],
             };
 

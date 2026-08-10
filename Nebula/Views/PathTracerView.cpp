@@ -34,7 +34,7 @@ namespace nbl
         auto terrainGenerator = vxl::TerrainGenerator({ 256, 24, 128, true });
         terrainGenerator.generate();
 
-        std::unordered_map<glm::vec3, Handle> voxelMaterial;
+        std::unordered_map<glm::vec3, PoolHandle> voxelMaterial;
 
         for (const auto& [i, voxel] : nbl::enumerate(terrainGenerator.getResult()))
         {

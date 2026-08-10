@@ -43,7 +43,7 @@ namespace nbl
         if (ImGui::SmallButton("Remove"))
         {
             release(mSelectedLight);
-            mSelectedLight = (getSize() > 0) ? getHandleFromDense(0) : Handle {};
+            mSelectedLight = (getSize() > 0) ? getHandleFromDense(0) : PoolHandle {};
         }
 
         // Select Function

@@ -83,7 +83,7 @@ namespace nbl
         });
         terrainGenerator.generate();
 
-        std::unordered_map<glm::vec3, Handle> voxelMaterial;
+        std::unordered_map<glm::vec3, PoolHandle> voxelMaterial;
 
         for (const auto& [i, voxel] : nbl::enumerate(terrainGenerator.getResult()))
         {
@@ -151,7 +151,7 @@ namespace nbl
             textures[4] = mTextureManager->loadTexture("cat_5.jpg");
             textures[5] = mTextureManager->loadTexture("cat_6.jpg");
 
-            std::array<Handle, 6> catMaterials;
+            std::array<PoolHandle, 6> catMaterials;
             for (auto i = 0; i < textures.size(); i++)
             {
                 catMaterials[i] = mMaterialSystem->acquire({
@@ -266,6 +266,7 @@ namespace nbl
         {
             mSelectObjectFeature->onDrawUI(mObjects);
         }
+        onDrawUI_Culling();
     }
 
     void Level::drawIndexedIndirect(const RHI::CommandList* commandList, const RHI::FrameData& frameData) const noexcept
@@ -387,11 +388,13 @@ namespace nbl
             }
         }
 
-        std::unordered_map<int32_t, std::vector<Handle>> groups;
+        std::unordered_map<int32_t, std::vector<PoolHandle>> groups;
         for (const auto& obj : mObjects)
         {
             groups[obj->geometryIndex].push_back(obj->hInstance);
         }
+
+        static size_t sLastDrawCommandCount = 0;
 
         /**
          * After culling "gl_InstanceIndex" becomes valid for visible instances only, a "dense" index.
@@ -400,11 +403,21 @@ namespace nbl
          */
         std::vector<uint32_t>                       instanceIndirectionMap;
         std::vector<vk::DrawIndexedIndirectCommand> draws;
+        draws.reserve(sLastDrawCommandCount);
 
+        static constexpr size_t sSamples = 256;
+        static std::array<float, sSamples> sCullTimeSamples = {};
+
+        float visibilityTime = 0.0f;
         auto cullTime = DeltaTime().initialize();
 
         uint32_t totalInstanceCount        = 0;
         uint32_t totalVisibleInstanceCount = 0;
+
+        const auto cameraData = mCameraSystem->getActiveCamera()->getGpuCameraData();
+        const auto viewProj   = cameraData.proj * cameraData.view;
+        const auto f = FrustumSoA::build(viewProj);
+
         for (const auto& [geometryIndex, instanceHandles] : groups)
         {
             const auto firstInstance = static_cast<uint32_t>(instanceIndirectionMap.size());
@@ -416,7 +429,13 @@ namespace nbl
                 if (mEnableCulling)
                 {
                     auto* data = mInstanceSystem->get(hInstance);
-                    shouldKeep = data->boundingBox.isVisible(mCameraSystem->getActiveCamera()->getFrustumPlanes());
+
+                    auto visT = DeltaTime().initialize();
+                    {
+                        // shouldKeep = data->boundingBox.isVisible(f);
+                        shouldKeep = data->boundingBox.isVisible_old(mCameraSystem->getActiveCamera()->getFrustumPlanes());
+                    }
+                    sCullTimeSamples[frameData.lifetimeFrameCounter & (sSamples - 1)] = visT.getDeltaTime() * 1000000.0f;
                 }
                 if (shouldKeep)
                 {
@@ -438,7 +457,10 @@ namespace nbl
             draws.push_back(cmd);
         }
 
-        mLastCullStats = CullStats::make(totalInstanceCount, totalVisibleInstanceCount, cullTime.getDeltaTime());
+        const float cullSec = cullTime.getDeltaTime();
+        const auto profiledTime = std::accumulate(sCullTimeSamples.begin(), sCullTimeSamples.end(), 0.0f) / static_cast<float>(sSamples);
+
+        mLastCullStats = CullStats::make(totalInstanceCount, totalVisibleInstanceCount, profiledTime);
         mDrawCount     = static_cast<uint32_t>(draws.size());
 
         // If totalVisibleInstanceCount is 0 keep the result of the last culling to avoid allocating buffers of size 0.
@@ -497,6 +519,8 @@ namespace nbl
             .setDstBuffer(mInstanceIndirectionMapBuffer[frameData.currentFrame]->getHandle())
             .setRegions(mapRegion);
         pCommandList->getHandle().copyBuffer2(mapCopyInfo);
+
+        sLastDrawCommandCount = draws.size();
     }
 
     void Level::onDrawUI_Culling()

@@ -13,7 +13,7 @@ namespace nbl
     {
         int32_t                    geometryIndex = -1;
         Transform                  transform     = {};
-        Handle                     hMaterial     = {};
+        PoolHandle                 hMaterial     = {};
         bool                       isEmitter     = false;
         std::optional<glm::vec3>   radiance      = std::nullopt;
         std::optional<std::string> name          = std::nullopt;

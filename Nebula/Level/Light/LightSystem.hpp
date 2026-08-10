@@ -22,7 +22,7 @@ namespace nbl
             flush(commandList);
         }
 
-        [[nodiscard]] Handle addLight(const Light& light)
+        [[nodiscard]] PoolHandle addLight(const Light& light)
         {
             const auto hLight = acquire(light);
             if (mSelectedLight.isNull())
@@ -36,6 +36,6 @@ namespace nbl
 
     private:
         std::vector<std::string> mLightTypeNames = {};
-        Handle                   mSelectedLight  = {};
+        PoolHandle               mSelectedLight  = {};
     };
 }

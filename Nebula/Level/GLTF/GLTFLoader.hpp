@@ -64,7 +64,7 @@ namespace nbl
 
         Geometry*   pGeometry     = nullptr;
         int32_t     geometryIndex = -1;
-        Handle      hMaterial     = {};
+        PoolHandle  hMaterial     = {};
         std::string name          = {};
 
         [[nodiscard]] bool isValid() const
@@ -117,8 +117,8 @@ namespace nbl
         int32_t                    mDefaultSampler;
 
         // GLTF Material Index [->] Material Handle
-        Handle                     mDefaultMaterial;
-        std::map<size_t, Handle>   mMaterialMap;
+        PoolHandle                      mDefaultMaterial;
+        std::map<size_t, PoolHandle>    mMaterialMap;
         // GLTF Mesh Index [->] List of Primitives for one Mesh
         std::map<size_t, std::vector<PrimInfo>> mMeshMap;
     };

@@ -20,12 +20,12 @@ namespace nbl
 
         int32_t     geometryIndex   = -1;
         Transform   transform       = {};
-        Handle      hMaterial       = {};
+        PoolHandle      hMaterial       = {};
         uint64_t    blasAddress     = {};
 
         bool        isInstanceDirty = true;
         bool        isFirstUpdate   = true;
-        Handle      hInstance       = {};
+        PoolHandle      hInstance       = {};
 
         int32_t     emitterIndex    = -1;
 
