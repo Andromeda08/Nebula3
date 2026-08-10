@@ -49,3 +49,6 @@
 [submodule "External/ImGuizmo"]
 	path = External/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "External/metal-cpp"]
+	path = External/metal-cpp
+	url = https://github.com/apple/metal-cpp.git
