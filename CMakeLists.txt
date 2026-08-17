@@ -28,6 +28,8 @@ add_subdirectory(External/SDL_ttf           EXCLUDE_FROM_ALL)
 add_subdirectory(External/spdlog            EXCLUDE_FROM_ALL)
 add_subdirectory(External/meshopt           EXCLUDE_FROM_ALL)
 
+add_subdirectory(sunflower)
+
 set("IMGUI_DIR" External/imgui)
 set("IMGUIZMO_DIR" External/imguizmo)
 set("IMGUI_FILES"
@@ -165,6 +167,7 @@ set(V2_FILES
     Nebula/RHI/DynamicRHI.hpp
     Nebula/RHI/Timeline.hpp
     Nebula/VulkanRHI/Commands/VulkanTimelineSync.hpp
+    sunflower/main.cpp
 )
 
 add_executable(Nebula3
@@ -245,9 +248,9 @@ add_executable(Nebula3
     Nebula/Level/TextureManager.hpp
     Nebula/Level/TextureManager.cpp
     Nebula/Core/Platform.hpp
-    Nebula/Window/SDLWindow.hpp
+    Nebula/Window/TestWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp
-    Nebula/Window/SDLWindow.cpp
+    Nebula/Window/TestWindow.cpp
     Nebula/Core/Ranges.hpp
     Nebula/Math/HeightMap.hpp
     Nebula/Core/Random.hpp
