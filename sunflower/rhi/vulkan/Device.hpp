@@ -22,6 +22,34 @@ namespace sunflower::rhi
 
         ~Device();
 
+        [[nodiscard]] const vk::Device& getHandle() const noexcept;
+
+        [[nodiscard]] const VmaAllocator& getAllocator() const noexcept;
+
+        template <class T>
+        requires vk::isVulkanHandleType<T>::value
+        void setLabel(const T& handle, const Option<String>& label = std::nullopt) const
+        {
+            if constexpr (conf::gIsDebug)
+            {
+                if (handle == VK_NULL_HANDLE)
+                {
+                    return;
+                }
+
+                // ReSharper disable once CppFunctionalStyleCast
+                const uint64_t objectHandle = uint64_t(static_cast<T::CType>(handle));
+                const String   objectName   = label.value_or(fmt::format("{} ({:#x})", vk::to_string(T::objectType), objectHandle));
+
+                const auto objectNameInfo = vk::DebugUtilsObjectNameInfoEXT()
+                    .setPObjectName(objectName.c_str())
+                    .setObjectHandle(objectHandle)
+                    .setObjectType(T::objectType);
+
+                std::ignore = mDevice.setDebugUtilsObjectNameEXT(objectNameInfo);
+            }
+        }
+
     private:
         void selectPhysicalDevice();
         void createDevice(const detail::Surface* pSurface);

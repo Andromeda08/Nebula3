@@ -14,6 +14,7 @@
 #endif
 
 #include <rhi/Common.hpp>
+#include <rhi/DynamicRHI.hpp>
 
 namespace sunflower::rhi
 {
@@ -85,5 +86,59 @@ namespace sunflower::rhi
         #endif
 
         return missing.empty();
+    }
+
+    [[nodiscard]] constexpr vk::Format toVulkan(const Format format)
+    {
+        using enum Format;
+        using enum vk::Format;
+        switch (format)
+        {
+            case None:          return eUndefined;;
+            case RGBA8_Unorm:   return eR8G8B8A8Unorm;
+            case RGBA8_Srgb:    return eR8G8B8A8Srgb;
+            case BGRA8_Unorm:   return eB8G8R8A8Unorm;
+            case BGRA8_Srgb:    return eB8G8R8A8Srgb;
+            case R32_Float:     return eR32Sfloat;
+            case RG32_Float:    return eR32G32Sfloat;
+            case RGBA16_Float:  return eR16G16B16A16Sfloat;
+            case RGBA32_Float:  return eR32G32B32A32Sfloat;
+            case D32_Float:     return eD32Sfloat;
+        }
+        assert(false && "Unknown Format");
+        std::abort();
+    }
+
+    [[nodiscard]] constexpr vk::ImageUsageFlags toVulkan(const TextureUsage textureUsage)
+    {
+        return {};
+    }
+
+    [[nodiscard]] constexpr vk::ImageType toVulkan_ImageType(const TextureType textureType)
+    {
+        using enum TextureType;
+        switch (textureType)
+        {
+            case e1D:       return vk::ImageType::e1D;
+            case e2D:       return vk::ImageType::e2D;
+            case e3D:       return vk::ImageType::e3D;
+            case eCube:     return vk::ImageType::e2D;
+        }
+        assert(false && "Unknown TextureType");
+        std::abort();
+    }
+
+    [[nodiscard]] constexpr vk::ImageViewType toVulkan_ImageViewType(const TextureType textureType)
+    {
+        using enum TextureType;
+        switch (textureType)
+        {
+            case e1D:       return vk::ImageViewType::e1D;
+            case e2D:       return vk::ImageViewType::e2D;;
+            case e3D:       return vk::ImageViewType::e3D;
+            case eCube:     return vk::ImageViewType::eCube;
+        }
+        assert(false && "Unknown TextureType");
+        std::abort();
     }
 }

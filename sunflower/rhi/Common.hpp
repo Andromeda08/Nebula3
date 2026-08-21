@@ -7,6 +7,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include <spdlog/spdlog.h>
 
@@ -188,4 +189,19 @@ namespace sunflower
     private: explicit T(const T##CreateInfo& createInfo);                           \
     public: [[nodiscard]] static Ptr<T> create(const T##CreateInfo& createInfo) {   \
         return Ptr<T>(new T(createInfo));                                           \
+    }
+
+#define sunflower_CreateResource(T, CreateT, DeviceT, Ptr)                                                  \
+    private: explicit T(const CreateT& createInfo, const SPtr<DeviceT>& device);                            \
+    public: [[nodiscard]] static Ptr<T> create(const CreateT& createInfo, const SPtr<DeviceT>& device) {    \
+        return Ptr<T>(new T(createInfo, device));                                                           \
+    }
+
+#define sunflower_BasicFlags(T) \
+    static_assert(std::is_enum_v<T> && std::is_integral_v<std::underlying_type_t<T>>); \
+    constexpr T operator|(const T lhs, const T rhs) noexcept { \
+        return static_cast<T>(std::to_underlying(lhs) | std::to_underlying(rhs)); \
+    } \
+    constexpr T operator&(const T lhs, const T rhs) noexcept { \
+        return static_cast<T>(std::to_underlying(lhs) & std::to_underlying(rhs)); \
     }

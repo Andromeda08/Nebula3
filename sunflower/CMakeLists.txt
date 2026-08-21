@@ -18,6 +18,9 @@ add_executable(Sunflower
     test/TestWindow.hpp
     test/TestWindow.cpp
     rhi/vulkan/impl/vma.impl.cpp
+    rhi/vulkan/Texture.cpp
+    rhi/vulkan/Texture.hpp
+    rhi/DynamicRHI.cpp
 )
 
 target_include_directories(Sunflower PUBLIC

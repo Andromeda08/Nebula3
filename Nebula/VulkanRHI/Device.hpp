@@ -123,7 +123,7 @@ namespace RHI
         std::vector<SPtr<Allocation>>       mAllocations;
     };
 
-    template<class T>
+    template <class T>
     void Device::nameObject(const NameObjectInfo<T>& nameObjectInfo) const
     {
         if (!gFeatures.debug)

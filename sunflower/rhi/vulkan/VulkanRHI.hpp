@@ -20,11 +20,13 @@ namespace sunflower::rhi
         Option<String>  engineName      = {};
     };
 
-    class VulkanRHI : public DynamicRHI
+    class VulkanRHI final : public DynamicRHI
     {
     public:
         sunflower_DisableCopy(VulkanRHI);
-        sunflower_Create(VulkanRHI, SPtr);
+        sunflower_Create(VulkanRHI, SPtr)
+
+        [[nodiscard]] SPtr<Texture> createTexture(const TextureCreateInfo& textureInfo) override;
 
     private:
         IWindow*                mWindow;

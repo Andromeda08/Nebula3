@@ -248,9 +248,9 @@ add_executable(Nebula3
     Nebula/Level/TextureManager.hpp
     Nebula/Level/TextureManager.cpp
     Nebula/Core/Platform.hpp
-    Nebula/Window/TestWindow.hpp
+    Nebula/Window/SDLWindow.hpp
     Nebula/Window/WindowCreateInfo.hpp
-    Nebula/Window/TestWindow.cpp
+    Nebula/Window/SDLWindow.cpp
     Nebula/Core/Ranges.hpp
     Nebula/Math/HeightMap.hpp
     Nebula/Core/Random.hpp

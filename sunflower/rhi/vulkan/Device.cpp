@@ -129,6 +129,16 @@ namespace sunflower::rhi
         }
     }
 
+    const VmaAllocator& Device::getAllocator() const noexcept
+    {
+        return mAllocator;
+    }
+
+    const vk::Device& Device::getHandle() const noexcept
+    {
+        return mDevice;
+    }
+
     void Device::selectPhysicalDevice()
     {
         std::vector<std::string> availableDeviceNames;

@@ -1,5 +1,7 @@
 #include "VulkanRHI.hpp"
 
+#include "Texture.hpp"
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 namespace sunflower::rhi
@@ -29,5 +31,10 @@ namespace sunflower::rhi
             .instance = mInstance,
             .pSurface = mSurface.get(),
         });
+    }
+
+    SPtr<Texture> VulkanRHI::createTexture(const TextureCreateInfo& textureInfo)
+    {
+        return VulkanTexture::create(textureInfo, mDevice);
     }
 }
