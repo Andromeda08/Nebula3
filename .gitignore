@@ -21,6 +21,7 @@ cmake_install.cmake
 nbl.json
 compile.bat
 imgui.ini
+*.metallib
 
 External/FidelityFX-SDK-2.1.1
 External/FidelityFX-SDK-v1.1.4

@@ -111,7 +111,34 @@ namespace sunflower::rhi
 
     [[nodiscard]] constexpr vk::ImageUsageFlags toVulkan(const TextureUsage textureUsage)
     {
-        return {};
+        vk::ImageUsageFlags flags = {};
+
+        if ((textureUsage & TextureUsage::Sampled) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eSampled;
+        }
+        if ((textureUsage & TextureUsage::Storage) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eStorage;
+        }
+        if ((textureUsage & TextureUsage::ColorTarget) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eColorAttachment;
+        }
+        if ((textureUsage & TextureUsage::DepthTarget) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+        }
+        if ((textureUsage & TextureUsage::TransferSrc) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eTransferSrc;
+        }
+        if ((textureUsage & TextureUsage::TransferDst) != TextureUsage::None)
+        {
+            flags |= vk::ImageUsageFlagBits::eTransferDst;
+        }
+
+        return flags;
     }
 
     [[nodiscard]] constexpr vk::ImageType toVulkan_ImageType(const TextureType textureType)
