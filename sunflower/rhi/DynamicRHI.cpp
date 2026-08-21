@@ -2,7 +2,7 @@
 
 namespace sunflower::rhi
 {
-    std::uint32_t getMipLevels(const TextureCreateInfo& createInfo, const bool isMultisampled) noexcept
+    std::uint32_t getMipLevels(const TextureCreateInfo& createInfo, const bool isMultisampled)
     {
         const auto& [size, mipLevels, format, usage, type, label] = createInfo;
         if (type != TextureType::e2D or isMultisampled)
@@ -41,5 +41,34 @@ namespace sunflower::rhi
             return 6u;
         }
         return 1u;
+    }
+
+    Size validateTextureSize(const Size& size, const TextureType textureType)
+    {
+        Size result = {
+            .width  = std::max(size.width, 1u),
+            .height = std::max(size.height, 1u),
+            .depth  = std::max(size.depth, 1u),
+        };
+
+        using enum TextureType;
+        if (textureType == e1D and (size.height != 1u or size.depth != 1u))
+        {
+            if constexpr (conf::gIsDebug)
+            {
+                spdlog::debug("1D Textures must have a height and depth of 1.");
+            }
+            result.height = result.depth = 1u;
+        }
+        if ((textureType == e2D or textureType == eCube) and size.depth != 1u)
+        {
+            if constexpr (conf::gIsDebug)
+            {
+                spdlog::debug("2D or CubeMap Textures must have a depth of 1.");
+            }
+            result.depth = 1u;
+        }
+
+        return result;
     }
 }

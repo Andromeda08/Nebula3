@@ -32,7 +32,7 @@ namespace sunflower::rhi
     VulkanTexture::VulkanTexture(const TextureCreateInfo& createInfo, const SPtr<Device>& device)
     : mDevice(device)
     , mFormat(createInfo.format)
-    , mSize(createInfo.size)
+    , mSize(validateTextureSize(createInfo.size, createInfo.type))
     , mType(createInfo.type)
     , mMipLevels(getMipLevels(createInfo, false))
     , mLayers(getTextureLayerCount(createInfo))

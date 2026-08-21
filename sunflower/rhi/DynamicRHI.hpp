@@ -75,9 +75,11 @@ namespace sunflower::rhi
      * - Mip levels of non-2D and multisampled images must equal 1.
      * - The user specified mip levels can't exceed the levels that the given size can accommodate.
      */
-    [[nodiscard]] std::uint32_t getMipLevels(const TextureCreateInfo& createInfo, bool isMultisampled = false) noexcept;
+    [[nodiscard]] std::uint32_t getMipLevels(const TextureCreateInfo& createInfo, bool isMultisampled = false);
 
     [[nodiscard]] std::uint32_t getTextureLayerCount(const TextureCreateInfo& createInfo) noexcept;
+
+    [[nodiscard]] Size validateTextureSize(const Size& size, TextureType textureType);
 
     struct DynamicRHI
     {

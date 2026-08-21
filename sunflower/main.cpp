@@ -15,5 +15,14 @@ int main()
         .pWindow = window.get(),
     });
 
+    const auto texture = rhi->createTexture({
+        .size      = { 1280, 720, 1 },
+        .mipLevels = 1u,
+        .format    = rhi::Format::RGBA32_Float,
+        .usage     = rhi::TextureUsage::ColorTarget,
+        .type      = rhi::TextureType::e2D,
+        .label     = "TestTexture",
+    });
+
     return 0;
 } 
