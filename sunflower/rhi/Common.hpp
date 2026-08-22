@@ -44,7 +44,7 @@ namespace sunflower::conf
     #endif
 
     // Configures the number of frames in flight
-    constexpr uint64_t gFramesInFlight = 3;
+    constexpr uint32_t gFramesInFlight = 3;
 }
 
 // Smart pointer aliases
@@ -171,6 +171,14 @@ namespace sunflower
         Graphics,
         Transfer,
     };
+
+    template <class T>
+    requires std::floating_point<T> || std::integral<T>
+    constexpr bool isInRange(T val, T min, T max) noexcept
+    {
+        return min <= val && val <= max;
+    }
+
 }
 
 #define sunflower_INTERFACE(T)          \
@@ -191,11 +199,13 @@ namespace sunflower
         return Ptr<T>(new T(createInfo));                                           \
     }
 
-#define sunflower_CreateResource(T, CreateT, DeviceT, Ptr)                                                  \
+#define sunflower_CreateResourceCustom(T, CreateT, DeviceT, Ptr, fnName)                                    \
     private: explicit T(const CreateT& createInfo, const SPtr<DeviceT>& device);                            \
-    public: [[nodiscard]] static Ptr<T> create(const CreateT& createInfo, const SPtr<DeviceT>& device) {    \
+    public: [[nodiscard]] static Ptr<T> fnName(const CreateT& createInfo, const SPtr<DeviceT>& device) {    \
         return Ptr<T>(new T(createInfo, device));                                                           \
     }
+
+#define sunflower_CreateResource(T, CreateT, DeviceT, Ptr) sunflower_CreateResourceCustom(T, CreateT, DeviceT, Ptr, create)
 
 #define sunflower_BasicFlags(T) \
     static_assert(std::is_enum_v<T> && std::is_integral_v<std::underlying_type_t<T>>); \

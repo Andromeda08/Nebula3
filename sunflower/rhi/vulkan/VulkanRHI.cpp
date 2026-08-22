@@ -31,6 +31,12 @@ namespace sunflower::rhi
             .instance = mInstance,
             .pSurface = mSurface.get(),
         });
+
+        mSwapchain = VulkanSwapchain::create({
+            .pWindow  = mWindow,
+            .pSurface = mSurface.get(),
+            .device   = mDevice,
+        });
     }
 
     SPtr<Texture> VulkanRHI::createTexture(const TextureCreateInfo& textureInfo)

@@ -3,6 +3,8 @@
 #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan_format_traits.hpp>
 
+#include "Swapchain.hpp"
+
 namespace sunflower::rhi
 {
     namespace detail
@@ -41,24 +43,30 @@ namespace sunflower::rhi
         createImageView();
     }
 
-    // TODO: Setup image metadata from Swapchain
     VulkanTexture::VulkanTexture(const VulkanSwapchainWrappedTextureCreateInfo& createInfo, const SPtr<Device>& device)
     : mDevice(device)
     , mSwapchain(createInfo.pSwapchain)
     , mImage(createInfo.handle)
+    , mFormat(createInfo.pSwapchain->getFormat())
+    , mSize(createInfo.pSwapchain->getSize())
+    , mType(TextureType::e2D)
+    , mMipLevels(1u)
+    , mLayers(1u)
     {
         if (mImage == VK_NULL_HANDLE)
         {
             ::sunflower::exit("Invalid Image handle specified to wrapped texture ctor.");
         }
+
+        mDevice->setLabel(mImage, createInfo.label);
         createImageView(createInfo.label);
     }
 
     VulkanTexture::~VulkanTexture()
     {
+        mDevice->getHandle().destroy(mImageView);
         if (!mSwapchain)
         {
-            mDevice->getHandle().destroy(mImageView);
             vmaDestroyImage(mDevice->getAllocator(), mImage, mAlloc);
         }
     }

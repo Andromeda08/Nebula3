@@ -21,6 +21,8 @@ add_executable(Sunflower
     rhi/vulkan/Texture.cpp
     rhi/vulkan/Texture.hpp
     rhi/DynamicRHI.cpp
+    rhi/vulkan/Swapchain.hpp
+    rhi/vulkan/Swapchain.cpp
 )
 
 target_include_directories(Sunflower PUBLIC

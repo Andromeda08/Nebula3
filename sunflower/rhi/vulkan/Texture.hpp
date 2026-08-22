@@ -21,9 +21,9 @@ namespace sunflower::rhi
     public:
         sunflower_DisableCopy(VulkanTexture);
         // ctor: Regular Texture.
-        sunflower_CreateResource(VulkanTexture, TextureCreateInfo,                       Device, SPtr);
+        sunflower_CreateResource(VulkanTexture, TextureCreateInfo, Device, SPtr);
         // ctor: Texture for wrapping a Swapchain image.
-        sunflower_CreateResource(VulkanTexture, VulkanSwapchainWrappedTextureCreateInfo, Device, SPtr);
+        sunflower_CreateResourceCustom(VulkanTexture, VulkanSwapchainWrappedTextureCreateInfo, Device, SPtr, createWrapped);
 
         ~VulkanTexture() override;
 

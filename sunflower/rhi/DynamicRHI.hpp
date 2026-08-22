@@ -81,6 +81,19 @@ namespace sunflower::rhi
 
     [[nodiscard]] Size validateTextureSize(const Size& size, TextureType textureType);
 
+    inline constexpr auto gSwapchainFormat = Format::BGRA8_Unorm;
+
+    struct Swapchain
+    {
+        sunflower_INTERFACE(Swapchain);
+
+        virtual const SPtr<Texture>& getTexture(uint64_t i) const = 0;
+
+        virtual Format getFormat() const noexcept = 0;
+
+        virtual Size getSize() const noexcept = 0;
+    };
+
     struct DynamicRHI
     {
         sunflower_INTERFACE(DynamicRHI);

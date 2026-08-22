@@ -8,6 +8,8 @@
 #include <rhi/vulkan/detail/Instance.hpp>
 #include <rhi/vulkan/detail/Surface.hpp>
 
+#include "Swapchain.hpp"
+
 /**
  * Vulkan RHI targeting bindless-first GPU-driven setups.
  */
@@ -33,5 +35,6 @@ namespace sunflower::rhi
         SPtr<detail::Instance>  mInstance;
         UPtr<detail::Surface>   mSurface;
         SPtr<Device>            mDevice;
+        UPtr<VulkanSwapchain>   mSwapchain;
     };
 }

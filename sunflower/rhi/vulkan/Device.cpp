@@ -139,6 +139,11 @@ namespace sunflower::rhi
         return mDevice;
     }
 
+    const vk::PhysicalDevice& Device::getPhysicalDevice() const noexcept
+    {
+        return mPhysicalDevice;
+    }
+
     void Device::selectPhysicalDevice()
     {
         std::vector<std::string> availableDeviceNames;

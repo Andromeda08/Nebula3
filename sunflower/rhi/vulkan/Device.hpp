@@ -24,6 +24,8 @@ namespace sunflower::rhi
 
         [[nodiscard]] const vk::Device& getHandle() const noexcept;
 
+        [[nodiscard]] const vk::PhysicalDevice& getPhysicalDevice() const noexcept;
+
         [[nodiscard]] const VmaAllocator& getAllocator() const noexcept;
 
         template <class T>
