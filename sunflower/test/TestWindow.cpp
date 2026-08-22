@@ -10,7 +10,7 @@ TestWindow::TestWindow(const TestWindowCreateInfo& createInfo)
         ::sunflower::exit("Failed to initialize windowing system.");
     }
 
-    static constexpr uint64_t sWindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
+    static constexpr uint64_t sWindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
     const auto width  = static_cast<int32_t>(createInfo.size.width);
     const auto height = static_cast<int32_t>(createInfo.size.height);

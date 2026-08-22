@@ -172,6 +172,18 @@ namespace sunflower
         Transfer,
     };
 
+    [[nodiscard]] constexpr const char* toString(const QueueType e) noexcept
+    {
+        using enum QueueType;
+        switch (e)
+        {
+            case Compute:  return "Compute";
+            case Graphics: return "Graphics";
+            case Transfer: return "Transfer";
+            default:       return "unknown";
+        }
+    }
+
     template <class T>
     requires std::floating_point<T> || std::integral<T>
     constexpr bool isInRange(T val, T min, T max) noexcept

@@ -81,9 +81,9 @@ namespace sunflower::rhi
         mDevice->getHandle().destroy(mSwapchain);
     }
 
-    const SPtr<Texture>& VulkanSwapchain::getTexture(const uint64_t i) const
+    Texture* VulkanSwapchain::getTexture(const uint64_t i) const
     {
-        return mTextures[i];
+        return mTextures[i].get();
     }
 
     Format VulkanSwapchain::getFormat() const noexcept

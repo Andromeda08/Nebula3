@@ -76,7 +76,7 @@ namespace sunflower::rhi
         return mFormat;
     }
 
-    const Size& VulkanTexture::getSize() const noexcept
+    Size VulkanTexture::getSize() const noexcept
     {
         return mSize;
     }

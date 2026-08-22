@@ -28,6 +28,10 @@ namespace sunflower::rhi
 
         [[nodiscard]] const VmaAllocator& getAllocator() const noexcept;
 
+        const DeviceQueue& getGraphicsQueue() const noexcept;
+
+        const Option<DeviceQueue>& getComputeQueue() const noexcept;
+
         template <class T>
         requires vk::isVulkanHandleType<T>::value
         void setLabel(const T& handle, const Option<String>& label = std::nullopt) const

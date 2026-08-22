@@ -23,7 +23,7 @@ namespace sunflower::rhi
 
         ~VulkanSwapchain() override;
 
-        [[nodiscard]] const SPtr<Texture>& getTexture(uint64_t i) const override;
+        [[nodiscard]] Texture* getTexture(uint64_t i) const override;
 
         [[nodiscard]] Format getFormat() const noexcept override;
 
@@ -42,7 +42,7 @@ namespace sunflower::rhi
         vk::SwapchainKHR            mSwapchain;
 
         std::vector<vk::Image>      mAcquiredImages;
-        std::vector<SPtr<Texture>>  mTextures;
+        std::vector<UPtr<Texture>>  mTextures;
 
         Format                      mFormat = gSwapchainFormat;
         Size                        mSize   = {};

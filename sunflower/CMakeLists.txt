@@ -23,6 +23,14 @@ add_executable(Sunflower
     rhi/DynamicRHI.cpp
     rhi/vulkan/Swapchain.hpp
     rhi/vulkan/Swapchain.cpp
+    rhi/vulkan/detail/VulkanTimelineSync.hpp
+    rhi/vulkan/detail/VulkanTimelineSync.cpp
+    rhi/vulkan/CommandQueue.hpp
+    rhi/vulkan/CommandQueue.cpp
+    rhi/vulkan/CommandPool.hpp
+    rhi/vulkan/CommandList.hpp
+    rhi/vulkan/CommandPool.cpp
+    rhi/vulkan/CommandList.cpp
 )
 
 target_include_directories(Sunflower PUBLIC

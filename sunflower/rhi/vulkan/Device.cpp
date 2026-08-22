@@ -134,6 +134,16 @@ namespace sunflower::rhi
         return mAllocator;
     }
 
+    const DeviceQueue& Device::getGraphicsQueue() const noexcept
+    {
+        return mGraphicsQueue;
+    }
+
+    const Option<DeviceQueue>& Device::getComputeQueue() const noexcept
+    {
+        return mComputeQueue;
+    }
+
     const vk::Device& Device::getHandle() const noexcept
     {
         return mDevice;
@@ -266,7 +276,13 @@ namespace sunflower::rhi
         mDevice = device;
 
         mGraphicsQueue = graphicsQueue->makeDeviceQueue(mDevice);
+        setLabel(mGraphicsQueue.queue, fmt::format("Queue[{}]", toString(mGraphicsQueue.queueType)));
+
         mComputeQueue  = computeQueue.transform([&](const auto& q){ return q.makeDeviceQueue(mDevice); });
+        if (mComputeQueue)
+        {
+            setLabel(mComputeQueue->queue, fmt::format("Queue[{}]", toString(mComputeQueue->queueType)));
+        }
     }
 
     void Device::createAllocator()

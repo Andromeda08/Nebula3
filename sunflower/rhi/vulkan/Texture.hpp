@@ -21,15 +21,15 @@ namespace sunflower::rhi
     public:
         sunflower_DisableCopy(VulkanTexture);
         // ctor: Regular Texture.
-        sunflower_CreateResource(VulkanTexture, TextureCreateInfo, Device, SPtr);
+        sunflower_CreateResource(VulkanTexture, TextureCreateInfo, Device, UPtr);
         // ctor: Texture for wrapping a Swapchain image.
-        sunflower_CreateResourceCustom(VulkanTexture, VulkanSwapchainWrappedTextureCreateInfo, Device, SPtr, createWrapped);
+        sunflower_CreateResourceCustom(VulkanTexture, VulkanSwapchainWrappedTextureCreateInfo, Device, UPtr, createWrapped);
 
         ~VulkanTexture() override;
 
         [[nodiscard]] Format getFormat() const noexcept override;
 
-        [[nodiscard]] const Size& getSize() const noexcept override;
+        [[nodiscard]] Size getSize() const noexcept override;
 
         // -----------------------------
         // Vulkan Specific
